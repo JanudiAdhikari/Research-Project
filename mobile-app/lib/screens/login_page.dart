@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'farmer_dashboard.dart';
 import 'forgot_password_page.dart';
 import 'home_screen.dart';
 import 'signup_page.dart';
@@ -39,12 +40,10 @@ class _LoginPageState extends State<LoginPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
 
@@ -104,9 +103,13 @@ class _LoginPageState extends State<LoginPage>
 
       if (user != null) {
         // Navigate to home screen
+        // Navigator.pushReplacement(
+        //   context,
+        //   MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
+        // );
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
+          MaterialPageRoute(builder: (_) => const FarmerDashboard()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -239,13 +242,16 @@ class _LoginPageState extends State<LoginPage>
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: primary, width: 2),
+                                borderSide: BorderSide(
+                                  color: primary,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -298,13 +304,16 @@ class _LoginPageState extends State<LoginPage>
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: primary, width: 2),
+                                borderSide: BorderSide(
+                                  color: primary,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -426,9 +435,7 @@ class _LoginPageState extends State<LoginPage>
                       // Divider with "OR"
                       Row(
                         children: [
-                          Expanded(
-                            child: Divider(color: Colors.grey.shade300),
-                          ),
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
@@ -439,9 +446,7 @@ class _LoginPageState extends State<LoginPage>
                               ),
                             ),
                           ),
-                          Expanded(
-                            child: Divider(color: Colors.grey.shade300),
-                          ),
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
                         ],
                       ),
 

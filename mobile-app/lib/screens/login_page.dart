@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'forgot_password_page.dart';
 import 'home_screen.dart';
+import 'signup_page.dart';
 import 'signup_screen.dart';
 
 class LoginPage extends StatefulWidget {
@@ -92,7 +93,7 @@ class _LoginPageState extends State<LoginPage> {
   void _navigateToSignUp() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SignupScreen()),
+      MaterialPageRoute(builder: (context) => const SignupPage()),
     );
   }
 

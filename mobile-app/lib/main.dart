@@ -7,6 +7,7 @@ import 'screens/login_page.dart';
 import 'screens/signup_screen.dart';
 import 'screens/signup_page.dart';
 import 'screens/image_picker_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         fontFamily: 'Poppins',
       ),
-      home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
+      // home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
+      home: error != null ? ErrorScreen(error: error!) : const SplashScreen(),
       navigatorObservers: [FirebaseErrorObserver()],
     );
   }

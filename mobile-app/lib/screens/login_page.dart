@@ -335,8 +335,7 @@ class _LoginPageState extends State<LoginPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          //TODO: Add google.png in assets folder
-                          // Image.asset("assets/google.png", height: 24),
+                          Image.asset("assets/google.png", height: 24),
                           const SizedBox(width: 12),
                           const Text(
                             "Continue with Google",

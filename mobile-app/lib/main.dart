@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/login_page.dart';
 import 'screens/signup_screen.dart';
+import 'screens/signup_page.dart';
 import 'screens/image_picker_screen.dart';
 
 void main() async {
@@ -62,7 +63,8 @@ class MainScreen extends StatelessWidget {
   void _navigateToSignUp(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SignupScreen()),
+      // MaterialPageRoute(builder: (context) => const SignupScreen()),
+      MaterialPageRoute(builder: (context) => const SignupPage()),
     );
   }
 

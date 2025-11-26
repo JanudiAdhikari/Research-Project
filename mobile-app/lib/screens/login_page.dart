@@ -357,7 +357,7 @@ class _LoginPageState extends State<LoginPage> {
                       GestureDetector(
                         onTap: _navigateToSignUp,
                         child: Text(
-                          "Sign up",
+                          "Sign Up",
                           style: TextStyle(
                             color: primary,
                             fontWeight: FontWeight.w600,

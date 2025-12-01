@@ -3,8 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
+import 'screens/login_page.dart';
 import 'screens/signup_screen.dart';
+import 'screens/signup_page.dart';
 import 'screens/image_picker_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,12 +31,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Black Pepper',
       theme: ThemeData(
         primarySwatch: Colors.green,
         fontFamily: 'Poppins',
       ),
-      home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
+      // home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
+      home: error != null ? ErrorScreen(error: error!) : const SplashScreen(),
       navigatorObservers: [FirebaseErrorObserver()],
     );
   }
@@ -52,14 +57,16 @@ class MainScreen extends StatelessWidget {
   void _navigateToLogin(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      // MaterialPageRoute(builder: (context) => const LoginScreen()),
+      MaterialPageRoute(builder: (context) => const LoginPage()),
     );
   }
 
   void _navigateToSignUp(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SignupScreen()),
+      // MaterialPageRoute(builder: (context) => const SignupScreen()),
+      MaterialPageRoute(builder: (context) => const SignupPage()),
     );
   }
 

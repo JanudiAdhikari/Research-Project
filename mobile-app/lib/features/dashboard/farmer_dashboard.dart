@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/responsive.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -44,6 +45,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
     final primary = const Color(0xFF2E7D32);
     final lightGreen = const Color(0xFFE8F5E9);
 
@@ -58,16 +60,24 @@ class _FarmerDashboardState extends State<FarmerDashboard>
               children: [
                 // Enhanced Header
                 Container(
-                  padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+                  padding: responsive.padding(
+                    mobile: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+                    tablet: const EdgeInsets.fromLTRB(32, 24, 32, 36),
+                    desktop: const EdgeInsets.fromLTRB(40, 28, 40, 42),
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [primary, primary.withOpacity(0.8)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(32),
-                      bottomRight: Radius.circular(32),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(
+                        responsive.value(mobile: 32, tablet: 36, desktop: 40),
+                      ),
+                      bottomRight: Radius.circular(
+                        responsive.value(mobile: 32, tablet: 36, desktop: 40),
+                      ),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -90,16 +100,20 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                                 "Hello, Farmer 👋",
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
-                                  fontSize: 16,
+                                  fontSize: responsive.bodyFontSize,
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              const Text(
+                              ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
+                              Text(
                                 "Welcome Back",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 28,
+                                  fontSize: responsive.fontSize(
+                                    mobile: 26,
+                                    tablet: 28,
+                                    desktop: 32,
+                                  ),
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: -0.5,
                                 ),
@@ -119,26 +133,46 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                               ],
                             ),
                             child: CircleAvatar(
-                              radius: 28,
+                              radius: responsive.value(
+                                mobile: 26,
+                                tablet: 28,
+                                desktop: 32,
+                              ),
                               backgroundColor: Colors.white,
                               child: Icon(
                                 Icons.person_rounded,
                                 color: primary,
-                                size: 28,
+                                size: responsive.value(
+                                  mobile: 26,
+                                  tablet: 28,
+                                  desktop: 32,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                        padding: responsive.padding(
+                          mobile: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          tablet: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          desktop: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(
+                            responsive.value(mobile: 16, tablet: 18, desktop: 20),
+                          ),
                           border: Border.all(
                             color: Colors.white.withOpacity(0.2),
                             width: 1,
@@ -149,14 +183,18 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                             Icon(
                               Icons.location_on_rounded,
                               color: Colors.white.withOpacity(0.9),
-                              size: 20,
+                              size: responsive.smallIconSize,
                             ),
-                            const SizedBox(width: 8),
+                            ResponsiveSpacing.horizontal(
+                              mobile: 8,
+                              tablet: 10,
+                              desktop: 12,
+                            ),
                             Text(
                               "Colombo",
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.9),
-                                fontSize: 15,
+                                fontSize: responsive.bodyFontSize,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -164,14 +202,18 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                             Icon(
                               Icons.wb_sunny_rounded,
                               color: Colors.amber[300],
-                              size: 20,
+                              size: responsive.smallIconSize,
                             ),
-                            const SizedBox(width: 8),
-                            const Text(
+                            ResponsiveSpacing.horizontal(
+                              mobile: 8,
+                              tablet: 10,
+                              desktop: 12,
+                            ),
+                            Text(
                               "29°C",
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 15,
+                                fontSize: responsive.bodyFontSize,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -182,26 +224,32 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
                 // Section Title
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsive.pagePadding,
+                  ),
                   child: Row(
                     children: [
                       Container(
-                        width: 4,
-                        height: 24,
+                        width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
+                        height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
                         decoration: BoxDecoration(
                           color: primary,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      ResponsiveSpacing.horizontal(
+                        mobile: 12,
+                        tablet: 14,
+                        desktop: 16,
+                      ),
+                      Text(
                         "Quick Actions",
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: responsive.headingFontSize,
                           fontWeight: FontWeight.w700,
                           color: Colors.black87,
                         ),
@@ -210,102 +258,73 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
                 // Enhanced Quick Action Grid
                 SlideTransition(
                   position: _slideAnimation,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.95,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        _featureCard(
-                          context,
-                          title: "Predict\nHarvest",
-                          icon: Icons.analytics_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.green.shade400,
-                              Colors.green.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to harvest prediction
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Disease\nDetection",
-                          icon: Icons.biotech_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.orange.shade400,
-                              Colors.orange.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to disease detection
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Quality\nGrading",
-                          icon: Icons.verified_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.blue.shade400,
-                              Colors.blue.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to quality grading
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Market\nPrices",
-                          icon: Icons.trending_up_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.purple.shade400,
-                              Colors.purple.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to market module
-                          },
-                        ),
-                      ],
+                    padding: EdgeInsets.symmetric(
+                      horizontal: responsive.pagePadding,
+                    ),
+                    child: ResponsiveBuilder(
+                      mobile: GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        childAspectRatio: 0.95,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: _buildFeatureCards(context, responsive, primary),
+                      ),
+                      tablet: GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        crossAxisSpacing: 20,
+                        mainAxisSpacing: 20,
+                        childAspectRatio: 1.0,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: _buildFeatureCards(context, responsive, primary),
+                      ),
+                      desktop: GridView.count(
+                        crossAxisCount: 4,
+                        shrinkWrap: true,
+                        crossAxisSpacing: 24,
+                        mainAxisSpacing: 24,
+                        childAspectRatio: 0.95,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: _buildFeatureCards(context, responsive, primary),
+                      ),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
                 // Tips Section Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsive.pagePadding,
+                  ),
                   child: Row(
                     children: [
                       Container(
-                        width: 4,
-                        height: 24,
+                        width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
+                        height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
                         decoration: BoxDecoration(
                           color: primary,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
+                      ResponsiveSpacing.horizontal(
+                        mobile: 12,
+                        tablet: 14,
+                        desktop: 16,
+                      ),
+                      Text(
                         "Recommended Tips",
                         style: TextStyle(
-                          fontSize: 22,
+                          fontSize: responsive.headingFontSize,
                           fontWeight: FontWeight.w700,
                           color: Colors.black87,
                         ),
@@ -314,50 +333,56 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       Icon(
                         Icons.lightbulb_rounded,
                         color: Colors.amber[700],
-                        size: 24,
+                        size: responsive.mediumIconSize,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
                 // Enhanced Tips Cards
                 SizedBox(
-                  height: 140,
+                  height: responsive.value(mobile: 140, tablet: 160, desktop: 180),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: responsive.pagePadding,
+                    ),
                     children: [
                       _tipCard(
                         "Improve drying process",
                         Icons.wb_sunny_rounded,
                         Colors.orange.shade50,
                         Colors.orange.shade700,
+                        responsive,
                       ),
                       _tipCard(
                         "Prevent fungal infection",
                         Icons.shield_rounded,
                         Colors.red.shade50,
                         Colors.red.shade700,
+                        responsive,
                       ),
                       _tipCard(
                         "Enhance soil nutrients",
                         Icons.eco_rounded,
                         Colors.green.shade50,
                         Colors.green.shade700,
+                        responsive,
                       ),
                       _tipCard(
                         "Optimize irrigation",
                         Icons.water_drop_rounded,
                         Colors.blue.shade50,
                         Colors.blue.shade700,
+                        responsive,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
               ],
             ),
           ),
@@ -366,22 +391,96 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     );
   }
 
+  List<Widget> _buildFeatureCards(
+      BuildContext context,
+      Responsive responsive,
+      Color primary,
+      ) {
+    return [
+      _featureCard(
+        context,
+        responsive,
+        title: "Predict\nHarvest",
+        icon: Icons.analytics_rounded,
+        gradient: LinearGradient(
+          colors: [
+            Colors.green.shade400,
+            Colors.green.shade600,
+          ],
+        ),
+        onTap: () {
+          // TODO: Navigate to harvest prediction
+        },
+      ),
+      _featureCard(
+        context,
+        responsive,
+        title: "Disease\nDetection",
+        icon: Icons.biotech_rounded,
+        gradient: LinearGradient(
+          colors: [
+            Colors.orange.shade400,
+            Colors.orange.shade600,
+          ],
+        ),
+        onTap: () {
+          // TODO: Navigate to disease detection
+        },
+      ),
+      _featureCard(
+        context,
+        responsive,
+        title: "Quality\nGrading",
+        icon: Icons.verified_rounded,
+        gradient: LinearGradient(
+          colors: [
+            Colors.blue.shade400,
+            Colors.blue.shade600,
+          ],
+        ),
+        onTap: () {
+          // TODO: Navigate to quality grading
+        },
+      ),
+      _featureCard(
+        context,
+        responsive,
+        title: "Market\nPrices",
+        icon: Icons.trending_up_rounded,
+        gradient: LinearGradient(
+          colors: [
+            Colors.purple.shade400,
+            Colors.purple.shade600,
+          ],
+        ),
+        onTap: () {
+          // TODO: Navigate to market module
+        },
+      ),
+    ];
+  }
+
   Widget _featureCard(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required Gradient gradient,
-    required Function onTap,
-  }) {
+      BuildContext context,
+      Responsive responsive, {
+        required String title,
+        required IconData icon,
+        required Gradient gradient,
+        required Function onTap,
+      }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => onTap(),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(
+          responsive.value(mobile: 20, tablet: 22, desktop: 24),
+        ),
         child: Container(
           decoration: BoxDecoration(
             gradient: gradient,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(
+              responsive.value(mobile: 20, tablet: 22, desktop: 24),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -398,43 +497,51 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                 bottom: -10,
                 child: Icon(
                   icon,
-                  size: 80,
+                  size: responsive.value(mobile: 70, tablet: 80, desktop: 90),
                   color: Colors.white.withOpacity(0.15),
                 ),
               ),
               // Content
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: responsive.padding(
+                  mobile: const EdgeInsets.all(18),
+                  tablet: const EdgeInsets.all(20),
+                  desktop: const EdgeInsets.all(24),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: responsive.padding(
+                        mobile: const EdgeInsets.all(10),
+                        tablet: const EdgeInsets.all(12),
+                        desktop: const EdgeInsets.all(14),
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         icon,
-                        size: 32,
+                        size: responsive.value(mobile: 28, tablet: 32, desktop: 36),
                         color: Colors.white,
                       ),
                     ),
                     const Spacer(),
                     Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: TextStyle(
+                        fontSize: responsive.titleFontSize,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
                     Icon(
                       Icons.arrow_forward_rounded,
                       color: Colors.white.withOpacity(0.8),
-                      size: 20,
+                      size: responsive.smallIconSize,
                     ),
                   ],
                 ),
@@ -446,14 +553,28 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     );
   }
 
-  Widget _tipCard(String text, IconData icon, Color bgColor, Color iconColor) {
+  Widget _tipCard(
+      String text,
+      IconData icon,
+      Color bgColor,
+      Color iconColor,
+      Responsive responsive,
+      ) {
     return Container(
-      margin: const EdgeInsets.only(right: 16),
-      padding: const EdgeInsets.all(20),
-      width: 200,
+      margin: EdgeInsets.only(
+        right: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+      ),
+      padding: responsive.padding(
+        mobile: const EdgeInsets.all(18),
+        tablet: const EdgeInsets.all(20),
+        desktop: const EdgeInsets.all(24),
+      ),
+      width: responsive.value(mobile: 200, tablet: 220, desktop: 240),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(
+          responsive.value(mobile: 20, tablet: 22, desktop: 24),
+        ),
         border: Border.all(
           color: iconColor.withOpacity(0.2),
           width: 1,
@@ -470,7 +591,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: responsive.padding(
+              mobile: const EdgeInsets.all(10),
+              tablet: const EdgeInsets.all(11),
+              desktop: const EdgeInsets.all(12),
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
@@ -485,15 +610,15 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             child: Icon(
               icon,
               color: iconColor,
-              size: 24,
+              size: responsive.mediumIconSize,
             ),
           ),
-          const SizedBox(height: 12),
+          ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
           Text(
             text,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 15,
+              fontSize: responsive.bodyFontSize,
               color: Colors.grey[800],
               height: 1.3,
             ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../../screens/farmer_dashboard.dart';
+import '../dashboard/farmer_dashboard.dart';
 import 'forgot_password_page.dart';
 import '../../screens/home_screen.dart';
 import 'signup_page.dart';

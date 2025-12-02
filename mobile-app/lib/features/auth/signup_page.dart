@@ -167,345 +167,351 @@ class _SignupPageState extends State<SignupPage>
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: responsive.maxContentWidth,
-            ),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: responsive.pagePadding,
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: responsive.maxContentWidth,
               ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ResponsiveSpacing(mobile: 40, tablet: 48),
-
-                      // Back button
-                      Align(
-                        alignment: Alignment.topLeft,
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(
-                            Icons.arrow_back_ios_rounded,
-                            color: primary,
-                            size: responsive.smallIconSize,
-                          ),
-                          style: IconButton.styleFrom(
-                            backgroundColor: lightGreen,
-                            padding: EdgeInsets.all(responsive.smallSpacing),
-                          ),
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 10, tablet: 16),
-
-                      // Logo with background
-                      Container(
-                        padding: EdgeInsets.all(
-                          responsive.spacing(mobile: 16, tablet: 20),
-                        ),
-                        decoration: BoxDecoration(
-                          color: lightGreen,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Image.asset(
-                          "assets/images/logos/logo.jpg",
-                          height: responsive.value(mobile: 70, tablet: 90),
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 24, tablet: 32),
-
-                      // Title
-                      ResponsiveText(
-                        "Create Your",
-                        mobileFontSize: 28,
-                        tabletFontSize: 32,
-                        desktopFontSize: 32,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.black87,
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      // Sign Up with gradient
-                      ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [primary, primary.withOpacity(0.7)],
-                        ).createShader(bounds),
-                        child: ResponsiveText(
-                          "Account",
-                          mobileFontSize: 32,
-                          tabletFontSize: 38,
-                          desktopFontSize: 38,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 32, tablet: 40),
-
-                      // First name
-                      _buildInputField(
-                        responsive: responsive,
-                        label: "First Name",
-                        hint: "Enter your first name",
-                        controller: _firstNameController,
-                        icon: Icons.person_outline,
-                        primary: primary,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 20),
-
-                      // Last name
-                      _buildInputField(
-                        responsive: responsive,
-                        label: "Last Name",
-                        hint: "Enter your last name",
-                        controller: _lastNameController,
-                        icon: Icons.person_outline,
-                        primary: primary,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 20),
-
-                      // Email
-                      _buildInputField(
-                        responsive: responsive,
-                        label: "Email Address",
-                        hint: "youremail@gmail.com",
-                        controller: _emailController,
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        primary: primary,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 20),
-
-                      // Contact
-                      _buildInputField(
-                        responsive: responsive,
-                        label: "Contact Number",
-                        hint: "0712345678",
-                        controller: _contactController,
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        primary: primary,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 20),
-
-                      // Password
-                      _buildInputField(
-                        responsive: responsive,
-                        label: "Password",
-                        hint: "Create a strong password",
-                        controller: _passwordController,
-                        icon: Icons.lock_outline,
-                        obscureText: _obscurePassword,
-                        primary: primary,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.grey[600],
-                            size: responsive.mediumIconSize,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 20),
-
-                      // Re-enter password
-                      _buildInputField(
-                        responsive: responsive,
-                        label: "Confirm Password",
-                        hint: "Re-enter your password",
-                        controller: _rePasswordController,
-                        icon: Icons.lock_outline,
-                        obscureText: _obscureRePassword,
-                        primary: primary,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureRePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.grey[600],
-                            size: responsive.mediumIconSize,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureRePassword = !_obscureRePassword;
-                            });
-                          },
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 32, tablet: 40),
-
-                      // Sign Up Button with shadow
-                      Container(
-                        width: double.infinity,
-                        height: responsive.buttonHeight,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primary.withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.pagePadding,
+                ),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ResponsiveSpacing(mobile: 40, tablet: 48),
+        
+                        // Back button
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: Icon(
+                              Icons.arrow_back_ios_rounded,
+                              color: primary,
+                              size: responsive.smallIconSize,
                             ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _signUp,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
+                            style: IconButton.styleFrom(
+                              backgroundColor: lightGreen,
+                              padding: EdgeInsets.all(responsive.smallSpacing),
                             ),
-                            disabledBackgroundColor: primary.withOpacity(0.6),
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
+                        ),
+        
+                        ResponsiveSpacing(mobile: 10, tablet: 16),
+        
+                        // Logo with background
+                        Container(
+                          padding: EdgeInsets.all(
+                            responsive.spacing(mobile: 16, tablet: 20),
+                          ),
+                          decoration: BoxDecoration(
+                            color: lightGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Image.asset(
+                            "assets/images/logos/logo.jpg",
+                            height: responsive.value(mobile: 70, tablet: 90),
+                          ),
+                        ),
+        
+                        ResponsiveSpacing(mobile: 24, tablet: 32),
+        
+                        // Title
+                        ResponsiveText(
+                          "Create Your",
+                          mobileFontSize: 28,
+                          tabletFontSize: 32,
+                          desktopFontSize: 32,
+                          fontWeight: FontWeight.w300,
+                          color: Colors.black87,
+                        ),
+        
+                        const SizedBox(height: 4),
+        
+                        // Sign Up with gradient
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [primary, primary.withOpacity(0.7)],
+                          ).createShader(bounds),
+                          child: ResponsiveText(
+                            "Account",
+                            mobileFontSize: 32,
+                            tabletFontSize: 38,
+                            desktopFontSize: 38,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+        
+                        ResponsiveSpacing(mobile: 32, tablet: 40),
+        
+                        // First name
+                        _buildInputField(
+                          responsive: responsive,
+                          label: "First Name",
+                          hint: "Enter your first name",
+                          controller: _firstNameController,
+                          icon: Icons.person_outline,
+                          primary: primary,
+                        ),
+        
+                        ResponsiveSpacing(mobile: 16, tablet: 20),
+        
+                        // Last name
+                        _buildInputField(
+                          responsive: responsive,
+                          label: "Last Name",
+                          hint: "Enter your last name",
+                          controller: _lastNameController,
+                          icon: Icons.person_outline,
+                          primary: primary,
+                        ),
+        
+                        ResponsiveSpacing(mobile: 16, tablet: 20),
+        
+                        // Email
+                        _buildInputField(
+                          responsive: responsive,
+                          label: "Email Address",
+                          hint: "youremail@gmail.com",
+                          controller: _emailController,
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          primary: primary,
+                        ),
+        
+                        ResponsiveSpacing(mobile: 16, tablet: 20),
+        
+                        // Contact
+                        _buildInputField(
+                          responsive: responsive,
+                          label: "Contact Number",
+                          hint: "0712345678",
+                          controller: _contactController,
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          primary: primary,
+                        ),
+        
+                        ResponsiveSpacing(mobile: 16, tablet: 20),
+        
+                        // Password
+                        _buildInputField(
+                          responsive: responsive,
+                          label: "Password",
+                          hint: "Create a strong password",
+                          controller: _passwordController,
+                          icon: Icons.lock_outline,
+                          obscureText: _obscurePassword,
+                          primary: primary,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: Colors.grey[600],
+                              size: responsive.mediumIconSize,
                             ),
-                          )
-                              : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Create Account",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: responsive.titleFontSize + 1,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                size: responsive.smallIconSize,
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+        
+                        ResponsiveSpacing(mobile: 16, tablet: 20),
+        
+                        // Re-enter password
+                        _buildInputField(
+                          responsive: responsive,
+                          label: "Confirm Password",
+                          hint: "Re-enter your password",
+                          controller: _rePasswordController,
+                          icon: Icons.lock_outline,
+                          obscureText: _obscureRePassword,
+                          primary: primary,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureRePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: Colors.grey[600],
+                              size: responsive.mediumIconSize,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureRePassword = !_obscureRePassword;
+                              });
+                            },
+                          ),
+                        ),
+        
+                        ResponsiveSpacing(mobile: 32, tablet: 40),
+        
+                        // Sign Up Button with shadow
+                        Container(
+                          width: double.infinity,
+                          height: responsive.buttonHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primary.withOpacity(0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 24, tablet: 28),
-
-                      // Divider with "OR"
-                      Row(
-                        children: [
-                          Expanded(child: Divider(color: Colors.grey.shade300)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              "OR",
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                                fontSize: responsive.bodyFontSize,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _signUp,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
                               ),
+                              disabledBackgroundColor: primary.withOpacity(0.6),
                             ),
-                          ),
-                          Expanded(child: Divider(color: Colors.grey.shade300)),
-                        ],
-                      ),
-
-                      ResponsiveSpacing(mobile: 24, tablet: 28),
-
-                      // Google sign up button
-                      Container(
-                        width: double.infinity,
-                        height: responsive.buttonHeight,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              // TODO: implement Google sign up
-                            },
-                            borderRadius: BorderRadius.circular(28),
-                            child: Row(
+                            child: _isLoading
+                                ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                                : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset(
-                                  "assets/images/icons/google.png",
-                                  height: responsive.mediumIconSize,
-                                ),
-                                const SizedBox(width: 12),
                                 Text(
-                                  "Sign up with Google",
+                                  "Create Account",
                                   style: TextStyle(
-                                    fontSize: responsive.titleFontSize,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    fontSize: responsive.titleFontSize + 1,
+                                    letterSpacing: 0.5,
                                   ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: responsive.smallIconSize,
                                 ),
                               ],
                             ),
                           ),
                         ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 24, tablet: 32),
-
-                      // Login link
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            "Already have an account?",
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              fontSize: responsive.bodyFontSize + 1,
+        
+                        ResponsiveSpacing(mobile: 24, tablet: 28),
+        
+                        // Divider with "OR"
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: Colors.grey.shade300)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                "OR",
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: responsive.bodyFontSize,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: Colors.grey.shade300)),
+                          ],
+                        ),
+        
+                        ResponsiveSpacing(mobile: 24, tablet: 28),
+        
+                        // Google sign up button
+                        Container(
+                          width: double.infinity,
+                          height: responsive.buttonHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: _navigateToLogin,
-                            child: Text(
-                              "Login",
-                              style: TextStyle(
-                                color: primary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: responsive.bodyFontSize + 1,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                // TODO: implement Google sign up
+                              },
+                              borderRadius: BorderRadius.circular(28),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    "assets/images/icons/google.png",
+                                    height: responsive.mediumIconSize,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    "Sign up with Google",
+                                    style: TextStyle(
+                                      fontSize: responsive.titleFontSize,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
-
-                      ResponsiveSpacing(mobile: 40, tablet: 48),
-                    ],
+                        ),
+        
+                        ResponsiveSpacing(mobile: 24, tablet: 32),
+        
+                        // Login link
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              "Already have an account?",
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontSize: responsive.bodyFontSize + 1,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: _navigateToLogin,
+                              child: Text(
+                                "Login",
+                                style: TextStyle(
+                                  color: primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: responsive.bodyFontSize + 1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+        
+                        ResponsiveSpacing(mobile: 40, tablet: 48),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -13,7 +13,6 @@ class _SignupPageState extends State<SignupPage>
     with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _usernameController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _contactController = TextEditingController();
@@ -42,12 +41,10 @@ class _SignupPageState extends State<SignupPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -57,7 +54,6 @@ class _SignupPageState extends State<SignupPage>
     _animationController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _usernameController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _contactController.dispose();
@@ -105,9 +101,11 @@ class _SignupPageState extends State<SignupPage>
 
     try {
       final user = await _authService.signUp(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-        _usernameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        contact: _contactController.text.trim(),
       );
 
       setState(() {
@@ -207,7 +205,10 @@ class _SignupPageState extends State<SignupPage>
                           color: lightGreen,
                           shape: BoxShape.circle,
                         ),
-                        child: Image.asset("assets/images/logos/logo.jpg", height: 70),
+                        child: Image.asset(
+                          "assets/images/logos/logo.jpg",
+                          height: 70,
+                        ),
                       ),
 
                       const SizedBox(height: 24),
@@ -397,9 +398,7 @@ class _SignupPageState extends State<SignupPage>
                       // Divider with "OR"
                       Row(
                         children: [
-                          Expanded(
-                            child: Divider(color: Colors.grey.shade300),
-                          ),
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
@@ -410,9 +409,7 @@ class _SignupPageState extends State<SignupPage>
                               ),
                             ),
                           ),
-                          Expanded(
-                            child: Divider(color: Colors.grey.shade300),
-                          ),
+                          Expanded(child: Divider(color: Colors.grey.shade300)),
                         ],
                       ),
 
@@ -439,7 +436,10 @@ class _SignupPageState extends State<SignupPage>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset("assets/images/icons/google.png", height: 24),
+                                Image.asset(
+                                  "assets/images/icons/google.png",
+                                  height: 24,
+                                ),
                                 const SizedBox(width: 12),
                                 const Text(
                                   "Sign up with Google",

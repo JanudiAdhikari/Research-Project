@@ -102,15 +102,26 @@ class _LoginPageState extends State<LoginPage>
       });
 
       if (user != null) {
-        // Navigate to home screen
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
-        // );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const FarmerDashboard()),
-        );
+        final role = user["role"];
+
+        if (role == "farmer") {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const FarmerDashboard()),
+          );
+        } else if (role == "exporter") {
+          Navigator.pushReplacement(
+            context,
+            // MaterialPageRoute(builder: (_) => const ExporterDashboard()),
+            MaterialPageRoute(builder: (_) => const FarmerDashboard()),
+          );
+        } else if (role == "admin") {
+          Navigator.pushReplacement(
+            context,
+            // MaterialPageRoute(builder: (_) => const AdminDashboard()),
+            MaterialPageRoute(builder: (_) => const FarmerDashboard()),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -176,7 +187,10 @@ class _LoginPageState extends State<LoginPage>
                           color: lightGreen,
                           shape: BoxShape.circle,
                         ),
-                        child: Image.asset("assets/images/logos/logo.jpg", height: 80),
+                        child: Image.asset(
+                          "assets/images/logos/logo.jpg",
+                          height: 80,
+                        ),
                       ),
 
                       const SizedBox(height: 32),
@@ -473,7 +487,10 @@ class _LoginPageState extends State<LoginPage>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset("assets/images/icons/google.png", height: 24),
+                                Image.asset(
+                                  "assets/images/icons/google.png",
+                                  height: 24,
+                                ),
                                 const SizedBox(width: 12),
                                 const Text(
                                   "Continue with Google",

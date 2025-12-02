@@ -273,7 +273,7 @@ class _SplashScreenState extends State<SplashScreen>
                                       ).createShader(bounds);
                                     },
                                     child: Text(
-                                      "Black Pepper",
+                                      "Ceylon Pepper",
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: titleFontSize,

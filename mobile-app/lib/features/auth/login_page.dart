@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../dashboard/admin_dashboard.dart';
@@ -31,6 +32,7 @@ class _LoginPageState extends State<LoginPage>
   @override
   void initState() {
     super.initState();
+    _loadSavedCredentials();
 
     // Initialize animations
     _animationController = AnimationController(
@@ -74,6 +76,23 @@ class _LoginPageState extends State<LoginPage>
     super.dispose();
   }
 
+  void _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final savedEmail = prefs.getString("saved_email");
+    final savedPassword = prefs.getString("saved_password");
+    final remember = prefs.getBool("remember_me") ?? false;
+
+    if (remember && savedEmail != null && savedPassword != null) {
+      setState(() {
+        _rememberMe = true;
+        _emailController.text = savedEmail;
+        _passwordController.text = savedPassword;
+      });
+    }
+  }
+
+
   void _login() async {
     // Basic validation
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
@@ -102,6 +121,18 @@ class _LoginPageState extends State<LoginPage>
       setState(() {
         _isLoading = false;
       });
+
+      final prefs = await SharedPreferences.getInstance();
+
+      if (_rememberMe) {
+        await prefs.setString("saved_email", _emailController.text.trim());
+        await prefs.setString("saved_password", _passwordController.text.trim());
+        await prefs.setBool("remember_me", true);
+      } else {
+        await prefs.remove("saved_email");
+        await prefs.remove("saved_password");
+        await prefs.setBool("remember_me", false);
+      }
 
       if (user != null) {
         final role = user["role"];
@@ -193,7 +224,7 @@ class _LoginPageState extends State<LoginPage>
                           tablet: 60,
                           desktop: 60,
                         ),
-        
+
                         // Logo with background
                         Container(
                           padding: EdgeInsets.all(
@@ -208,9 +239,9 @@ class _LoginPageState extends State<LoginPage>
                             height: responsive.value(mobile: 80, tablet: 100),
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 32, tablet: 40),
-        
+
                         // Welcome back text
                         ResponsiveText(
                           "Welcome Back",
@@ -220,9 +251,9 @@ class _LoginPageState extends State<LoginPage>
                           fontWeight: FontWeight.w300,
                           color: Colors.black87,
                         ),
-        
+
                         const SizedBox(height: 4),
-        
+
                         // Login title with gradient
                         ShaderMask(
                           shaderCallback: (bounds) => LinearGradient(
@@ -237,9 +268,9 @@ class _LoginPageState extends State<LoginPage>
                             color: Colors.white,
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 40, tablet: 48),
-        
+
                         // Email field with icon
                         _buildInputField(
                           responsive: responsive,
@@ -250,9 +281,9 @@ class _LoginPageState extends State<LoginPage>
                           prefixIcon: Icons.email_outlined,
                           primary: primary,
                         ),
-        
+
                         ResponsiveSpacing(mobile: 20, tablet: 24),
-        
+
                         // Password field with icon
                         _buildInputField(
                           responsive: responsive,
@@ -277,9 +308,9 @@ class _LoginPageState extends State<LoginPage>
                             },
                           ),
                         ),
-        
+
                         const SizedBox(height: 12),
-        
+
                         // Remember me and Forgot password
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -338,9 +369,9 @@ class _LoginPageState extends State<LoginPage>
                             ),
                           ],
                         ),
-        
+
                         ResponsiveSpacing(mobile: 32, tablet: 40),
-        
+
                         // Login Button with shadow
                         Container(
                           width: double.infinity,
@@ -397,9 +428,9 @@ class _LoginPageState extends State<LoginPage>
                             ),
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 20, tablet: 24),
-        
+
                         // Divider with "OR"
                         Row(
                           children: [
@@ -418,9 +449,9 @@ class _LoginPageState extends State<LoginPage>
                             Expanded(child: Divider(color: Colors.grey.shade300)),
                           ],
                         ),
-        
+
                         ResponsiveSpacing(mobile: 20, tablet: 24),
-        
+
                         // Google login button
                         Container(
                           width: double.infinity,
@@ -460,9 +491,9 @@ class _LoginPageState extends State<LoginPage>
                             ),
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 32, tablet: 40),
-        
+
                         // Signup link
                         Wrap(
                           alignment: WrapAlignment.center,
@@ -489,7 +520,7 @@ class _LoginPageState extends State<LoginPage>
                             ),
                           ],
                         ),
-        
+
                         ResponsiveSpacing(mobile: 40, tablet: 48),
                       ],
                     ),

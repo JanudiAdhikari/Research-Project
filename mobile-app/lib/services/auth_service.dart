@@ -127,6 +127,17 @@ class AuthService {
     await storage.deleteAll();
   }
 
+  // FORGOT PASSWORD
+  Future<bool> sendPasswordResetEmail(String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      return true;
+    } catch (e) {
+      print("Password reset error: $e");
+      return false;
+    }
+  }
+
   // CURRENT FIREBASE USER
   User? get currentUser => _auth.currentUser;
 }

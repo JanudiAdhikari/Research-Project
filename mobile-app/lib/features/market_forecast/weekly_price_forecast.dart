@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'weekly_prediction.dart';
 
 class WeeklyPriceForecast extends StatefulWidget {
   const WeeklyPriceForecast({Key? key}) : super(key: key);
@@ -259,6 +260,17 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast> {
                     weeks,
                     (val) => setState(() => selectedWeek = val),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(
+                      "Weather Details",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -271,7 +283,12 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast> {
                         ),
                       ),
                       onPressed: () {
-                        // Fetch price prediction
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const WeeklyPrediction(),
+                          ),
+                        );
                       },
                       child: const Text(
                         "Predict the Price",

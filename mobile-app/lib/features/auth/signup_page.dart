@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../utils/responsive.dart';
 import 'login_page.dart';
 
 class SignupPage extends StatefulWidget {
@@ -160,6 +161,7 @@ class _SignupPageState extends State<SignupPage>
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
     final primary = const Color(0xFF2E7D32);
     final lightGreen = const Color(0xFFE8F5E9);
 
@@ -168,9 +170,13 @@ class _SignupPageState extends State<SignupPage>
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: BoxConstraints(
+              maxWidth: responsive.maxContentWidth,
+            ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(
+                horizontal: responsive.pagePadding,
+              ),
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: SlideTransition(
@@ -178,7 +184,7 @@ class _SignupPageState extends State<SignupPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 40),
+                      ResponsiveSpacing(mobile: 40, tablet: 48),
 
                       // Back button
                       Align(
@@ -188,41 +194,44 @@ class _SignupPageState extends State<SignupPage>
                           icon: Icon(
                             Icons.arrow_back_ios_rounded,
                             color: primary,
+                            size: responsive.smallIconSize,
                           ),
                           style: IconButton.styleFrom(
                             backgroundColor: lightGreen,
-                            padding: const EdgeInsets.all(12),
+                            padding: EdgeInsets.all(responsive.smallSpacing),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      ResponsiveSpacing(mobile: 10, tablet: 16),
 
                       // Logo with background
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(
+                          responsive.spacing(mobile: 16, tablet: 20),
+                        ),
                         decoration: BoxDecoration(
                           color: lightGreen,
                           shape: BoxShape.circle,
                         ),
                         child: Image.asset(
                           "assets/images/logos/logo.jpg",
-                          height: 70,
+                          height: responsive.value(mobile: 70, tablet: 90),
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                      ResponsiveSpacing(mobile: 24, tablet: 32),
 
                       // Title
-                      const Text(
+                      ResponsiveText(
                         "Create Your",
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w300,
-                          color: Colors.black87,
-                          letterSpacing: -0.5,
-                        ),
+                        mobileFontSize: 28,
+                        tabletFontSize: 32,
+                        desktopFontSize: 32,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.black87,
                       ),
+
                       const SizedBox(height: 4),
 
                       // Sign Up with gradient
@@ -230,21 +239,21 @@ class _SignupPageState extends State<SignupPage>
                         shaderCallback: (bounds) => LinearGradient(
                           colors: [primary, primary.withOpacity(0.7)],
                         ).createShader(bounds),
-                        child: const Text(
+                        child: ResponsiveText(
                           "Account",
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                          ),
+                          mobileFontSize: 32,
+                          tabletFontSize: 38,
+                          desktopFontSize: 38,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
                         ),
                       ),
 
-                      const SizedBox(height: 32),
+                      ResponsiveSpacing(mobile: 32, tablet: 40),
 
                       // First name
                       _buildInputField(
+                        responsive: responsive,
                         label: "First Name",
                         hint: "Enter your first name",
                         controller: _firstNameController,
@@ -252,10 +261,11 @@ class _SignupPageState extends State<SignupPage>
                         primary: primary,
                       ),
 
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(mobile: 16, tablet: 20),
 
                       // Last name
                       _buildInputField(
+                        responsive: responsive,
                         label: "Last Name",
                         hint: "Enter your last name",
                         controller: _lastNameController,
@@ -263,10 +273,11 @@ class _SignupPageState extends State<SignupPage>
                         primary: primary,
                       ),
 
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(mobile: 16, tablet: 20),
 
                       // Email
                       _buildInputField(
+                        responsive: responsive,
                         label: "Email Address",
                         hint: "youremail@gmail.com",
                         controller: _emailController,
@@ -275,10 +286,11 @@ class _SignupPageState extends State<SignupPage>
                         primary: primary,
                       ),
 
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(mobile: 16, tablet: 20),
 
                       // Contact
                       _buildInputField(
+                        responsive: responsive,
                         label: "Contact Number",
                         hint: "0712345678",
                         controller: _contactController,
@@ -287,10 +299,11 @@ class _SignupPageState extends State<SignupPage>
                         primary: primary,
                       ),
 
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(mobile: 16, tablet: 20),
 
                       // Password
                       _buildInputField(
+                        responsive: responsive,
                         label: "Password",
                         hint: "Create a strong password",
                         controller: _passwordController,
@@ -303,6 +316,7 @@ class _SignupPageState extends State<SignupPage>
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                             color: Colors.grey[600],
+                            size: responsive.mediumIconSize,
                           ),
                           onPressed: () {
                             setState(() {
@@ -312,10 +326,11 @@ class _SignupPageState extends State<SignupPage>
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      ResponsiveSpacing(mobile: 16, tablet: 20),
 
                       // Re-enter password
                       _buildInputField(
+                        responsive: responsive,
                         label: "Confirm Password",
                         hint: "Re-enter your password",
                         controller: _rePasswordController,
@@ -328,6 +343,7 @@ class _SignupPageState extends State<SignupPage>
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                             color: Colors.grey[600],
+                            size: responsive.mediumIconSize,
                           ),
                           onPressed: () {
                             setState(() {
@@ -337,12 +353,12 @@ class _SignupPageState extends State<SignupPage>
                         ),
                       ),
 
-                      const SizedBox(height: 32),
+                      ResponsiveSpacing(mobile: 32, tablet: 40),
 
                       // Sign Up Button with shadow
                       Container(
                         width: double.infinity,
-                        height: 56,
+                        height: responsive.buttonHeight,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: [
@@ -366,34 +382,37 @@ class _SignupPageState extends State<SignupPage>
                           ),
                           child: _isLoading
                               ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Create Account",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 17,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    SizedBox(width: 8),
-                                    Icon(Icons.arrow_forward_rounded, size: 20),
-                                  ],
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                              : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Create Account",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: responsive.titleFontSize + 1,
+                                  letterSpacing: 0.5,
                                 ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: responsive.smallIconSize,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                      ResponsiveSpacing(mobile: 24, tablet: 28),
 
                       // Divider with "OR"
                       Row(
@@ -406,6 +425,7 @@ class _SignupPageState extends State<SignupPage>
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontWeight: FontWeight.w500,
+                                fontSize: responsive.bodyFontSize,
                               ),
                             ),
                           ),
@@ -413,12 +433,12 @@ class _SignupPageState extends State<SignupPage>
                         ],
                       ),
 
-                      const SizedBox(height: 24),
+                      ResponsiveSpacing(mobile: 24, tablet: 28),
 
                       // Google sign up button
                       Container(
                         width: double.infinity,
-                        height: 56,
+                        height: responsive.buttonHeight,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
@@ -438,13 +458,13 @@ class _SignupPageState extends State<SignupPage>
                               children: [
                                 Image.asset(
                                   "assets/images/icons/google.png",
-                                  height: 24,
+                                  height: responsive.mediumIconSize,
                                 ),
                                 const SizedBox(width: 12),
-                                const Text(
+                                Text(
                                   "Sign up with Google",
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: responsive.titleFontSize,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.black87,
                                   ),
@@ -455,17 +475,18 @@ class _SignupPageState extends State<SignupPage>
                         ),
                       ),
 
-                      const SizedBox(height: 24),
+                      ResponsiveSpacing(mobile: 24, tablet: 32),
 
                       // Login link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
                             "Already have an account?",
                             style: TextStyle(
                               color: Colors.grey[700],
-                              fontSize: 15,
+                              fontSize: responsive.bodyFontSize + 1,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -476,14 +497,14 @@ class _SignupPageState extends State<SignupPage>
                               style: TextStyle(
                                 color: primary,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 15,
+                                fontSize: responsive.bodyFontSize + 1,
                               ),
                             ),
                           ),
                         ],
                       ),
 
-                      const SizedBox(height: 40),
+                      ResponsiveSpacing(mobile: 40, tablet: 48),
                     ],
                   ),
                 ),
@@ -496,6 +517,7 @@ class _SignupPageState extends State<SignupPage>
   }
 
   Widget _buildInputField({
+    required Responsive responsive,
     required String label,
     required String hint,
     required TextEditingController controller,
@@ -512,7 +534,7 @@ class _SignupPageState extends State<SignupPage>
           label,
           style: TextStyle(
             color: Colors.grey[700],
-            fontSize: 14,
+            fontSize: responsive.bodyFontSize,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -521,16 +543,26 @@ class _SignupPageState extends State<SignupPage>
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
+          style: TextStyle(
+            fontSize: responsive.bodyFontSize + 1,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400]),
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontSize: responsive.bodyFontSize + 1,
+            ),
             filled: true,
             fillColor: Colors.grey[50],
-            prefixIcon: Icon(icon, color: Colors.grey[600]),
+            prefixIcon: Icon(
+              icon,
+              color: Colors.grey[600],
+              size: responsive.mediumIconSize,
+            ),
             suffixIcon: suffixIcon,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 18,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: responsive.mediumSpacing,
+              vertical: responsive.value(mobile: 18, tablet: 20),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

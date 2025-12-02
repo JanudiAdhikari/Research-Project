@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_two/features/market_forecast/weekly_price_forecast.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -26,12 +27,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -278,7 +277,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                             ],
                           ),
                           onTap: () {
-                            // TODO: Navigate to market module
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WeeklyPriceForecast(),
+                              ),
+                            );
                           },
                         ),
                       ],
@@ -414,11 +418,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         color: Colors.white.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
-                        icon,
-                        size: 32,
-                        color: Colors.white,
-                      ),
+                      child: Icon(icon, size: 32, color: Colors.white),
                     ),
                     const Spacer(),
                     Text(
@@ -454,10 +454,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: iconColor.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -482,11 +479,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                 ),
               ],
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 24,
-            ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
           const SizedBox(height: 12),
           Text(

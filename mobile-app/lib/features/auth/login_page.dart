@@ -166,327 +166,333 @@ class _LoginPageState extends State<LoginPage>
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: responsive.maxContentWidth,
-            ),
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: responsive.pagePadding,
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: responsive.maxContentWidth,
               ),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ResponsiveSpacing(
-                        mobile: 40,
-                        tablet: 60,
-                        desktop: 60,
-                      ),
-
-                      // Logo with background
-                      Container(
-                        padding: EdgeInsets.all(
-                          responsive.spacing(mobile: 16, tablet: 20),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.pagePadding,
+                ),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ResponsiveSpacing(
+                          mobile: 40,
+                          tablet: 60,
+                          desktop: 60,
                         ),
-                        decoration: BoxDecoration(
-                          color: lightGreen,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Image.asset(
-                          "assets/images/logos/logo.jpg",
-                          height: responsive.value(mobile: 80, tablet: 100),
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 32, tablet: 40),
-
-                      // Welcome back text
-                      ResponsiveText(
-                        "Welcome Back",
-                        mobileFontSize: 28,
-                        tabletFontSize: 32,
-                        desktopFontSize: 32,
-                        fontWeight: FontWeight.w300,
-                        color: Colors.black87,
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      // Login title with gradient
-                      ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [primary, primary.withOpacity(0.7)],
-                        ).createShader(bounds),
-                        child: ResponsiveText(
-                          "Login",
-                          mobileFontSize: 32,
-                          tabletFontSize: 38,
-                          desktopFontSize: 38,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 40, tablet: 48),
-
-                      // Email field with icon
-                      _buildInputField(
-                        responsive: responsive,
-                        label: "Email Address",
-                        hint: "youremail@gmail.com",
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icons.email_outlined,
-                        primary: primary,
-                      ),
-
-                      ResponsiveSpacing(mobile: 20, tablet: 24),
-
-                      // Password field with icon
-                      _buildInputField(
-                        responsive: responsive,
-                        label: "Password",
-                        hint: "Enter your password",
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        prefixIcon: Icons.lock_outline,
-                        primary: primary,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: Colors.grey[600],
-                            size: responsive.mediumIconSize,
+        
+                        // Logo with background
+                        Container(
+                          padding: EdgeInsets.all(
+                            responsive.spacing(mobile: 16, tablet: 20),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
-                          },
+                          decoration: BoxDecoration(
+                            color: lightGreen,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Image.asset(
+                            "assets/images/logos/logo.jpg",
+                            height: responsive.value(mobile: 80, tablet: 100),
+                          ),
                         ),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Remember me and Forgot password
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Row(
-                              children: [
-                                Transform.scale(
-                                  scale: responsive.value(
-                                    mobile: 0.9,
-                                    tablet: 1.0,
-                                  ),
-                                  child: Checkbox(
-                                    value: _rememberMe,
-                                    activeColor: primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _rememberMe = value ?? false;
-                                      });
-                                      // TODO: save to SharedPreferences
-                                    },
-                                  ),
-                                ),
-                                Flexible(
-                                  child: Text(
-                                    "Remember me",
-                                    style: TextStyle(
-                                      fontSize: responsive.bodyFontSize,
-                                      color: Colors.grey[700],
-                                    ),
-                                  ),
-                                ),
-                              ],
+        
+                        ResponsiveSpacing(mobile: 32, tablet: 40),
+        
+                        // Welcome back text
+                        ResponsiveText(
+                          "Welcome Back",
+                          mobileFontSize: 28,
+                          tabletFontSize: 32,
+                          desktopFontSize: 32,
+                          fontWeight: FontWeight.w300,
+                          color: Colors.black87,
+                        ),
+        
+                        const SizedBox(height: 4),
+        
+                        // Login title with gradient
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [primary, primary.withOpacity(0.7)],
+                          ).createShader(bounds),
+                          child: ResponsiveText(
+                            "Login",
+                            mobileFontSize: 32,
+                            tabletFontSize: 38,
+                            desktopFontSize: 38,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+        
+                        ResponsiveSpacing(mobile: 40, tablet: 48),
+        
+                        // Email field with icon
+                        _buildInputField(
+                          responsive: responsive,
+                          label: "Email Address",
+                          hint: "youremail@gmail.com",
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          prefixIcon: Icons.email_outlined,
+                          primary: primary,
+                        ),
+        
+                        ResponsiveSpacing(mobile: 20, tablet: 24),
+        
+                        // Password field with icon
+                        _buildInputField(
+                          responsive: responsive,
+                          label: "Password",
+                          hint: "Enter your password",
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          prefixIcon: Icons.lock_outline,
+                          primary: primary,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                              color: Colors.grey[600],
+                              size: responsive.mediumIconSize,
                             ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ForgotPasswordPage(),
-                                ),
-                              );
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
                             },
-                            child: Text(
-                              "Forgot password?",
-                              style: TextStyle(
-                                fontSize: responsive.bodyFontSize,
-                                color: primary,
-                                fontWeight: FontWeight.w600,
+                          ),
+                        ),
+        
+                        const SizedBox(height: 12),
+        
+                        // Remember me and Forgot password
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Row(
+                                children: [
+                                  Transform.scale(
+                                    scale: responsive.value(
+                                      mobile: 0.9,
+                                      tablet: 1.0,
+                                    ),
+                                    child: Checkbox(
+                                      value: _rememberMe,
+                                      activeColor: primary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _rememberMe = value ?? false;
+                                        });
+                                        // TODO: save to SharedPreferences
+                                      },
+                                    ),
+                                  ),
+                                  Flexible(
+                                    child: Text(
+                                      "Remember me",
+                                      style: TextStyle(
+                                        fontSize: responsive.bodyFontSize,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-
-                      ResponsiveSpacing(mobile: 32, tablet: 40),
-
-                      // Login Button with shadow
-                      Container(
-                        width: double.infinity,
-                        height: responsive.buttonHeight,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primary.withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const ForgotPasswordPage(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                "Forgot password?",
+                                style: TextStyle(
+                                  fontSize: responsive.bodyFontSize,
+                                  color: primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _login,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                            disabledBackgroundColor: primary.withOpacity(0.6),
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                              : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Login",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: responsive.titleFontSize + 1,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                size: responsive.smallIconSize,
+        
+                        ResponsiveSpacing(mobile: 32, tablet: 40),
+        
+                        // Login Button with shadow
+                        Container(
+                          width: double.infinity,
+                          height: responsive.buttonHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primary.withOpacity(0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 20, tablet: 24),
-
-                      // Divider with "OR"
-                      Row(
-                        children: [
-                          Expanded(child: Divider(color: Colors.grey.shade300)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              "OR",
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                                fontSize: responsive.bodyFontSize,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
                               ),
+                              disabledBackgroundColor: primary.withOpacity(0.6),
                             ),
-                          ),
-                          Expanded(child: Divider(color: Colors.grey.shade300)),
-                        ],
-                      ),
-
-                      ResponsiveSpacing(mobile: 20, tablet: 24),
-
-                      // Google login button
-                      Container(
-                        width: double.infinity,
-                        height: responsive.buttonHeight,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: Colors.grey.shade300,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              // TODO: implement Google login
-                            },
-                            borderRadius: BorderRadius.circular(28),
-                            child: Row(
+                            child: _isLoading
+                                ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                                : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset(
-                                  "assets/images/icons/google.png",
-                                  height: responsive.mediumIconSize,
-                                ),
-                                const SizedBox(width: 12),
                                 Text(
-                                  "Continue with Google",
+                                  "Login",
                                   style: TextStyle(
-                                    fontSize: responsive.titleFontSize,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
+                                    fontSize: responsive.titleFontSize + 1,
+                                    letterSpacing: 0.5,
                                   ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: responsive.smallIconSize,
                                 ),
                               ],
                             ),
                           ),
                         ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 32, tablet: 40),
-
-                      // Signup link
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            "Don't have an account?",
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              fontSize: responsive.bodyFontSize + 1,
+        
+                        ResponsiveSpacing(mobile: 20, tablet: 24),
+        
+                        // Divider with "OR"
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: Colors.grey.shade300)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                "OR",
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: responsive.bodyFontSize,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: Colors.grey.shade300)),
+                          ],
+                        ),
+        
+                        ResponsiveSpacing(mobile: 20, tablet: 24),
+        
+                        // Google login button
+                        Container(
+                          width: double.infinity,
+                          height: responsive.buttonHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
                             ),
                           ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: _navigateToSignUp,
-                            child: Text(
-                              "Sign Up",
-                              style: TextStyle(
-                                color: primary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: responsive.bodyFontSize + 1,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                // TODO: implement Google login
+                              },
+                              borderRadius: BorderRadius.circular(28),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.asset(
+                                    "assets/images/icons/google.png",
+                                    height: responsive.mediumIconSize,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    "Continue with Google",
+                                    style: TextStyle(
+                                      fontSize: responsive.titleFontSize,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
-
-                      ResponsiveSpacing(mobile: 40, tablet: 48),
-                    ],
+                        ),
+        
+                        ResponsiveSpacing(mobile: 32, tablet: 40),
+        
+                        // Signup link
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account?",
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontSize: responsive.bodyFontSize + 1,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: _navigateToSignUp,
+                              child: Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  color: primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: responsive.bodyFontSize + 1,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+        
+                        ResponsiveSpacing(mobile: 40, tablet: 48),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 import 'forgot_password_confirmation_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -48,15 +49,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
   }
 
   void _sendResetEmail() async {
-    setState(() {
-      // TODO: add proper email validation logic
-      isEmailValid = _emailController.text.contains("@");
-    });
+    final email = _emailController.text.trim();
 
-    if (!isEmailValid || _emailController.text.isEmpty) {
+    if (email.isEmpty || !email.contains("@")) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Please enter a valid email address"),
+          content: const Text("Please enter a valid email"),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -70,17 +68,31 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       _isLoading = true;
     });
 
-    // TODO: Call backend or Firebase to send password reset link
-    await Future.delayed(const Duration(seconds: 2)); // Simulating API call
+    final success = await AuthService().sendPasswordResetEmail(email);
 
     setState(() {
       _isLoading = false;
     });
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ForgotPasswordConfirmationPage()),
-    );
+    if (success) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const ForgotPasswordConfirmationPage(),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Failed to send reset email. Try again."),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
   }
 
   @override

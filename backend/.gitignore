@@ -1,1 +1,30 @@
-node_modules
+# Ignore node_modules folder
+node_modules/
+
+# Ignore environment variables
+.env
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore npm debug logs
+npm-debug.log*
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore build or distribution folders
+dist/
+build/
+
+# Ignore coverage reports (if you're testing)
+coverage/
+
+# Ignore service account keys
+serviceAccountKey.json

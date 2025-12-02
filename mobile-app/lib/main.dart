@@ -33,10 +33,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Black Pepper',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        fontFamily: 'Poppins',
-      ),
+      theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Poppins'),
       // home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
       home: error != null ? ErrorScreen(error: error!) : const SplashScreen(),
       navigatorObservers: [FirebaseErrorObserver()],
@@ -79,11 +76,7 @@ class MainScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.green[50]!,
-              Colors.white,
-              Colors.green[50]!,
-            ],
+            colors: [Colors.green[50]!, Colors.white, Colors.green[50]!],
           ),
         ),
         child: SafeArea(
@@ -150,7 +143,10 @@ class MainScreen extends StatelessWidget {
                 flex: 1,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 30,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: const BorderRadius.only(
@@ -284,11 +280,7 @@ class ErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 80,
-              ),
+              const Icon(Icons.error_outline, color: Colors.red, size: 80),
               const SizedBox(height: 20),
               const Text(
                 'Initialization Error',
@@ -302,10 +294,7 @@ class ErrorScreen extends StatelessWidget {
               Text(
                 error,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const SizedBox(height: 30),
               ElevatedButton(

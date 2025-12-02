@@ -32,12 +32,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -81,9 +79,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
 
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const ForgotPasswordConfirmationPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const ForgotPasswordConfirmationPage()),
     );
   }
 
@@ -223,13 +219,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage>
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide:
-                                    BorderSide(color: primary, width: 2),
+                                borderSide: BorderSide(
+                                  color: primary,
+                                  width: 2,
+                                ),
                               ),
                               errorBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),

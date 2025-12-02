@@ -3,11 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
-import 'screens/login_page.dart';
+import 'features/auth/login_page.dart';
 import 'screens/signup_screen.dart';
-import 'screens/signup_page.dart';
+import 'features/auth/signup_page.dart';
 import 'screens/image_picker_screen.dart';
-import 'screens/splash_screen.dart';
+import 'features/auth/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'login_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/auth_service.dart';
+import '../../utils/responsive.dart';
+import '../auth/login_page.dart';
+import '../dashboard/admin_dashboard.dart';
+import '../dashboard/exporter_dashboard.dart';
+import '../dashboard/farmer_dashboard.dart';
 import '../onboarding/onboarding_screen_one.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -12,6 +18,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
+
   late AnimationController _scaleController;
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -22,11 +29,16 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _shimmerAnimation;
 
+  final AuthService _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
+    _initAnimations();
+    _startNavigation();
+  }
 
-    // Scale animation for logo
+  void _initAnimations() {
     _scaleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -36,7 +48,6 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.elasticOut,
     );
 
-    // Fade animation for container
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -46,7 +57,6 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.easeIn,
     );
 
-    // Slide animation for text
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
@@ -56,7 +66,6 @@ class _SplashScreenState extends State<SplashScreen>
           CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
         );
 
-    // Shimmer effect
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -65,37 +74,61 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
     );
 
-    _startAnimations();
-    _navigateToMain();
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _fadeController.forward();
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _scaleController.forward();
+        Future.delayed(const Duration(milliseconds: 300), () {
+          _slideController.forward();
+          _shimmerController.repeat(reverse: true);
+        });
+      });
+    });
   }
 
-  void _startAnimations() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    _fadeController.forward();
-    await Future.delayed(const Duration(milliseconds: 100));
-    _scaleController.forward();
-    await Future.delayed(const Duration(milliseconds: 300));
-    _slideController.forward();
-    _shimmerController.repeat(reverse: true);
-  }
+  void _startNavigation() {
+    Timer(const Duration(milliseconds: 3000), () async {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  void _navigateToMain() {
-    Timer(const Duration(milliseconds: 3200), () {
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const OnboardingScreenOne(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+      bool seenOnboarding = prefs.getBool("seenOnboarding") ?? false;
+
+      if (!seenOnboarding) {
+        _go(const OnboardingScreenOne());
+        return;
+      }
+
+      var userData = await _authService.getCurrentUser();
+
+      if (userData == null) {
+        _go(const LoginPage());
+        return;
+      }
+
+      String role = userData["role"];
+
+      if (role == "farmer") {
+        _go(const FarmerDashboard());
+      } else if (role == "exporter") {
+        _go(const ExporterDashboard());
+      } else if (role == "admin") {
+        _go(const AdminDashboard());
+      } else {
+        _go(const LoginPage());
       }
     });
+  }
+
+  void _go(Widget page) {
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, a, b) => page,
+        transitionsBuilder: (_, a, b, child) =>
+            FadeTransition(opacity: a, child: child),
+        transitionDuration: const Duration(milliseconds: 500),
+      ),
+    );
   }
 
   @override
@@ -109,6 +142,18 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final responsive = context.responsive;
+
+    // Responsive sizing using utility
+    final logoSize = responsive.value(mobile: 100, tablet: 120, desktop: 140);
+    final logoPadding = responsive.value(mobile: 16, tablet: 20, desktop: 24);
+    final titleFontSize = responsive.value(mobile: 36, tablet: 42, desktop: 48);
+    final subtitleFontSize = responsive.value(mobile: 14, tablet: 16, desktop: 18);
+    final verticalSpacing = responsive.value(mobile: 40, tablet: 50, desktop: 60);
+    final loadingSize = responsive.value(mobile: 40, tablet: 45, desktop: 50);
+    final particleCount = responsive.isDesktop ? 30 : 20;
+    final particleSize = responsive.value(mobile: 4, tablet: 5, desktop: 6);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -125,18 +170,18 @@ class _SplashScreenState extends State<SplashScreen>
         child: Stack(
           children: [
             // Animated background particles
-            ...List.generate(20, (index) {
+            ...List.generate(particleCount, (index) {
               return AnimatedBuilder(
                 animation: _shimmerController,
                 builder: (context, child) {
                   return Positioned(
-                    left: (index * 50.0) % MediaQuery.of(context).size.width,
-                    top: (index * 80.0) % MediaQuery.of(context).size.height,
+                    left: (index * 50.0) % responsive.width,
+                    top: (index * 80.0) % responsive.height,
                     child: Opacity(
                       opacity: 0.15 + (_shimmerAnimation.value.abs() * 0.15),
                       child: Container(
-                        width: 4,
-                        height: 4,
+                        width: particleSize,
+                        height: particleSize,
                         decoration: BoxDecoration(
                           color: const Color(0xFF4CAF50).withOpacity(0.4),
                           shape: BoxShape.circle,
@@ -149,111 +194,136 @@ class _SplashScreenState extends State<SplashScreen>
             }),
 
             // Main content
-            Center(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Logo with scale animation and glow
-                    ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF4CAF50).withOpacity(0.3),
-                              blurRadius: 50,
-                              spreadRadius: 20,
-                            ),
-                          ],
+            SafeArea(
+              child: Center(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: responsive.padding(
+                        mobile: EdgeInsets.symmetric(
+                          horizontal: responsive.width * 0.08,
+                          vertical: responsive.height * 0.05,
                         ),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFF4CAF50).withOpacity(0.3),
-                              width: 2,
-                            ),
-                          ),
-                          child: ClipOval(
-                            child: Image.asset(
-                              "assets/images/logos/logo.jpg",
-                              height: 100,
-                              width: 100,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                        tablet: EdgeInsets.symmetric(
+                          horizontal: responsive.width * 0.12,
+                          vertical: responsive.height * 0.06,
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    // App name with slide animation
-                    SlideTransition(
-                      position: _slideAnimation,
-                      child: FadeTransition(
-                        opacity: _slideController,
-                        child: Column(
-                          children: [
-                            ShaderMask(
-                              shaderCallback: (bounds) {
-                                return LinearGradient(
-                                  colors: [
-                                    const Color(0xFF4CAF50),
-                                    const Color(0xFF66BB6A),
-                                    const Color(0xFF4CAF50),
-                                  ],
-                                  stops: const [0.0, 0.5, 1.0],
-                                ).createShader(bounds);
-                              },
-                              child: const Text(
-                                "Black Pepper",
-                                style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 1.5,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Logo with scale animation and glow
+                          ScaleTransition(
+                            scale: _scaleAnimation,
+                            child: Container(
+                              padding: EdgeInsets.all(
+                                responsive.value(mobile: 20, tablet: 24, desktop: 28),
+                              ),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF4CAF50).withOpacity(0.3),
+                                    blurRadius: responsive.value(mobile: 50, tablet: 60, desktop: 70),
+                                    spreadRadius: responsive.value(mobile: 20, tablet: 25, desktop: 30),
+                                  ),
+                                ],
+                              ),
+                              child: Container(
+                                padding: EdgeInsets.all(logoPadding),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F5E9),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: const Color(0xFF4CAF50).withOpacity(0.3),
+                                    width: responsive.value(mobile: 2, tablet: 2.5, desktop: 3),
+                                  ),
+                                ),
+                                child: ClipOval(
+                                  child: Image.asset(
+                                    "assets/images/logos/logo.jpg",
+                                    height: logoSize,
+                                    width: logoSize,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Grow Together, Thrive Together",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: const Color(0xFF4CAF50).withOpacity(0.7),
-                                letterSpacing: 1.5,
-                                fontWeight: FontWeight.w400,
+                          ),
+
+                          SizedBox(height: verticalSpacing),
+
+                          // App name with slide animation
+                          SlideTransition(
+                            position: _slideAnimation,
+                            child: FadeTransition(
+                              opacity: _slideController,
+                              child: Column(
+                                children: [
+                                  ShaderMask(
+                                    shaderCallback: (bounds) {
+                                      return LinearGradient(
+                                        colors: [
+                                          const Color(0xFF4CAF50),
+                                          const Color(0xFF66BB6A),
+                                          const Color(0xFF4CAF50),
+                                        ],
+                                        stops: const [0.0, 0.5, 1.0],
+                                      ).createShader(bounds);
+                                    },
+                                    child: Text(
+                                      "Ceylon Pepper",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: titleFontSize,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        letterSpacing: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: responsive.smallSpacing),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: responsive.width * 0.05,
+                                    ),
+                                    child: Text(
+                                      "Grow Together, Thrive Together",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: subtitleFontSize,
+                                        color: const Color(0xFF4CAF50).withOpacity(0.7),
+                                        letterSpacing: 1.5,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 60),
-
-                    // Loading indicator
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 3,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            const Color(0xFF4CAF50).withOpacity(0.6),
                           ),
-                        ),
+
+                          SizedBox(height: responsive.value(mobile: 60, tablet: 70, desktop: 80)),
+
+                          // Loading indicator
+                          FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: SizedBox(
+                              width: loadingSize,
+                              height: loadingSize,
+                              child: CircularProgressIndicator(
+                                strokeWidth: responsive.value(mobile: 3, tablet: 3.5, desktop: 4),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  const Color(0xFF4CAF50).withOpacity(0.6),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

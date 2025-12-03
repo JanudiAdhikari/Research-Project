@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
-import 'package:flutter_app_two/features/market_forecast/weekly_price_forecast.dart';
 
-class FarmerDashboard extends StatefulWidget {
-  const FarmerDashboard({super.key});
+class ExporterDashboard extends StatefulWidget {
+  const ExporterDashboard({super.key});
 
   @override
-  State<FarmerDashboard> createState() => _FarmerDashboardState();
+  State<ExporterDashboard> createState() => _ExporterDashboardState();
 }
 
-class _FarmerDashboardState extends State<FarmerDashboard>
+class _ExporterDashboardState extends State<ExporterDashboard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -28,10 +27,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-        );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
 
     _animationController.forward();
   }
@@ -57,7 +58,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Enhanced Header
+                // Header
                 Container(
                   padding: responsive.padding(
                     mobile: const EdgeInsets.fromLTRB(24, 20, 24, 30),
@@ -89,14 +90,16 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Top Row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          // Welcome text
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Hello, Farmer 👋",
+                                "Hello, Exporter 👋",
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
                                   fontSize: responsive.bodyFontSize,
@@ -119,6 +122,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                               ),
                             ],
                           ),
+
+                          // Avatar
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -139,19 +144,22 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                               ),
                               backgroundColor: Colors.white,
                               child: Icon(
-                                Icons.person_rounded,
+                                Icons.account_circle,
                                 color: primary,
                                 size: responsive.value(
-                                  mobile: 26,
-                                  tablet: 28,
-                                  desktop: 32,
+                                  mobile: 32,
+                                  tablet: 36,
+                                  desktop: 42,
                                 ),
                               ),
                             ),
                           ),
                         ],
                       ),
+
                       ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
+
+                      // Location and temperature
                       Container(
                         padding: responsive.padding(
                           mobile: const EdgeInsets.symmetric(
@@ -180,7 +188,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         child: Row(
                           children: [
                             Icon(
-                              Icons.location_on_rounded,
+                              Icons.flag_rounded,
                               color: Colors.white.withOpacity(0.9),
                               size: responsive.smallIconSize,
                             ),
@@ -190,7 +198,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                               desktop: 12,
                             ),
                             Text(
-                              "Colombo",
+                              "Sri Lanka",
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: responsive.bodyFontSize,
@@ -225,7 +233,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
                 ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
-                // Section Title
+                // Section Header: Quick Actions
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: responsive.pagePadding,
@@ -259,7 +267,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
                 ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
-                // Enhanced Quick Action Grid
+                // Quick Action Grid
                 SlideTransition(
                   position: _slideAnimation,
                   child: Padding(
@@ -274,7 +282,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         mainAxisSpacing: 16,
                         childAspectRatio: 0.95,
                         physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(context, responsive, primary),
+                        children: _buildFeatureCards(responsive),
                       ),
                       tablet: GridView.count(
                         crossAxisCount: 2,
@@ -283,7 +291,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         mainAxisSpacing: 20,
                         childAspectRatio: 1.0,
                         physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(context, responsive, primary),
+                        children: _buildFeatureCards(responsive),
                       ),
                       desktop: GridView.count(
                         crossAxisCount: 4,
@@ -292,86 +300,15 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         mainAxisSpacing: 24,
                         childAspectRatio: 0.95,
                         physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(context, responsive, primary),
+                        children: _buildFeatureCards(responsive),
                       ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.95,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        _featureCard(
-                          context,
-                          title: "Predict\nHarvest",
-                          icon: Icons.analytics_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.green.shade400,
-                              Colors.green.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to harvest prediction
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Disease\nDetection",
-                          icon: Icons.biotech_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.orange.shade400,
-                              Colors.orange.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to disease detection
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Quality\nGrading",
-                          icon: Icons.verified_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.blue.shade400,
-                              Colors.blue.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to quality grading
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Market\nPrices",
-                          icon: Icons.trending_up_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.purple.shade400,
-                              Colors.purple.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WeeklyPriceForecast(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
                     ),
                   ),
                 ),
 
                 ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
-                // Tips Section Header
+                // Section Header: Tips
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: responsive.pagePadding,
@@ -401,8 +338,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       ),
                       const Spacer(),
                       Icon(
-                        Icons.lightbulb_rounded,
-                        color: Colors.amber[700],
+                        Icons.lightbulb,
+                        color: Colors.amber,
                         size: responsive.mediumIconSize,
                       ),
                     ],
@@ -411,7 +348,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
                 ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
-                // Enhanced Tips Cards
+                // Tips List
                 SizedBox(
                   height: responsive.value(mobile: 140, tablet: 160, desktop: 180),
                   child: ListView(
@@ -421,31 +358,31 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                     ),
                     children: [
                       _tipCard(
-                        "Improve drying process",
-                        Icons.wb_sunny_rounded,
-                        Colors.orange.shade50,
-                        Colors.orange.shade700,
+                        "Maintain moisture below 12 percent",
+                        Icons.opacity_rounded,
+                        Colors.blue.shade50,
+                        Colors.blue.shade700,
                         responsive,
                       ),
                       _tipCard(
-                        "Prevent fungal infection",
-                        Icons.shield_rounded,
-                        Colors.red.shade50,
-                        Colors.red.shade700,
-                        responsive,
-                      ),
-                      _tipCard(
-                        "Enhance soil nutrients",
-                        Icons.eco_rounded,
+                        "Use food grade packaging",
+                        Icons.inventory_rounded,
                         Colors.green.shade50,
                         Colors.green.shade700,
                         responsive,
                       ),
                       _tipCard(
-                        "Optimize irrigation",
-                        Icons.water_drop_rounded,
-                        Colors.blue.shade50,
-                        Colors.blue.shade700,
+                        "Ensure export documentation accuracy",
+                        Icons.assignment_rounded,
+                        Colors.orange.shade50,
+                        Colors.orange.shade700,
+                        responsive,
+                      ),
+                      _tipCard(
+                        "Check global pepper demand weekly",
+                        Icons.public_rounded,
+                        Colors.purple.shade50,
+                        Colors.purple.shade700,
                         responsive,
                       ),
                     ],
@@ -461,77 +398,48 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     );
   }
 
-  List<Widget> _buildFeatureCards(
-      BuildContext context,
-      Responsive responsive,
-      Color primary,
-      ) {
+  List<Widget> _buildFeatureCards(Responsive responsive) {
     return [
       _featureCard(
-        context,
-        responsive,
-        title: "Predict\nHarvest",
-        icon: Icons.analytics_rounded,
-        gradient: LinearGradient(
-          colors: [
-            Colors.green.shade400,
-            Colors.green.shade600,
-          ],
-        ),
-        onTap: () {
-          // TODO: Navigate to harvest prediction
-        },
-      ),
-      _featureCard(
-        context,
-        responsive,
-        title: "Disease\nDetection",
-        icon: Icons.biotech_rounded,
-        gradient: LinearGradient(
-          colors: [
-            Colors.orange.shade400,
-            Colors.orange.shade600,
-          ],
-        ),
-        onTap: () {
-          // TODO: Navigate to disease detection
-        },
-      ),
-      _featureCard(
-        context,
-        responsive,
-        title: "Quality\nGrading",
-        icon: Icons.verified_rounded,
-        gradient: LinearGradient(
-          colors: [
-            Colors.blue.shade400,
-            Colors.blue.shade600,
-          ],
-        ),
-        onTap: () {
-          // TODO: Navigate to quality grading
-        },
-      ),
-      _featureCard(
-        context,
         responsive,
         title: "Market\nPrices",
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.purple.shade400,
-            Colors.purple.shade600,
-          ],
+          colors: [Colors.purple.shade400, Colors.purple.shade600],
         ),
-        onTap: () {
-          // TODO: Navigate to market module
-        },
+        onTap: () {},
+      ),
+      _featureCard(
+        responsive,
+        title: "Quality\nRequests",
+        icon: Icons.verified_user_rounded,
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade400, Colors.blue.shade600],
+        ),
+        onTap: () {},
+      ),
+      _featureCard(
+        responsive,
+        title: "Export\nBatches",
+        icon: Icons.inventory_2_rounded,
+        gradient: LinearGradient(
+          colors: [Colors.teal.shade400, Colors.teal.shade600],
+        ),
+        onTap: () {},
+      ),
+      _featureCard(
+        responsive,
+        title: "Traceability",
+        icon: Icons.qr_code_rounded,
+        gradient: LinearGradient(
+          colors: [Colors.orange.shade400, Colors.orange.shade600],
+        ),
+        onTap: () {},
       ),
     ];
   }
 
   Widget _featureCard(
-      BuildContext context,
       Responsive responsive, {
         required String title,
         required IconData icon,
@@ -561,7 +469,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           ),
           child: Stack(
             children: [
-              // Background pattern
               Positioned(
                 right: -10,
                 bottom: -10,
@@ -571,7 +478,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   color: Colors.white.withOpacity(0.15),
                 ),
               ),
-              // Content
               Padding(
                 padding: responsive.padding(
                   mobile: const EdgeInsets.all(18),
@@ -596,7 +502,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         size: responsive.value(mobile: 28, tablet: 32, desktop: 36),
                         color: Colors.white,
                       ),
-                      child: Icon(icon, size: 32, color: Colors.white),
                     ),
                     const Spacer(),
                     Text(
@@ -650,8 +555,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           color: iconColor.withOpacity(0.2),
           width: 1,
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -685,7 +588,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
               color: iconColor,
               size: responsive.mediumIconSize,
             ),
-            child: Icon(icon, color: iconColor, size: 24),
           ),
           ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
           Text(

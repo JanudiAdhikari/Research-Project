@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
+import 'package:flutter_app_two/features/market_forecast/weekly_price_forecast.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -27,12 +28,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -295,6 +294,77 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         physics: const NeverScrollableScrollPhysics(),
                         children: _buildFeatureCards(context, responsive, primary),
                       ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      childAspectRatio: 0.95,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        _featureCard(
+                          context,
+                          title: "Predict\nHarvest",
+                          icon: Icons.analytics_rounded,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.green.shade400,
+                              Colors.green.shade600,
+                            ],
+                          ),
+                          onTap: () {
+                            // TODO: Navigate to harvest prediction
+                          },
+                        ),
+                        _featureCard(
+                          context,
+                          title: "Disease\nDetection",
+                          icon: Icons.biotech_rounded,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.orange.shade400,
+                              Colors.orange.shade600,
+                            ],
+                          ),
+                          onTap: () {
+                            // TODO: Navigate to disease detection
+                          },
+                        ),
+                        _featureCard(
+                          context,
+                          title: "Quality\nGrading",
+                          icon: Icons.verified_rounded,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.blue.shade400,
+                              Colors.blue.shade600,
+                            ],
+                          ),
+                          onTap: () {
+                            // TODO: Navigate to quality grading
+                          },
+                        ),
+                        _featureCard(
+                          context,
+                          title: "Market\nPrices",
+                          icon: Icons.trending_up_rounded,
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.purple.shade400,
+                              Colors.purple.shade600,
+                            ],
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WeeklyPriceForecast(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -526,6 +596,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         size: responsive.value(mobile: 28, tablet: 32, desktop: 36),
                         color: Colors.white,
                       ),
+                      child: Icon(icon, size: 32, color: Colors.white),
                     ),
                     const Spacer(),
                     Text(
@@ -579,6 +650,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           color: iconColor.withOpacity(0.2),
           width: 1,
         ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -612,6 +685,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
               color: iconColor,
               size: responsive.mediumIconSize,
             ),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
           ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
           Text(

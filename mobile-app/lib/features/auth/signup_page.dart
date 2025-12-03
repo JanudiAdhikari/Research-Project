@@ -454,8 +454,24 @@ class _SignupPageState extends State<SignupPage>
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: () {
-                                // TODO: implement Google sign up
+                              onTap: () async {
+                                final user = await _authService.signInWithGoogle();
+
+                                if (user == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Google signup failed")),
+                                  );
+                                  return;
+                                }
+
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginPage(
+                                      successMessage: "Signup successful! Continue with Google",
+                                    ),
+                                  ),
+                                );
                               },
                               borderRadius: BorderRadius.circular(28),
                               child: Row(

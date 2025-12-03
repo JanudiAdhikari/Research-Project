@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api.dart';
@@ -135,6 +136,77 @@ class AuthService {
     } catch (e) {
       print("Password reset error: $e");
       return false;
+    }
+  }
+
+  // GOOGLE LOGIN
+  Future<Map<String, dynamic>?> signInWithGoogle() async {
+    try {
+      final googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+      );
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return null;
+
+      final GoogleSignInAuthentication googleAuth =
+      await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+        accessToken: googleAuth.accessToken,
+      );
+
+      final UserCredential result =
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      final user = result.user;
+      if (user == null) return null;
+
+      final token = await user.getIdToken();
+
+      // check if user exists in backend
+      final response = await http.get(
+        Uri.parse("${ApiConfig.baseUrl}/api/users/me"),
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await storage.write(key: "token", value: token);
+        await storage.write(key: "uid", value: user.uid);
+        await storage.write(key: "role", value: data["role"]);
+        return data;
+      }
+
+      // if new Google user, register
+      final regResponse = await http.post(
+        Uri.parse("${ApiConfig.baseUrl}/api/users/register"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode({
+          "firebaseUid": user.uid,
+          "email": user.email,
+          "firstName": user.displayName?.split(" ").first,
+          "lastName": user.displayName?.split(" ").last,
+          "contact": "",
+        }),
+      );
+
+      if (regResponse.statusCode == 200 || regResponse.statusCode == 201) {
+        final data = jsonDecode(regResponse.body);
+        await storage.write(key: "token", value: token);
+        await storage.write(key: "uid", value: user.uid);
+        await storage.write(key: "role", value: data["role"]);
+        return data;
+      }
+
+      return null;
+    } catch (e) {
+      print("Google sign in error: $e");
+      return null;
     }
   }
 

@@ -52,4 +52,6 @@ dependencies {
 
     // Google Play Services
     implementation("com.google.android.gms:play-services-base:18.2.0")
+
+    implementation("androidx.browser:browser:1.5.0")
 }

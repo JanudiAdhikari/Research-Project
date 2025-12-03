@@ -466,8 +466,34 @@ class _LoginPageState extends State<LoginPage>
                           child: Material(
                             color: Colors.transparent,
                             child: InkWell(
-                              onTap: () {
-                                // TODO: implement Google login
+                              onTap: () async {
+                                final user = await _authService.signInWithGoogle();
+
+                                if (user == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Google login failed")),
+                                  );
+                                  return;
+                                }
+
+                                final role = user["role"];
+
+                                if (role == "farmer") {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const FarmerDashboard()),
+                                  );
+                                } else if (role == "exporter") {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const ExporterDashboard()),
+                                  );
+                                } else if (role == "admin") {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                                  );
+                                }
                               },
                               borderRadius: BorderRadius.circular(28),
                               child: Row(

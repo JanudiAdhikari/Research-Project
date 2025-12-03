@@ -1,6 +1,6 @@
+import 'package:CeylonPepper/features/market_forecast/weekly_price_forecast.dart';
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
-import 'package:flutter_app_two/features/market_forecast/weekly_price_forecast.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -103,7 +103,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
-                              ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
+                              ResponsiveSpacing(
+                                mobile: 4,
+                                tablet: 6,
+                                desktop: 8,
+                              ),
                               Text(
                                 "Welcome Back",
                                 style: TextStyle(
@@ -170,7 +174,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(
-                            responsive.value(mobile: 16, tablet: 18, desktop: 20),
+                            responsive.value(
+                              mobile: 16,
+                              tablet: 18,
+                              desktop: 20,
+                            ),
                           ),
                           border: Border.all(
                             color: Colors.white.withOpacity(0.2),
@@ -233,8 +241,16 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   child: Row(
                     children: [
                       Container(
-                        width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
-                        height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+                        width: responsive.value(
+                          mobile: 4,
+                          tablet: 5,
+                          desktop: 6,
+                        ),
+                        height: responsive.value(
+                          mobile: 22,
+                          tablet: 24,
+                          desktop: 26,
+                        ),
                         decoration: BoxDecoration(
                           color: primary,
                           borderRadius: BorderRadius.circular(2),
@@ -274,7 +290,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         mainAxisSpacing: 16,
                         childAspectRatio: 0.95,
                         physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(context, responsive, primary),
+                        children: _buildFeatureCards(
+                          context,
+                          responsive,
+                          primary,
+                        ),
                       ),
                       tablet: GridView.count(
                         crossAxisCount: 2,
@@ -283,7 +303,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         mainAxisSpacing: 20,
                         childAspectRatio: 1.0,
                         physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(context, responsive, primary),
+                        children: _buildFeatureCards(
+                          context,
+                          responsive,
+                          primary,
+                        ),
                       ),
                       desktop: GridView.count(
                         crossAxisCount: 4,
@@ -292,86 +316,21 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         mainAxisSpacing: 24,
                         childAspectRatio: 0.95,
                         physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(context, responsive, primary),
+                        children: _buildFeatureCards(
+                          context,
+                          responsive,
+                          primary,
+                        ),
                       ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 0.95,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        _featureCard(
-                          context,
-                          title: "Predict\nHarvest",
-                          icon: Icons.analytics_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.green.shade400,
-                              Colors.green.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to harvest prediction
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Disease\nDetection",
-                          icon: Icons.biotech_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.orange.shade400,
-                              Colors.orange.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to disease detection
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Quality\nGrading",
-                          icon: Icons.verified_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.blue.shade400,
-                              Colors.blue.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            // TODO: Navigate to quality grading
-                          },
-                        ),
-                        _featureCard(
-                          context,
-                          title: "Market\nPrices",
-                          icon: Icons.trending_up_rounded,
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.purple.shade400,
-                              Colors.purple.shade600,
-                            ],
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WeeklyPriceForecast(),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
                     ),
                   ),
                 ),
 
-                ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-
-                // Tips Section Header
+                ResponsiveSpacing(
+                  mobile: 32,
+                  tablet: 40,
+                  desktop: 48,
+                ), // Tips Section Header
                 Padding(
                   padding: EdgeInsets.symmetric(
                     horizontal: responsive.pagePadding,
@@ -379,8 +338,16 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   child: Row(
                     children: [
                       Container(
-                        width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
-                        height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+                        width: responsive.value(
+                          mobile: 4,
+                          tablet: 5,
+                          desktop: 6,
+                        ),
+                        height: responsive.value(
+                          mobile: 22,
+                          tablet: 24,
+                          desktop: 26,
+                        ),
                         decoration: BoxDecoration(
                           color: primary,
                           borderRadius: BorderRadius.circular(2),
@@ -413,7 +380,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
                 // Enhanced Tips Cards
                 SizedBox(
-                  height: responsive.value(mobile: 140, tablet: 160, desktop: 180),
+                  height: responsive.value(
+                    mobile: 140,
+                    tablet: 160,
+                    desktop: 180,
+                  ),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(
@@ -462,10 +433,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   List<Widget> _buildFeatureCards(
-      BuildContext context,
-      Responsive responsive,
-      Color primary,
-      ) {
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
     return [
       _featureCard(
         context,
@@ -473,10 +444,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         title: "Predict\nHarvest",
         icon: Icons.analytics_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.green.shade400,
-            Colors.green.shade600,
-          ],
+          colors: [Colors.green.shade400, Colors.green.shade600],
         ),
         onTap: () {
           // TODO: Navigate to harvest prediction
@@ -488,10 +456,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         title: "Disease\nDetection",
         icon: Icons.biotech_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.orange.shade400,
-            Colors.orange.shade600,
-          ],
+          colors: [Colors.orange.shade400, Colors.orange.shade600],
         ),
         onTap: () {
           // TODO: Navigate to disease detection
@@ -503,10 +468,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         title: "Quality\nGrading",
         icon: Icons.verified_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.blue.shade400,
-            Colors.blue.shade600,
-          ],
+          colors: [Colors.blue.shade400, Colors.blue.shade600],
         ),
         onTap: () {
           // TODO: Navigate to quality grading
@@ -518,26 +480,26 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         title: "Market\nPrices",
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.purple.shade400,
-            Colors.purple.shade600,
-          ],
+          colors: [Colors.purple.shade400, Colors.purple.shade600],
         ),
         onTap: () {
-          // TODO: Navigate to market module
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => WeeklyPriceForecast()),
+          );
         },
       ),
     ];
   }
 
   Widget _featureCard(
-      BuildContext context,
-      Responsive responsive, {
-        required String title,
-        required IconData icon,
-        required Gradient gradient,
-        required Function onTap,
-      }) {
+    BuildContext context,
+    Responsive responsive, {
+    required String title,
+    required IconData icon,
+    required Gradient gradient,
+    required Function onTap,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -593,10 +555,13 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       ),
                       child: Icon(
                         icon,
-                        size: responsive.value(mobile: 28, tablet: 32, desktop: 36),
+                        size: responsive.value(
+                          mobile: 28,
+                          tablet: 32,
+                          desktop: 36,
+                        ),
                         color: Colors.white,
                       ),
-                      child: Icon(icon, size: 32, color: Colors.white),
                     ),
                     const Spacer(),
                     Text(
@@ -625,12 +590,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _tipCard(
-      String text,
-      IconData icon,
-      Color bgColor,
-      Color iconColor,
-      Responsive responsive,
-      ) {
+    String text,
+    IconData icon,
+    Color bgColor,
+    Color iconColor,
+    Responsive responsive,
+  ) {
     return Container(
       margin: EdgeInsets.only(
         right: responsive.value(mobile: 16, tablet: 18, desktop: 20),
@@ -646,11 +611,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 20, tablet: 22, desktop: 24),
         ),
-        border: Border.all(
-          color: iconColor.withOpacity(0.2),
-          width: 1,
-        ),
-        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
@@ -685,7 +645,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
               color: iconColor,
               size: responsive.mediumIconSize,
             ),
-            child: Icon(icon, color: iconColor, size: 24),
           ),
           ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
           Text(

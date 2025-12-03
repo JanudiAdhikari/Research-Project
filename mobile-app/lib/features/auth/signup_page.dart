@@ -212,16 +212,29 @@ class _SignupPageState extends State<SignupPage>
         
                         // Logo with background
                         Container(
-                          padding: EdgeInsets.all(
-                            responsive.spacing(mobile: 16, tablet: 20),
-                          ),
+                          padding: EdgeInsets.all(responsive.spacing(mobile: 16, tablet: 20)),
                           decoration: BoxDecoration(
-                            color: lightGreen,
                             shape: BoxShape.circle,
+                            color: lightGreen,
+                            border: Border.all(
+                              color: primary.withOpacity(0.3),
+                              width: responsive.value(mobile: 2, tablet: 2.5),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primary.withOpacity(0.25),
+                                blurRadius: 30,
+                                spreadRadius: 10,
+                              ),
+                            ],
                           ),
-                          child: Image.asset(
-                            "assets/images/logos/logo.jpg",
-                            height: responsive.value(mobile: 70, tablet: 90),
+                          child: ClipOval(
+                            child: Image.asset(
+                              "assets/images/logos/logo.jpg",
+                              height: responsive.value(mobile: 80, tablet: 100),
+                              width: responsive.value(mobile: 80, tablet: 100),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
         

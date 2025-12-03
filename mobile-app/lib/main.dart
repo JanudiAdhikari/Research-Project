@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Black Pepper',
+      title: 'CeylonPepper',
       theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Poppins'),
       // home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
       home: error != null ? ErrorScreen(error: error!) : const SplashScreen(),
@@ -115,7 +115,7 @@ class MainScreen extends StatelessWidget {
                       const SizedBox(height: 30),
                       // App Title
                       const Text(
-                        'Black Pepper',
+                        'CeylonPepper',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,

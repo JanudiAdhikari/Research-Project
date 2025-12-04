@@ -230,7 +230,7 @@ class _SignupPageState extends State<SignupPage>
                           ),
                           child: ClipOval(
                             child: Image.asset(
-                              "assets/images/logos/logo.jpg",
+                              "assets/images/logos/logo.png",
                               height: responsive.value(mobile: 80, tablet: 100),
                               width: responsive.value(mobile: 80, tablet: 100),
                               fit: BoxFit.cover,

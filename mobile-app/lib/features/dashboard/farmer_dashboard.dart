@@ -1,6 +1,8 @@
 import 'package:CeylonPepper/features/market_forecast/weekly_price_forecast.dart';
 import 'package:flutter/material.dart';
+import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
+import '../auth/login_page.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -14,6 +16,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -123,19 +127,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                               ),
                             ],
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: CircleAvatar(
+                          PopupMenuButton<String>(
+                            icon: CircleAvatar(
                               radius: responsive.value(
                                 mobile: 26,
                                 tablet: 28,
@@ -152,6 +145,31 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                                 ),
                               ),
                             ),
+                            onSelected: (value) async {
+                              if (value == 'logout') {
+                                await _authService.logout();
+
+                                if (!mounted) return;
+
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                                      (route) => false,
+                                );
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'logout',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.logout, color: Colors.red),
+                                    const SizedBox(width: 10),
+                                    const Text("Logout"),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

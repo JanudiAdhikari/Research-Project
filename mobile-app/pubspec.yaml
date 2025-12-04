@@ -74,6 +74,7 @@ flutter:
     - assets/images/onboarding/onboard2.png
     - assets/images/onboarding/onboard3.png
     - assets/images/onboarding/onboard4.png
+    - assets/images/market_forecast/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

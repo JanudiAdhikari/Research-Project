@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
+import '../../widgets/navigation_wrapper.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -48,9 +49,16 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
   @override
   Widget build(BuildContext context) {
+    return NavigationWrapper(
+      showBottomNavigation: true,
+      initialIndex: 0, // Home tab is active
+      child: _buildDashboardContent(),
+    );
+  }
+
+  Widget _buildDashboardContent() {
     final responsive = context.responsive;
     final primary = const Color(0xFF2E7D32);
-    final lightGreen = const Color(0xFFE8F5E9);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -153,8 +161,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
                                 Navigator.pushAndRemoveUntil(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                                      (route) => false,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginPage(),
+                                  ),
+                                  (route) => false,
                                 );
                               }
                             },
@@ -450,6 +460,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     );
   }
 
+  // ... Keep all your existing methods (_buildFeatureCards, _featureCard, _tipCard) exactly as they were ...
   List<Widget> _buildFeatureCards(
     BuildContext context,
     Responsive responsive,

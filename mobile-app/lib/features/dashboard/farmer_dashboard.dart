@@ -1,5 +1,6 @@
 import 'package:CeylonPepper/features/market_forecast/weekly_price_forecast.dart';
 import 'package:flutter/material.dart';
+import '../disease_detection/screens/home_screen.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
@@ -488,7 +489,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           colors: [Colors.orange.shade400, Colors.orange.shade600],
         ),
         onTap: () {
-          // TODO: Navigate to disease detection
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+          );
         },
       ),
       _featureCard(

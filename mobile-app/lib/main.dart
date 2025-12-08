@@ -6,7 +6,7 @@ import 'screens/login_screen.dart';
 import 'features/auth/login_page.dart';
 import 'screens/signup_screen.dart';
 import 'features/auth/signup_page.dart';
-import 'screens/image_picker_screen.dart';
+import 'features/disease_detection/screens/image_picker_screen.dart';
 import 'features/auth/splash_screen.dart';
 
 void main() async {

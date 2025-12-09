@@ -1,4 +1,4 @@
-import 'package:CeylonPepper/features/market_forecast/weekly_price_forecast.dart';
+import 'package:CeylonPepper/features/market_forecast/navigation.dart';
 import 'package:flutter/material.dart';
 import '../disease_detection/screens/home_screen.dart';
 import '../../services/auth_service.dart';
@@ -518,7 +518,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => WeeklyPriceForecast()),
+            MaterialPageRoute(builder: (context) => PriceNavigation()),
           );
         },
       ),

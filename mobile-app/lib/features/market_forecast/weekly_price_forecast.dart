@@ -87,6 +87,8 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
 
   @override
   void dispose() {
+    // Remove any open overlay to avoid leaking visual elements when disposed
+    _overlayEntry?.remove();
     _animationController.dispose();
     super.dispose();
   }
@@ -139,7 +141,6 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,7 +168,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                   ),
                                 ),
                                 Text(
-                                  "Discover how prices may change next week...",
+                                  "Discover how prices may change in next week...",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: responsive.fontSize(
@@ -180,36 +181,6 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                   ),
                                 ),
                               ],
-                            ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: CircleAvatar(
-                                radius: responsive.value(
-                                  mobile: 26,
-                                  tablet: 28,
-                                  desktop: 32,
-                                ),
-                                backgroundColor: Colors.white,
-                                child: Icon(
-                                  Icons.person_rounded,
-                                  color: primary,
-                                  size: responsive.value(
-                                    mobile: 26,
-                                    tablet: 28,
-                                    desktop: 32,
-                                  ),
-                                ),
-                              ),
                             ),
                           ],
                         ),

@@ -1,3 +1,4 @@
+import 'package:CeylonPepper/features/market_forecast/recommendations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -321,7 +322,14 @@ class WeeklyPrediction extends StatelessWidget {
                       'Recommendations',
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const Recommendations(),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

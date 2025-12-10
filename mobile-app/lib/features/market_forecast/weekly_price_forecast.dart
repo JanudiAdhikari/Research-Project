@@ -168,7 +168,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                   ),
                                 ),
                                 Text(
-                                  "Discover how prices may change in next week...",
+                                  "Discover how prices may change in upcoming weeks...",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontSize: responsive.fontSize(
@@ -424,37 +424,41 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           ],
                         ),
 
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              padding: EdgeInsets.symmetric(
-                                vertical: responsive.value(
-                                  mobile: 14,
-                                  tablet: 16,
-                                  desktop: 18,
+                        Center(
+                          child: SizedBox(
+                            width:
+                                MediaQuery.of(context).size.width *
+                                0.6, // 60% width
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 20,
+                                ),
+                                backgroundColor: Colors.green,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
                                 ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const WeeklyPrediction(),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WeeklyPrediction(
+                                      year: selectedYear,
+                                      month: selectedMonth,
+                                      week: selectedWeek,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Predict the Price',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                              );
-                            },
-                            child: Text(
-                              "Predict the Price",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: responsive.bodyFontSize,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),

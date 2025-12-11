@@ -61,6 +61,8 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
   ];
   final List<String> weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
 
+  bool showErrors = false; // To control error message visibility
+
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 
@@ -277,6 +279,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           selectedDistrict,
                           districts,
                           (val) => setState(() => selectedDistrict = val),
+                          required: true,
                         ),
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
                         _buildDropdownField(
@@ -284,6 +287,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           selectedPepperType,
                           pepperTypes,
                           (val) => setState(() => selectedPepperType = val),
+                          required: true,
                         ),
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
                         _buildDropdownField(
@@ -301,6 +305,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                 selectedYear,
                                 years,
                                 (val) => setState(() => selectedYear = val),
+                                required: true,
                               ),
                             ),
                             ResponsiveSpacing.horizontal(
@@ -314,6 +319,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                 selectedMonth,
                                 months,
                                 (val) => setState(() => selectedMonth = val),
+                                required: true,
                               ),
                             ),
                           ],
@@ -324,6 +330,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           selectedWeek,
                           weeks,
                           (val) => setState(() => selectedWeek = val),
+                          required: true,
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 16),
@@ -441,6 +448,20 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                 ),
                               ),
                               onPressed: () {
+                                setState(() {
+                                  showErrors = true; // enable error messages
+                                });
+
+                                // Check required fields
+                                if (selectedDistrict == null ||
+                                    selectedPepperType == null ||
+                                    selectedYear == null ||
+                                    selectedMonth == null ||
+                                    selectedWeek == null) {
+                                  return; // stop navigation
+                                }
+
+                                // All good → navigate
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -452,6 +473,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                   ),
                                 );
                               },
+
                               child: const Text(
                                 'Predict the Price',
                                 style: TextStyle(
@@ -481,9 +503,11 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     String title,
     String? value,
     List<String> items,
-    ValueChanged<String?> onChanged,
-  ) {
+    ValueChanged<String?> onChanged, {
+    bool required = false,
+  }) {
     final key = GlobalKey();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -496,6 +520,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
           ),
         ),
         const SizedBox(height: 6),
+
         CompositedTransformTarget(
           link: _layerLink,
           child: GestureDetector(
@@ -506,7 +531,11 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(
+                  color: (showErrors && required && value == null)
+                      ? Colors.red
+                      : Colors.grey.shade300,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.03),
@@ -532,6 +561,15 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
             ),
           ),
         ),
+
+        if (showErrors && required && value == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              "$title is required",
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
       ],
     );
   }

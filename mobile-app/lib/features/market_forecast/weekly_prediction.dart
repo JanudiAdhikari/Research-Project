@@ -2,7 +2,7 @@ import 'package:CeylonPepper/features/market_forecast/recommendations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-/// Weekly pepper price prediction chart view
+// Weekly pepper price prediction chart view
 class WeeklyPrediction extends StatelessWidget {
   final String? year;
   final String? month;

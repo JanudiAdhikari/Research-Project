@@ -1,8 +1,8 @@
 import 'package:CeylonPepper/features/market_forecast/recommendations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../utils/responsive.dart';
 
-// Weekly pepper price prediction chart view
 class WeeklyPrediction extends StatelessWidget {
   final String? year;
   final String? month;
@@ -44,54 +44,56 @@ class WeeklyPrediction extends StatelessWidget {
   final Color blackPepperColor = Colors.orange;
   final Color whitePepperColor = Colors.blue;
 
-  /// Get the Monday date of a given week number in a month
-  DateTime getWeekStartDate(int year, int month, int weekNumber) {
-    final firstDay = DateTime(year, month, 1);
-    final dayOfWeek = firstDay.weekday; // Monday=1
-    final offset = (dayOfWeek == 1) ? 0 : (8 - dayOfWeek);
-    final firstMonday = firstDay.add(Duration(days: offset));
-    return firstMonday.add(Duration(days: 7 * (weekNumber - 1)));
-  }
-
-  /// Generate previous 6 weeks in chronological order (oldest first)
-  List<Map<String, int>> generatePreviousWeeks(
+  // Generate previous N weeks from selected year/month/week
+  List<Map<String, dynamic>> generatePreviousWeeks(
     int year,
     int month,
     int weekNumber,
+    int count,
   ) {
-    List<Map<String, int>> weeks = [];
-    int y = year;
-    int m = month;
-    int w = weekNumber;
+    List<Map<String, dynamic>> weeks = [];
 
-    while (weeks.length < 6) {
-      weeks.insert(0, {
-        "year": y,
-        "month": m,
-        "week": w,
-      }); // insert at start to keep chronological
+    // First day of selected month
+    DateTime firstDayOfMonth = DateTime(year, month, 1);
 
-      w--; // previous week
-      if (w == 0) {
-        m--; // previous month
-        if (m == 0) {
-          m = 12;
-          y--;
-        }
-        // Calculate number of weeks in previous month
-        final firstDay = DateTime(y, m, 1);
-        final lastDay = DateTime(y, m + 1, 0);
-        int totalWeeks =
-            ((lastDay.day - (7 - firstDay.weekday + 1)) / 7).ceil() + 1;
-        w = totalWeeks;
-      }
+    // Calculate start date of the selected week
+    int dayOfWeek = firstDayOfMonth.weekday; // Monday = 1
+    int offset = (dayOfWeek == 1) ? 0 : (8 - dayOfWeek);
+    DateTime firstMonday = firstDayOfMonth.add(Duration(days: offset));
+    DateTime selectedWeekStart = firstMonday.add(
+      Duration(days: (weekNumber - 1) * 7),
+    );
+
+    for (int i = count - 1; i >= 0; i--) {
+      DateTime weekStart = selectedWeekStart.subtract(Duration(days: i * 7));
+      int wYear = weekStart.year;
+      int wMonth = weekStart.month;
+
+      // Calculate week number in month
+      DateTime firstOfMonth = DateTime(wYear, wMonth, 1);
+      int firstWeekday = firstOfMonth.weekday;
+      int firstMondayOffset = (firstWeekday == 1) ? 0 : (8 - firstWeekday);
+      DateTime monthFirstMonday = firstOfMonth.add(
+        Duration(days: firstMondayOffset),
+      );
+
+      int weekInMonth =
+          ((weekStart.difference(monthFirstMonday).inDays) / 7).floor() + 1;
+      if (weekStart.isBefore(monthFirstMonday)) weekInMonth = 1;
+
+      weeks.add({
+        'year': wYear,
+        'month': wMonth,
+        'week': weekInMonth,
+        'startDate': weekStart,
+      });
     }
+
     return weeks;
   }
 
-  /// Format week labels as "MMM wn"
-  List<String> formatWeekLabels(List<Map<String, int>> weeks) {
-    final List<String> labels = [];
+  // Format labels like "Jan w2"
+  List<String> formatWeekLabelsFromMap(List<Map<String, dynamic>> weeks) {
     final monthNames = [
       "",
       "Jan",
@@ -107,23 +109,23 @@ class WeeklyPrediction extends StatelessWidget {
       "Nov",
       "Dec",
     ];
-    for (var week in weeks) {
-      labels.add("${monthNames[week['month']!]} w${week['week']}");
-    }
-    return labels;
+    return weeks.map((w) {
+      return "${monthNames[w['month']!]} w${w['week']!}";
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final y = int.tryParse(year ?? '') ?? 2024;
+    final responsive = context.responsive;
+    final y = int.tryParse(year ?? '') ?? 2025;
     final m = int.tryParse(month ?? '') ?? 1;
     final w = int.tryParse(week ?? '') ?? 1;
 
-    final previousWeeks = generatePreviousWeeks(y, m, w);
-    final weekLabels = formatWeekLabels(previousWeeks);
+    final previousWeeks = generatePreviousWeeks(y, m, w, 6);
+    final weekLabels = formatWeekLabelsFromMap(previousWeeks);
     final dataLength = previousWeeks.length;
 
-    // Generate dynamic data for each week (need to replace with real data)
+    // Assign prices for each week
     List<double> blackData = [];
     List<double> whiteData = [];
     for (int i = 0; i < dataLength; i++) {
@@ -136,45 +138,49 @@ class WeeklyPrediction extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+                    icon: Icon(
+                      Icons.arrow_back_ios_new,
+                      size: responsive.smallIconSize,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Spacer(),
                 ],
               ),
-              const SizedBox(height: 5),
+              SizedBox(height: responsive.smallSpacing),
               Center(
                 child: Column(
                   children: [
-                    const Text(
+                    ResponsiveText(
                       'Overview',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      mobileFontSize: responsive.headingFontSize,
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(height: 5),
-                    Text(
+                    SizedBox(height: responsive.smallSpacing),
+                    ResponsiveText(
                       '${month ?? 'Month'} - ${week ?? 'Week'} (${year ?? 'Year'})',
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      mobileFontSize: responsive.bodyFontSize,
+                      color: Colors.grey,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 25),
+              SizedBox(height: responsive.largeSpacing),
               Center(
                 child: Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(responsive.mediumSpacing),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(
+                      responsive.largeSpacing / 2,
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,
@@ -183,31 +189,33 @@ class WeeklyPrediction extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Text(
+                  child: ResponsiveText(
                     'Predicted Price:\nRs.1890 /kg',
+                    mobileFontSize: responsive.titleFontSize,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
-              const Text(
+              SizedBox(height: responsive.largeSpacing),
+              ResponsiveText(
                 'Past Price Trend',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                mobileFontSize: responsive.titleFontSize,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: 15),
-              _buildLegend(),
-              const SizedBox(height: 15),
-
-              // Centered and widened chart container
+              SizedBox(height: responsive.mediumSpacing),
+              _buildLegend(responsive),
+              SizedBox(height: responsive.mediumSpacing),
               Center(
                 child: Container(
-                  width: MediaQuery.of(context).size.width * 0.9,
+                  width: responsive.maxContentWidth,
                   height: 260,
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(responsive.smallSpacing),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(
+                      responsive.largeSpacing / 2,
+                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,
@@ -247,7 +255,9 @@ class WeeklyPrediction extends StatelessWidget {
                             getTitlesWidget: (value, meta) {
                               return Text(
                                 '${value ~/ 1}',
-                                style: const TextStyle(fontSize: 10),
+                                style: TextStyle(
+                                  fontSize: responsive.smallFontSize,
+                                ),
                               );
                             },
                           ),
@@ -266,8 +276,9 @@ class WeeklyPrediction extends StatelessWidget {
                                 angle: 0.785,
                                 child: Text(
                                   weekLabels[value.toInt()],
-                                  textAlign: TextAlign.start,
-                                  style: const TextStyle(fontSize: 10),
+                                  style: TextStyle(
+                                    fontSize: responsive.smallFontSize,
+                                  ),
                                 ),
                               );
                             },
@@ -300,13 +311,12 @@ class WeeklyPrediction extends StatelessWidget {
                   ),
                 ),
               ),
-
-              const SizedBox(height: 40),
+              SizedBox(height: responsive.largeSpacing),
 
               // Recommendations button
               Center(
                 child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.6, // 60% width
+                  width: MediaQuery.of(context).size.width * 0.6,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
@@ -334,7 +344,7 @@ class WeeklyPrediction extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 30),
+              SizedBox(height: responsive.largeSpacing),
             ],
           ),
         ),
@@ -342,27 +352,47 @@ class WeeklyPrediction extends StatelessWidget {
     );
   }
 
-  Widget _buildLegend() {
+  // Legend widget
+  Widget _buildLegend(Responsive responsive) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _legendItem(color: blackPepperColor, label: 'Black Pepper'),
-        const SizedBox(width: 20),
-        _legendItem(color: whitePepperColor, label: 'White Pepper'),
+        _legendItem(
+          color: blackPepperColor,
+          label: 'Black Pepper',
+          responsive: responsive,
+        ),
+        SizedBox(width: responsive.mediumSpacing),
+        _legendItem(
+          color: whitePepperColor,
+          label: 'White Pepper',
+          responsive: responsive,
+        ),
       ],
     );
   }
 
-  Widget _legendItem({required Color color, required String label}) {
+  // Legend item widget
+  Widget _legendItem({
+    required Color color,
+    required String label,
+    required Responsive responsive,
+  }) {
     return Row(
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: responsive.smallSpacing,
+          height: responsive.smallSpacing,
           decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
-        const SizedBox(width: 5),
-        Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        SizedBox(width: responsive.smallSpacing / 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: responsive.bodyFontSize,
+            color: Colors.grey,
+          ),
+        ),
       ],
     );
   }

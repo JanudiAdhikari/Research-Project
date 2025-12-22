@@ -83,5 +83,4 @@ class DefaultFirebaseOptions {
     authDomain: 'black-pepper-2.firebaseapp.com',
     storageBucket: 'black-pepper-2.firebasestorage.app',
   );
-
 }

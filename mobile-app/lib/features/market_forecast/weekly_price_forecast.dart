@@ -406,13 +406,6 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                       value: "12 km/h",
                                       responsive: responsive,
                                     ),
-                                    _buildWeatherCard(
-                                      imagePath:
-                                          "assets/images/market_forecast/soil_temperature.png",
-                                      label: "Soil Temp",
-                                      value: "23°C",
-                                      responsive: responsive,
-                                    ),
                                     SizedBox(
                                       width: _buildWeatherCardWidth(responsive),
                                     ),

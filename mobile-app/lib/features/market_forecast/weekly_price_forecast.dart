@@ -44,7 +44,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
   ];
   final List<String> pepperTypes = ['Black', 'White'];
   final List<String> grades = ['Grade 1', 'Grade 2', 'Grade 3'];
-  final List<String> years = ['2025', '2026', '2027'];
+  final List<String> years = ['2026', '2027'];
   final List<String> months = [
     'January',
     'February',
@@ -357,79 +357,38 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                             desktop: 20,
                           ),
                           children: [
-                            Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  // Sample data added for weather details. Need to connect the API
-                                  children: [
-                                    _buildWeatherCard(
-                                      imagePath:
-                                          "assets/images/market_forecast/rainfall.png",
-                                      label: "Rainfall",
-                                      value: "120 mm",
-                                      responsive: responsive,
-                                    ),
-                                    _buildWeatherCard(
-                                      imagePath:
-                                          "assets/images/market_forecast/temperature.png",
-                                      label: "Temperature",
-                                      value: "29°C",
-                                      responsive: responsive,
-                                    ),
-                                    _buildWeatherCard(
-                                      imagePath:
-                                          "assets/images/market_forecast/humidity.png",
-                                      label: "Humidity",
-                                      value: "78%",
-                                      responsive: responsive,
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(
-                                  height: responsive.value(
-                                    mobile: 16,
-                                    tablet: 18,
-                                    desktop: 20,
-                                  ),
-                                ),
-
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    _buildWeatherCard(
-                                      imagePath:
-                                          "assets/images/market_forecast/wind_speed.png",
-                                      label: "Wind Speed",
-                                      value: "12 km/h",
-                                      responsive: responsive,
-                                    ),
-                                    _buildWeatherCard(
-                                      imagePath:
-                                          "assets/images/market_forecast/soil_temperature.png",
-                                      label: "Soil Temp",
-                                      value: "23°C",
-                                      responsive: responsive,
-                                    ),
-                                    SizedBox(
-                                      width: _buildWeatherCardWidth(responsive),
-                                    ),
-                                  ],
-                                ),
-
-                                SizedBox(
-                                  height: responsive.value(
-                                    mobile: 24,
-                                    tablet: 28,
-                                    desktop: 32,
-                                  ),
-                                ), // space before the button
-                              ],
+                            _buildWeatherCard(
+                              imagePath:
+                                  "assets/images/market_forecast/rainfall.png",
+                              label: "Rainfall",
+                              value: "120 mm",
+                              responsive: responsive,
+                            ),
+                            _buildWeatherCard(
+                              imagePath:
+                                  "assets/images/market_forecast/temperature.png",
+                              label: "Temperature",
+                              value: "29°C",
+                              responsive: responsive,
+                            ),
+                            _buildWeatherCard(
+                              imagePath:
+                                  "assets/images/market_forecast/humidity.png",
+                              label: "Humidity",
+                              value: "78%",
+                              responsive: responsive,
+                            ),
+                            _buildWeatherCard(
+                              imagePath:
+                                  "assets/images/market_forecast/wind_speed.png",
+                              label: "Wind Speed",
+                              value: "12 km/h",
+                              responsive: responsive,
                             ),
                           ],
                         ),
+
+                        ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
                         Center(
                           child: SizedBox(
@@ -624,10 +583,6 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
         ],
       ),
     );
-  }
-
-  double _buildWeatherCardWidth(Responsive responsive) {
-    return responsive.value(mobile: 120, tablet: 160, desktop: 180);
   }
 
   void _toggleDropdown(

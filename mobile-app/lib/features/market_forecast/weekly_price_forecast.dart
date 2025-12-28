@@ -44,7 +44,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
   ];
   final List<String> pepperTypes = ['Black', 'White'];
   final List<String> grades = ['Grade 1', 'Grade 2', 'Grade 3'];
-  final List<String> years = ['2025', '2026', '2027'];
+  final List<String> years = ['2026', '2027'];
   final List<String> months = [
     'January',
     'February',

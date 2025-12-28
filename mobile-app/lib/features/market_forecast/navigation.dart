@@ -150,7 +150,7 @@ class PriceNavigation extends StatelessWidget {
                 child: Container(
                   decoration: _boxDecoration(),
                   child: _buildListTile(
-                    title: "Export Price Trends",
+                    title: "Past Export Price Trends",
                     subtitle: "Analyze export market trends",
                     icon: Icons.assessment,
                     iconColor: const Color(0xFF1976D2),

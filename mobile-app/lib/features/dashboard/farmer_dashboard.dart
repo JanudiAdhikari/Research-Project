@@ -5,6 +5,7 @@ import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
 import '../../widgets/navigation_wrapper.dart';
+import '../quality_grading/screens/quality_grading_dashboard.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -504,7 +505,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           colors: [Colors.blue.shade400, Colors.blue.shade600],
         ),
         onTap: () {
-          // TODO: Navigate to quality grading
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const QualityGradingDashboard()),
+          );
         },
       ),
       _featureCard(

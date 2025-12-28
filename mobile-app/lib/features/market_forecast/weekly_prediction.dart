@@ -44,7 +44,6 @@ class WeeklyPrediction extends StatelessWidget {
   final Color blackPepperColor = Colors.orange;
   final Color whitePepperColor = Colors.blue;
 
-  // Generate previous N weeks from selected year/month/week
   List<Map<String, dynamic>> generatePreviousWeeks(
     int year,
     int month,
@@ -53,11 +52,8 @@ class WeeklyPrediction extends StatelessWidget {
   ) {
     List<Map<String, dynamic>> weeks = [];
 
-    // First day of selected month
     DateTime firstDayOfMonth = DateTime(year, month, 1);
-
-    // Calculate start date of the selected week
-    int dayOfWeek = firstDayOfMonth.weekday; // Monday = 1
+    int dayOfWeek = firstDayOfMonth.weekday;
     int offset = (dayOfWeek == 1) ? 0 : (8 - dayOfWeek);
     DateTime firstMonday = firstDayOfMonth.add(Duration(days: offset));
     DateTime selectedWeekStart = firstMonday.add(
@@ -69,7 +65,6 @@ class WeeklyPrediction extends StatelessWidget {
       int wYear = weekStart.year;
       int wMonth = weekStart.month;
 
-      // Calculate week number in month
       DateTime firstOfMonth = DateTime(wYear, wMonth, 1);
       int firstWeekday = firstOfMonth.weekday;
       int firstMondayOffset = (firstWeekday == 1) ? 0 : (8 - firstWeekday);
@@ -81,18 +76,12 @@ class WeeklyPrediction extends StatelessWidget {
           ((weekStart.difference(monthFirstMonday).inDays) / 7).floor() + 1;
       if (weekStart.isBefore(monthFirstMonday)) weekInMonth = 1;
 
-      weeks.add({
-        'year': wYear,
-        'month': wMonth,
-        'week': weekInMonth,
-        'startDate': weekStart,
-      });
+      weeks.add({'year': wYear, 'month': wMonth, 'week': weekInMonth});
     }
 
     return weeks;
   }
 
-  // Format labels like "Jan w2"
   List<String> formatWeekLabelsFromMap(List<Map<String, dynamic>> weeks) {
     final monthNames = [
       "",
@@ -109,9 +98,9 @@ class WeeklyPrediction extends StatelessWidget {
       "Nov",
       "Dec",
     ];
-    return weeks.map((w) {
-      return "${monthNames[w['month']!]} w${w['week']!}";
-    }).toList();
+    return weeks
+        .map((w) => "${monthNames[w['month']!]} w${w['week']!}")
+        .toList();
   }
 
   @override
@@ -125,7 +114,6 @@ class WeeklyPrediction extends StatelessWidget {
     final weekLabels = formatWeekLabelsFromMap(previousWeeks);
     final dataLength = previousWeeks.length;
 
-    // Assign prices for each week
     List<double> blackData = [];
     List<double> whiteData = [];
     for (int i = 0; i < dataLength; i++) {
@@ -136,43 +124,20 @@ class WeeklyPrediction extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
+      appBar: AppBar(
+        title: const Text("Overview"),
+        backgroundColor: Colors.green,
+      ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back_ios_new,
-                      size: responsive.smallIconSize,
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Spacer(),
-                ],
-              ),
               SizedBox(height: responsive.smallSpacing),
-              Center(
-                child: Column(
-                  children: [
-                    ResponsiveText(
-                      'Overview',
-                      mobileFontSize: responsive.headingFontSize,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    SizedBox(height: responsive.smallSpacing),
-                    ResponsiveText(
-                      '${month ?? 'Month'} - ${week ?? 'Week'} (${year ?? 'Year'})',
-                      mobileFontSize: responsive.bodyFontSize,
-                      color: Colors.grey,
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: responsive.largeSpacing),
+
               Center(
                 child: Container(
                   padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -189,23 +154,37 @@ class WeeklyPrediction extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: ResponsiveText(
-                    'Predicted Price:\nRs.1890 /kg',
-                    mobileFontSize: responsive.titleFontSize,
-                    textAlign: TextAlign.center,
-                    fontWeight: FontWeight.w600,
+                  child: Column(
+                    children: [
+                      ResponsiveText(
+                        '${month ?? 'Month'} - ${week ?? 'Week'} (${year ?? 'Year'})',
+                        mobileFontSize: responsive.bodyFontSize,
+                        color: const Color.fromARGB(255, 0, 0, 0),
+                      ),
+                      SizedBox(height: responsive.smallSpacing),
+                      ResponsiveText(
+                        'Predicted Price:\nRs.1890 /kg',
+                        mobileFontSize: responsive.titleFontSize,
+                        textAlign: TextAlign.center,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              SizedBox(height: responsive.largeSpacing),
+
+              SizedBox(height: responsive.largeSpacing * 4),
+
               ResponsiveText(
                 'Past Price Trend',
                 mobileFontSize: responsive.titleFontSize,
                 fontWeight: FontWeight.w700,
               ),
+
               SizedBox(height: responsive.mediumSpacing),
               _buildLegend(responsive),
               SizedBox(height: responsive.mediumSpacing),
+
               Center(
                 child: Container(
                   width: responsive.maxContentWidth,
@@ -227,17 +206,13 @@ class WeeklyPrediction extends StatelessWidget {
                   child: LineChart(
                     LineChartData(
                       minX: 0,
-                      maxX: (dataLength - 0.2).toDouble(),
+                      maxX: (dataLength - 1).toDouble(),
                       minY: 1000,
                       maxY: 2700,
                       gridData: FlGridData(
                         show: true,
                         drawVerticalLine: false,
                         horizontalInterval: 500,
-                        getDrawingHorizontalLine: (value) => FlLine(
-                          strokeWidth: 0.5,
-                          color: Colors.grey.withOpacity(0.3),
-                        ),
                       ),
                       borderData: FlBorderData(show: false),
                       titlesData: FlTitlesData(
@@ -252,27 +227,19 @@ class WeeklyPrediction extends StatelessWidget {
                             showTitles: true,
                             interval: 500,
                             reservedSize: 40,
-                            getTitlesWidget: (value, meta) {
-                              return Text(
-                                '${value ~/ 1}',
-                                style: TextStyle(
-                                  fontSize: responsive.smallFontSize,
-                                ),
-                              );
-                            },
                           ),
                         ),
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
-                            reservedSize: 60,
                             interval: 1,
+                            reservedSize: 60,
                             getTitlesWidget: (value, meta) {
-                              if (value.toInt() >= weekLabels.length)
+                              if (value.toInt() >= weekLabels.length) {
                                 return const SizedBox.shrink();
+                              }
                               return SideTitleWidget(
                                 axisSide: meta.axisSide,
-                                space: 10,
                                 angle: 0.785,
                                 child: Text(
                                   weekLabels[value.toInt()],
@@ -311,18 +278,15 @@ class WeeklyPrediction extends StatelessWidget {
                   ),
                 ),
               ),
+
               SizedBox(height: responsive.largeSpacing),
 
-              // Recommendations button
               Center(
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.6,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 20,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Colors.green,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -352,7 +316,6 @@ class WeeklyPrediction extends StatelessWidget {
     );
   }
 
-  // Legend widget
   Widget _buildLegend(Responsive responsive) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -372,7 +335,6 @@ class WeeklyPrediction extends StatelessWidget {
     );
   }
 
-  // Legend item widget
   Widget _legendItem({
     required Color color,
     required String label,
@@ -396,9 +358,4 @@ class WeeklyPrediction extends StatelessWidget {
       ],
     );
   }
-}
-
-// Extension to safely take last n elements from a list
-extension TakeLast<T> on List<T> {
-  List<T> takeLast(int n) => skip(length - n).toList();
 }

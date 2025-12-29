@@ -1,6 +1,8 @@
 import 'package:CeylonPepper/features/market_forecast/navigation.dart';
 import 'package:flutter/material.dart';
 import '../disease_detection/screens/home_screen.dart';
+import '../disease_detection/services/weather_service.dart';
+import '../disease_detection/services/location_service.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
@@ -21,10 +23,19 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   late Animation<Offset> _slideAnimation;
 
   final AuthService _authService = AuthService();
+  final WeatherService _weatherService = WeatherService();
+  final LocationService _locationService = LocationService();
+
+  bool _isLoadingWeather = true;
+  String _locationName = 'Loading...';
+  String _temperature = '--°C';
 
   @override
   void initState() {
     super.initState();
+
+    print('🚀 FarmerDashboard initState called');
+    print('Initial state: loading=$_isLoadingWeather, location=$_locationName, temp=$_temperature');
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -41,12 +52,142 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         );
 
     _animationController.forward();
+
+    print('⏰ Scheduling _fetchWeatherData() to run after build');
+    // Delay weather fetch to ensure widget is built
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        print('✅ Widget is mounted, calling _fetchWeatherData()');
+        _fetchWeatherData();
+      } else {
+        print('❌ Widget not mounted, skipping weather fetch');
+      }
+    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchWeatherData() async {
+    print('🌤️ Starting weather fetch...');
+    print('Current state BEFORE: loading=$_isLoadingWeather, location=$_locationName');
+
+    // Force update to show we're loading
+    setState(() {
+      _isLoadingWeather = true;
+      _locationName = 'Loading...';
+      _temperature = '--°C';
+    });
+    print('State set to loading=true');
+
+    try {
+      print('📍 Getting location... (30 second timeout)');
+      final locationData = await _locationService.getCurrentLocation()
+          .timeout(const Duration(seconds: 30), onTimeout: () {
+        print('⏱️ Location fetch timeout after 30 seconds');
+        return null;
+      });
+
+      if (locationData == null) {
+        print('❌ Location is null - Using fallback location (Colombo)');
+        // Use Colombo, Sri Lanka as fallback
+        final fallbackLat = 6.9271;
+        final fallbackLon = 79.8612;
+
+        if (!mounted) return;
+
+        print('🌐 Fetching weather data for fallback location...');
+        final weatherData = await _weatherService.getWeatherData(
+          fallbackLat,
+          fallbackLon,
+        ).timeout(const Duration(seconds: 15), onTimeout: () {
+          print('⏱️ Weather API timeout');
+          return null;
+        });
+
+        if (weatherData != null) {
+          final parsedData = _weatherService.parseWeatherData(weatherData);
+          if (parsedData != null && mounted) {
+            setState(() {
+              _locationName = '${parsedData['location']} (Default)';
+              _temperature = '${parsedData['temperature']}°C';
+              _isLoadingWeather = false;
+            });
+            print('✅ Using fallback weather data');
+            return;
+          }
+        }
+
+        // If fallback also fails
+        if (!mounted) return;
+        setState(() {
+          _isLoadingWeather = false;
+          _locationName = 'Enable GPS';
+          _temperature = '--°C';
+        });
+        print('State updated: Enable GPS');
+        return;
+      }
+
+      print('✅ Location received: ${locationData.latitude}, ${locationData.longitude}');
+      print('🌐 Fetching weather data...');
+
+      final weatherData = await _weatherService.getWeatherData(
+        locationData.latitude,
+        locationData.longitude,
+      ).timeout(const Duration(seconds: 15), onTimeout: () {
+        print('⏱️ Weather API timeout');
+        return null;
+      });
+
+      print('Weather data received: $weatherData');
+
+      if (weatherData != null) {
+        print('✅ Weather data is not null');
+        final parsedData = _weatherService.parseWeatherData(weatherData);
+        print('Parsed data: $parsedData');
+
+        if (!mounted) return;
+        if (parsedData != null) {
+          print('✅ Setting state with location: ${parsedData['location']}, temp: ${parsedData['temperature']}');
+          setState(() {
+            _locationName = parsedData['location'] ?? 'Unknown';
+            _temperature = '${parsedData['temperature']}°C';
+            _isLoadingWeather = false;
+          });
+          print('✅ State updated successfully - location=$_locationName, temp=$_temperature, loading=$_isLoadingWeather');
+        } else {
+          print('❌ Parsed data is null');
+          setState(() {
+            _isLoadingWeather = false;
+            _locationName = 'Parse Error';
+            _temperature = '--°C';
+          });
+        }
+      } else {
+        print('❌ Weather data is null');
+        if (!mounted) return;
+        setState(() {
+          _isLoadingWeather = false;
+          _locationName = 'API Error';
+          _temperature = '--°C';
+        });
+        print('State updated: API Error');
+      }
+    } catch (e, stackTrace) {
+      print('❌ Weather fetch error: $e');
+      print('Stack trace: $stackTrace');
+      if (!mounted) return;
+      setState(() {
+        _isLoadingWeather = false;
+        _locationName = 'Error: ${e.toString().substring(0, 20)}';
+        _temperature = '--°C';
+      });
+      print('State updated: Error');
+    }
   }
 
   @override
@@ -61,6 +202,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   Widget _buildDashboardContent() {
     final responsive = context.responsive;
     final primary = const Color(0xFF2E7D32);
+
+    print('📱 Building FarmerDashboard content - Weather loading: $_isLoadingWeather, Location: $_locationName, Temp: $_temperature');
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -186,75 +329,91 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         ],
                       ),
                       ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-                      Container(
-                        padding: responsive.padding(
-                          mobile: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          tablet: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 14,
-                          ),
-                          desktop: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 16,
-                          ),
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(
-                            responsive.value(
-                              mobile: 16,
-                              tablet: 18,
-                              desktop: 20,
+                      GestureDetector(
+                        onTap: () {
+                          print('🔄 Manual weather refresh triggered');
+                          _fetchWeatherData();
+                        },
+                        child: Container(
+                          padding: responsive.padding(
+                            mobile: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            tablet: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 14,
+                            ),
+                            desktop: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 16,
                             ),
                           ),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(
+                              responsive.value(
+                                mobile: 16,
+                                tablet: 18,
+                                desktop: 20,
+                              ),
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.location_on_rounded,
-                              color: Colors.white.withOpacity(0.9),
-                              size: responsive.smallIconSize,
-                            ),
-                            ResponsiveSpacing.horizontal(
-                              mobile: 8,
-                              tablet: 10,
-                              desktop: 12,
-                            ),
-                            Text(
-                              "Colombo",
-                              style: TextStyle(
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_rounded,
                                 color: Colors.white.withOpacity(0.9),
-                                fontSize: responsive.bodyFontSize,
-                                fontWeight: FontWeight.w500,
+                                size: responsive.smallIconSize,
                               ),
-                            ),
-                            const Spacer(),
-                            Icon(
-                              Icons.wb_sunny_rounded,
-                              color: Colors.amber[300],
-                              size: responsive.smallIconSize,
-                            ),
-                            ResponsiveSpacing.horizontal(
-                              mobile: 8,
-                              tablet: 10,
-                              desktop: 12,
-                            ),
-                            Text(
-                              "29°C",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: responsive.bodyFontSize,
-                                fontWeight: FontWeight.w600,
+                              ResponsiveSpacing.horizontal(
+                                mobile: 8,
+                                tablet: 10,
+                                desktop: 12,
                               ),
-                            ),
-                          ],
+                              Text(
+                                _isLoadingWeather ? 'Loading... ⏳' : _locationName,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: responsive.bodyFontSize,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const Spacer(),
+                              if (_isLoadingWeather)
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              else
+                                Icon(
+                                  Icons.cloud_outlined,
+                                  color: Colors.white,
+                                  size: responsive.smallIconSize,
+                                ),
+                              ResponsiveSpacing.horizontal(
+                                mobile: 8,
+                                tablet: 10,
+                                desktop: 12,
+                              ),
+                              Text(
+                                _isLoadingWeather ? '--°C' : _temperature,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: responsive.bodyFontSize,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

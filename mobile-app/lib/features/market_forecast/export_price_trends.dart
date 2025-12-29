@@ -473,6 +473,20 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
   // Insights
   Widget _insightsCard() {
     final responsive = context.responsive;
+    final data = getChartData();
+    bool isBullish = false;
+    if (data.isNotEmpty) {
+      final start = data.first.y;
+      final end = data.last.y;
+      final change = end - start;
+      isBullish = change >= 0;
+    }
+
+    const Color tileGreen = Color(0xFF43A047); // Trend tile
+    const Color tilePurple = Color(0xFF8E24AA); // Peak vs Average tile
+    const Color tileBlue = Color(0xFF1565C0); // Momentum tile
+    const Color tileOrange = Color(0xFFEF6C00); // Recommendation tile
+
     return Container(
       padding: EdgeInsets.all(responsive.mediumSpacing),
       decoration: _cardDecoration(),
@@ -482,15 +496,113 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
           Text(
             'Insights',
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: responsive.titleFontSize,
+              color: Colors.black,
+              fontWeight: FontWeight.w600,
+              fontSize: responsive.smallFontSize + 4,
             ),
           ),
-          SizedBox(height: responsive.smallSpacing),
-          Text(
-            'Global pepper prices increased by 23% over the selected period, '
-            'mainly driven by strong demand from major importing countries.',
-            style: TextStyle(fontSize: responsive.bodyFontSize),
+          SizedBox(height: responsive.mediumSpacing),
+          // Responsive grid of insight tiles
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 600;
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: isWide ? 2 : 1,
+                mainAxisSpacing: responsive.smallSpacing,
+                crossAxisSpacing: responsive.smallSpacing,
+                childAspectRatio: isWide ? 3.0 : 3.2,
+                children: [
+                  _insightTile(
+                    icon: Icons.trending_up,
+                    color: tileGreen,
+                    title: isBullish
+                        ? 'Prices are trending upward'
+                        : 'Prices are trending downward',
+                    subtitle: isBullish
+                        ? 'Recent months show gains driven by importer demand.'
+                        : 'Recent months show easing prices with improving supply.',
+                  ),
+                  _insightTile(
+                    icon: Icons.attach_money,
+                    color: tilePurple,
+                    title: 'Peak vs Average',
+                    subtitle:
+                        'Time exports near peaks; use average for pricing baseline.',
+                  ),
+                  _insightTile(
+                    icon: Icons.timeline,
+                    color: tileBlue,
+                    title: 'Momentum & Stability',
+                    subtitle:
+                        'Track monthly momentum; favor stable windows for bulk shipments.',
+                  ),
+                  _insightTile(
+                    icon: Icons.insights,
+                    color: tileOrange,
+                    title: 'Recommendation',
+                    subtitle: isBullish
+                        ? 'Stagger shipments to capitalize on upward momentum.'
+                        : 'Hedge and optimize turnover during softer pricing.',
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _insightTile({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+  }) {
+    final responsive = context.responsive;
+    return Container(
+      padding: EdgeInsets.all(responsive.smallSpacing + 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        border: Border.all(color: color.withOpacity(0.22)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: responsive.value(mobile: 36, tablet: 40, desktop: 44),
+            height: responsive.value(mobile: 36, tablet: 40, desktop: 44),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color),
+          ),
+          SizedBox(width: responsive.smallSpacing),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: responsive.bodyFontSize,
+                  ),
+                ),
+                SizedBox(height: responsive.smallSpacing / 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: responsive.smallFontSize + 1,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

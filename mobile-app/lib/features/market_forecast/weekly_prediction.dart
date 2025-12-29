@@ -44,6 +44,25 @@ class WeeklyPrediction extends StatelessWidget {
   final Color blackPepperColor = Colors.orange;
   final Color whitePepperColor = Colors.blue;
 
+  String getMonthName(int month) {
+    final monthNames = [
+      "",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return monthNames[month];
+  }
+
   List<Map<String, dynamic>> generatePreviousWeeks(
     int year,
     int month,
@@ -110,7 +129,7 @@ class WeeklyPrediction extends StatelessWidget {
     final m = int.tryParse(month ?? '') ?? 1;
     final w = int.tryParse(week ?? '') ?? 1;
 
-    final previousWeeks = generatePreviousWeeks(y, m, w, 6);
+    final previousWeeks = generatePreviousWeeks(y, m, w, 5);
     final weekLabels = formatWeekLabelsFromMap(previousWeeks);
     final dataLength = previousWeeks.length;
 
@@ -122,12 +141,26 @@ class WeeklyPrediction extends StatelessWidget {
       whiteData.add(whitePepperPriceData[priceIndex]);
     }
 
+    // Calculate statistics
+    final currentPrice = 1890.0; // This week's price
+    final predictedPrice = 2150.0; // Next week's predicted price
+    final previousPrice = blackData.last;
+    final priceChange = predictedPrice - currentPrice;
+    final percentageChange = (priceChange / currentPrice) * 100;
+    final highPrice = blackData.reduce((a, b) => a > b ? a : b);
+    final lowPrice = blackData.reduce((a, b) => a < b ? a : b);
+    final avgPrice = blackData.reduce((a, b) => a + b) / blackData.length;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F7FA),
 
       appBar: AppBar(
-        title: const Text("Overview"),
-        backgroundColor: Colors.green,
+        title: const Text(
+          "Market Forecast Overview",
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.green[700],
+        elevation: 0,
       ),
 
       body: SafeArea(
@@ -136,49 +169,188 @@ class WeeklyPrediction extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: responsive.smallSpacing),
+              SizedBox(height: responsive.mediumSpacing),
+
+              // Header Card with Period and Predicted Price
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(responsive.largeSpacing),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 255, 232, 161),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color.fromARGB(255, 255, 232, 161).withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.calendar_today,
+                          color: Colors.black54,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${month ?? 'Month'} - ${week ?? 'Week'}, ${year ?? 'Year'}',
+                          style: TextStyle(
+                            fontSize: responsive.bodyFontSize,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: responsive.smallSpacing),
+                    const Text(
+                      'Predicted Price (Next Week)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'Rs. ',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '${predictedPrice.toInt()}',
+                          style: const TextStyle(
+                            fontSize: 42,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.bold,
+                            height: 1.0,
+                          ),
+                        ),
+                        const Text(
+                          ' /kg',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: priceChange >= 0
+                            ? Colors.green[700]!.withOpacity(0.5)
+                            : Colors.red[700]!.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.black87, width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            priceChange >= 0
+                                ? Icons.trending_up
+                                : Icons.trending_down,
+                            color: Colors.black87,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${priceChange >= 0 ? '+' : ''}${priceChange.toStringAsFixed(0)} (${percentageChange.toStringAsFixed(1)}%)',
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: responsive.largeSpacing),
+
+              // Current vs Previous Price
+              ResponsiveText(
+                'Current vs Previous Price',
+                mobileFontSize: responsive.titleFontSize,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+              SizedBox(height: responsive.mediumSpacing),
 
               Center(
                 child: Container(
+                  width: double.infinity,
                   padding: EdgeInsets.all(responsive.mediumSpacing),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(
-                      responsive.largeSpacing / 2,
-                    ),
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black12,
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Column(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ResponsiveText(
-                        '${month ?? 'Month'} - ${week ?? 'Week'} (${year ?? 'Year'})',
-                        mobileFontSize: responsive.bodyFontSize,
-                        color: const Color.fromARGB(255, 0, 0, 0),
+                      _priceColumn(
+                        icon: Icons.trending_flat,
+                        label: 'Previous Week',
+                        value: previousPrice.toInt(),
+                        color: Colors.blue[700],
+                        responsive: responsive,
                       ),
-                      SizedBox(height: responsive.smallSpacing),
-                      ResponsiveText(
-                        'Predicted Price:\nRs.1890 /kg',
-                        mobileFontSize: responsive.titleFontSize,
-                        textAlign: TextAlign.center,
-                        fontWeight: FontWeight.w600,
+                      Container(height: 50, width: 1, color: Colors.grey[300]),
+                      _priceColumn(
+                        icon: Icons.trending_up,
+                        label: 'Current Week',
+                        value: currentPrice.toInt(),
+                        color: Colors.green[700],
+                        responsive: responsive,
                       ),
                     ],
                   ),
                 ),
               ),
 
-              SizedBox(height: responsive.largeSpacing * 4),
+              SizedBox(height: responsive.largeSpacing),
 
               ResponsiveText(
                 'Past Price Trend',
                 mobileFontSize: responsive.titleFontSize,
                 fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+              SizedBox(height: responsive.smallSpacing / 2),
+              Text(
+                'Last 5 weeks comparison',
+                style: TextStyle(
+                  fontSize: responsive.smallFontSize,
+                  color: Colors.grey[600],
+                ),
               ),
 
               SizedBox(height: responsive.mediumSpacing),
@@ -208,7 +380,7 @@ class WeeklyPrediction extends StatelessWidget {
                       minX: 0,
                       maxX: (dataLength - 1).toDouble(),
                       minY: 1000,
-                      maxY: 2700,
+                      maxY: 3200,
                       gridData: FlGridData(
                         show: true,
                         drawVerticalLine: false,
@@ -233,18 +405,18 @@ class WeeklyPrediction extends StatelessWidget {
                           sideTitles: SideTitles(
                             showTitles: true,
                             interval: 1,
-                            reservedSize: 60,
+                            reservedSize: 45,
                             getTitlesWidget: (value, meta) {
                               if (value.toInt() >= weekLabels.length) {
                                 return const SizedBox.shrink();
                               }
                               return SideTitleWidget(
                                 axisSide: meta.axisSide,
-                                angle: 0.785,
+                                angle: 0.5,
                                 child: Text(
                                   weekLabels[value.toInt()],
                                   style: TextStyle(
-                                    fontSize: responsive.smallFontSize,
+                                    fontSize: responsive.smallFontSize * 0.9,
                                   ),
                                 ),
                               );
@@ -281,6 +453,60 @@ class WeeklyPrediction extends StatelessWidget {
 
               SizedBox(height: responsive.largeSpacing),
 
+              // Market Insights
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(responsive.mediumSpacing),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          color: Colors.blue[700],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Market Insights',
+                          style: TextStyle(
+                            fontSize: responsive.bodyFontSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.blue[900],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: responsive.smallSpacing),
+                    _buildInsightRow(
+                      Icons.trending_up,
+                      'Price trend shows ${priceChange >= 0 ? 'upward' : 'downward'} movement',
+                      responsive,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildInsightRow(
+                      Icons.analytics_outlined,
+                      'Historical average: Rs. ${avgPrice.toInt()}/kg',
+                      responsive,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildInsightRow(
+                      Icons.info_outline,
+                      'Price range: Rs. ${lowPrice.toInt()} - Rs. ${highPrice.toInt()}',
+                      responsive,
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: responsive.largeSpacing),
+
               Center(
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.6,
@@ -300,7 +526,16 @@ class WeeklyPrediction extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const Recommendations(),
+                          builder: (context) => Recommendations(
+                            // predictedPrice: next-week forecast (1950)
+                            predictedPrice: predictedPrice,
+                            currentPrice: currentPrice,
+                            previousPrice: previousPrice,
+                            averagePrice: avgPrice,
+                            month: month,
+                            week: week,
+                            year: year,
+                          ),
                         ),
                       );
                     },
@@ -313,6 +548,26 @@ class WeeklyPrediction extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInsightRow(IconData icon, String text, Responsive responsive) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: Colors.blue[700]),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: responsive.smallFontSize,
+              color: Colors.blue[900],
+              height: 1.3,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -330,6 +585,39 @@ class WeeklyPrediction extends StatelessWidget {
           color: whitePepperColor,
           label: 'White Pepper',
           responsive: responsive,
+        ),
+      ],
+    );
+  }
+
+  Widget _priceColumn({
+    required IconData icon,
+    required String label,
+    required int value,
+    required Color? color,
+    required Responsive responsive,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(icon, color: color, size: 28),
+        SizedBox(height: responsive.smallSpacing / 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: responsive.smallFontSize,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Rs. $value /kg',
+          style: TextStyle(
+            fontSize: responsive.titleFontSize * 0.9,
+            color: Colors.grey[900],
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );

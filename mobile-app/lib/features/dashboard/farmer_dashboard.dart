@@ -6,7 +6,7 @@ import '../disease_detection/services/location_service.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
-import '../../widgets/navigation_wrapper.dart';
+import '../chatbot/chatbot_screen.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -191,14 +191,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
   @override
   Widget build(BuildContext context) {
-    return NavigationWrapper(
-      showBottomNavigation: true,
-      initialIndex: 0, // Home tab is active
-      child: _buildDashboardContent(),
-    );
-  }
-
-  Widget _buildDashboardContent() {
     final responsive = context.responsive;
     final primary = const Color(0xFF2E7D32);
 
@@ -206,19 +198,25 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SingleChildScrollView(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        toolbarHeight: 0,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Enhanced Header
                 Container(
-                  padding: responsive.padding(
-                    mobile: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-                    tablet: const EdgeInsets.fromLTRB(32, 24, 32, 36),
-                    desktop: const EdgeInsets.fromLTRB(40, 28, 40, 42),
+                  padding: EdgeInsets.fromLTRB(
+                    responsive.value(mobile: 24, tablet: 32, desktop: 40),
+                    MediaQuery.of(context).padding.top + responsive.value(mobile: 20, tablet: 24, desktop: 28),
+                    responsive.value(mobile: 24, tablet: 32, desktop: 40),
+                    responsive.value(mobile: 30, tablet: 36, desktop: 42),
                   ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -579,6 +577,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       horizontal: responsive.pagePadding,
                     ),
                     children: [
+                      _aiAssistantCard(
+                        responsive,
+                        primary,
+                      ),
                       _tipCard(
                         "Improve drying process",
                         Icons.wb_sunny_rounded,
@@ -616,11 +618,9 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
-  // ... Keep all your existing methods (_buildFeatureCards, _featureCard, _tipCard) exactly as they were ...
   List<Widget> _buildFeatureCards(
     BuildContext context,
     Responsive responsive,
@@ -849,6 +849,131 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _aiAssistantCard(
+    Responsive responsive,
+    Color primary,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatbotScreen()),
+        );
+      },
+      child: Container(
+        margin: EdgeInsets.only(
+          right: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+        ),
+        padding: responsive.padding(
+          mobile: const EdgeInsets.all(14),
+          tablet: const EdgeInsets.all(16),
+          desktop: const EdgeInsets.all(20),
+        ),
+        width: responsive.value(mobile: 200, tablet: 220, desktop: 240),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF1E88E5), // DeepSeek blue
+              const Color(0xFF1565C0),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(
+            responsive.value(mobile: 20, tablet: 22, desktop: 24),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1E88E5).withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: responsive.padding(
+                    mobile: const EdgeInsets.all(8),
+                    tablet: const EdgeInsets.all(9),
+                    desktop: const EdgeInsets.all(10),
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.psychology_rounded,
+                    color: Colors.white,
+                    size: responsive.value(mobile: 20, tablet: 22, desktop: 24),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        color: Colors.amber[300],
+                        size: 12,
+                      ),
+                      const SizedBox(width: 3),
+                      const Text(
+                        'AI',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
+            Text(
+              'Ask AI Assistant',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: responsive.value(mobile: 15, tablet: 16, desktop: 17),
+                color: Colors.white,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Flexible(
+              child: Text(
+                'Get instant farming advice - 100% FREE!',
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: responsive.value(mobile: 10, tablet: 11, desktop: 12),
+                  color: Colors.white.withOpacity(0.9),
+                  height: 1.2,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

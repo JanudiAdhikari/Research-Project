@@ -1,5 +1,7 @@
+import 'package:CeylonPepper/features/market_forecast/export_price_prediction.dart';
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
+
 
 class ExporterDashboard extends StatefulWidget {
   const ExporterDashboard({super.key});
@@ -402,12 +404,19 @@ class _ExporterDashboardState extends State<ExporterDashboard>
     return [
       _featureCard(
         responsive,
-        title: "Market\nPrices",
+        title: "Export\nPrices",
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
           colors: [Colors.purple.shade400, Colors.purple.shade600],
         ),
-        onTap: () {},
+        onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ExportPricePrediction(),
+      ),
+    );
+  },
       ),
       _featureCard(
         responsive,

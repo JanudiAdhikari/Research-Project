@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/api_keys.dart';
 
 class GeminiService {
   // Groq API Configuration (FREE tier - no credit card required!)
   // Get your API key from: https://console.groq.com/keys
-  static const String _apiKey = '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';
+  // Configure in: lib/config/api_keys.dart
+  static final String _apiKey = ApiKeys.groqApiKey;
   static const String _apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
   final List<Map<String, String>> _chatHistory = [];

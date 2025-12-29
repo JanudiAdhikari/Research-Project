@@ -1,0 +1,15 @@
+# Documentation files (local reference only - don't commit)
+ACTION_REQUIRED.md
+START_HERE.md
+GIT_FIX_GUIDE.md
+VISUAL_GUIDE.md
+QUICK_START.md
+SECURITY_FIX.md
+REFERENCE_CARD.txt
+INDEX.md
+
+# Git cleanup scripts (local use only)
+git_cleanup.bat
+git_cleanup.ps1
+git_cleanup.sh
+

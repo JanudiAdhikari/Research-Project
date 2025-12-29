@@ -30,19 +30,32 @@ You got the "insufficient credits" error with DeepSeek because they only give li
 
 ---
 
-### Step 2: Add API Key to Your App
+### Step 2: Add API Key to Your App (Secure Method)
 
-**Open:** `lib\services\gemini_service.dart`
+**Option A: Copy the example file (Recommended)**
+```bash
+# In the mobile-app directory
+cp lib/config/api_keys.dart.example lib/config/api_keys.dart
+```
 
-**Line 7 - Replace:**
+**Option B: Manual setup**
+1. Navigate to: `lib/config/`
+2. Create a new file: `api_keys.dart`
+3. Copy content from: `api_keys.dart.example`
+
+**Then edit `lib/config/api_keys.dart`:**
+
+**Replace:**
 ```dart
-static const String _apiKey = 'YOUR_GROQ_API_KEY_HERE';
+static const String groqApiKey = 'YOUR_GROQ_API_KEY_HERE';
 ```
 
 **With your actual key:**
 ```dart
-static const String _apiKey = 'gsk_your_actual_groq_api_key_here';
+static const String groqApiKey = 'gsk_your_actual_groq_api_key_here';
 ```
+
+**✅ This file is gitignored - your key stays secure!**
 
 ---
 
@@ -193,7 +206,8 @@ Then you'll see a detailed response! ✅
 Before testing:
 - [ ] Sign up at https://console.groq.com/
 - [ ] Get API key from https://console.groq.com/keys
-- [ ] Update key in gemini_service.dart (line 7)
+- [ ] Create lib/config/api_keys.dart from the example file
+- [ ] Update your Groq API key in lib/config/api_keys.dart
 - [ ] Hot restart (Shift+R)
 - [ ] Test chatbot!
 

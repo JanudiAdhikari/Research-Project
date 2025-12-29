@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/gemini_service.dart';
+import '../../services/chatbot_service.dart';
 import '../../utils/responsive.dart';
 
 class ChatbotScreen extends StatefulWidget {

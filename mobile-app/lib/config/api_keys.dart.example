@@ -1,0 +1,17 @@
+/// API Keys Configuration Example
+///
+/// This is a template file. To use it:
+/// 1. Copy this file and rename it to: api_keys.dart
+/// 2. Replace all 'YOUR_..._HERE' values with your actual API keys
+/// 3. The api_keys.dart file is gitignored and won't be committed
+///
+/// Get your Groq API key from: https://console.groq.com/keys
+
+class ApiKeys {
+  // Groq API Key (FREE - get from: https://console.groq.com/keys)
+  static const String groqApiKey = 'YOUR_GROQ_API_KEY_HERE';
+
+  // Add other API keys here as needed
+  // static const String otherApiKey = 'YOUR_OTHER_API_KEY_HERE';
+}
+

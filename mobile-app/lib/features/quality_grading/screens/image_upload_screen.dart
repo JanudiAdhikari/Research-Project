@@ -99,20 +99,6 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
             color: Colors.white,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.help_outline_rounded, color: Colors.white),
-            tooltip: 'Capture guidelines',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const InstructionsScreen(),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -123,151 +109,94 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
               Container(
                 width: double.infinity,
                 padding: responsive.padding(
-                  mobile: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-                  tablet: const EdgeInsets.fromLTRB(32, 28, 32, 32),
-                  desktop: const EdgeInsets.fromLTRB(40, 32, 40, 36),
+                  mobile: const EdgeInsets.all(16),
+                  tablet: const EdgeInsets.all(20),
+                  desktop: const EdgeInsets.all(24),
                 ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primary, primary.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(
-                      responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                    ),
-                    bottomRight: Radius.circular(
-                      responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primary.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
+                color: Colors.white,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Step indicator
                     Row(
                       children: [
-                        Container(
-                          padding: responsive.padding(
-                            mobile: const EdgeInsets.all(12),
-                            tablet: const EdgeInsets.all(14),
-                            desktop: const EdgeInsets.all(16),
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Icon(
-                            Icons.photo_camera_rounded,
-                            color: Colors.white,
-                            size: responsive.value(
-                              mobile: 28,
-                              tablet: 32,
-                              desktop: 36,
-                            ),
-                          ),
+                        _buildStepIndicator(1, true, primary, responsive),
+                        _buildStepLine(true, primary, responsive),
+                        _buildStepIndicator(2, true, primary, responsive),
+                        _buildStepLine(true, primary, responsive),
+                        _buildStepIndicator(3, true, primary, responsive),
+                      ],
+                    ),
+                    ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+                    Text(
+                      "Capture Pepper Images",
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(
+                          mobile: 22,
+                          tablet: 24,
+                          desktop: 26,
                         ),
-                        ResponsiveSpacing.horizontal(
-                          mobile: 16,
-                          tablet: 18,
-                          desktop: 20,
-                        ),
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
+                    Text(
+                      "Take 9 images from different angles and layers",
+                      style: TextStyle(
+                        fontSize: responsive.bodyFontSize,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+                    // Compact Progress Bar
+                    Row(
+                      children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "Step 3 of 3",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: responsive.bodyFontSize - 1,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
-                              Text(
-                                "Capture Pepper Images",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: responsive.fontSize(
-                                    mobile: 20,
-                                    tablet: 22,
-                                    desktop: 24,
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '$uploadedImagesCount of 9 images',
+                                    style: TextStyle(
+                                      fontSize: responsive.bodyFontSize - 1,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[700],
+                                    ),
                                   ),
-                                  fontWeight: FontWeight.w700,
-                                  height: 1.2,
+                                  Text(
+                                    '${((uploadedImagesCount / 9) * 100).toInt()}%',
+                                    style: TextStyle(
+                                      fontSize: responsive.bodyFontSize - 1,
+                                      fontWeight: FontWeight.w600,
+                                      color: allImagesUploaded
+                                          ? Colors.green.shade700
+                                          : primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: LinearProgressIndicator(
+                                  value: uploadedImagesCount / 9,
+                                  backgroundColor: Colors.grey.shade200,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    allImagesUploaded
+                                        ? Colors.green.shade500
+                                        : primary,
+                                  ),
+                                  minHeight: 8,
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ],
-                    ),
-                    ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                    // Progress Indicator
-                    Container(
-                      padding: responsive.padding(
-                        mobile: const EdgeInsets.all(12),
-                        tablet: const EdgeInsets.all(14),
-                        desktop: const EdgeInsets.all(16),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.collections_rounded,
-                            color: Colors.white,
-                            size: responsive.smallIconSize,
-                          ),
-                          ResponsiveSpacing.horizontal(
-                            mobile: 10,
-                            tablet: 12,
-                            desktop: 14,
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '$uploadedImagesCount of 9 images captured',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: responsive.bodyFontSize - 1,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                ResponsiveSpacing(mobile: 6, tablet: 7, desktop: 8),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: LinearProgressIndicator(
-                                    value: uploadedImagesCount / 9,
-                                    backgroundColor: Colors.white.withOpacity(0.2),
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      allImagesUploaded
-                                          ? Colors.green.shade400
-                                          : Colors.amber.shade300,
-                                    ),
-                                    minHeight: 6,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ],
                 ),
@@ -285,7 +214,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Info Card
+                      // Info Card with View More Instructions Button
                       Container(
                         padding: responsive.padding(
                           mobile: const EdgeInsets.all(16),
@@ -302,26 +231,80 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: Colors.blue.shade200),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.camera_enhance_rounded,
-                              color: Colors.blue.shade700,
-                              size: responsive.mediumIconSize,
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.camera_enhance_rounded,
+                                  color: Colors.blue.shade700,
+                                  size: responsive.mediumIconSize,
+                                ),
+                                ResponsiveSpacing.horizontal(
+                                  mobile: 12,
+                                  tablet: 14,
+                                  desktop: 16,
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'Capture 9 images (3 angles × 3 layers) for accurate analysis',
+                                    style: TextStyle(
+                                      fontSize: responsive.bodyFontSize - 1,
+                                      color: Colors.blue.shade900,
+                                      height: 1.4,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            ResponsiveSpacing.horizontal(
-                              mobile: 12,
-                              tablet: 14,
-                              desktop: 16,
-                            ),
-                            Expanded(
-                              child: Text(
-                                'Capture 9 images (3 angles × 3 layers) for accurate analysis',
-                                style: TextStyle(
-                                  fontSize: responsive.bodyFontSize - 1,
-                                  color: Colors.blue.shade900,
-                                  height: 1.4,
-                                  fontWeight: FontWeight.w500,
+                            ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const InstructionsScreen(),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: responsive.value(
+                                    mobile: 12,
+                                    tablet: 14,
+                                    desktop: 16,
+                                  ),
+                                  vertical: responsive.value(
+                                    mobile: 8,
+                                    tablet: 9,
+                                    desktop: 10,
+                                  ),
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade700,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.help_outline_rounded,
+                                      color: Colors.white,
+                                      size: responsive.smallIconSize,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'View More Instructions',
+                                      style: TextStyle(
+                                        fontSize: responsive.bodyFontSize - 1,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
@@ -365,25 +348,22 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
 
                       ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
-                      // Submit Button
+                      // Submit Button - Always Enabled
                       Container(
                         width: double.infinity,
                         height: responsive.buttonHeight,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(28),
-                          boxShadow: allImagesUploaded
-                              ? [
+                          boxShadow: [
                             BoxShadow(
                               color: primary.withOpacity(0.3),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
-                          ]
-                              : [],
+                          ],
                         ),
                         child: ElevatedButton(
-                          onPressed: allImagesUploaded
-                              ? () {
+                          onPressed: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -392,14 +372,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                 ),
                               ),
                             );
-                          }
-                              : null,
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primary,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            disabledBackgroundColor: Colors.grey.shade300,
-                            disabledForegroundColor: Colors.grey.shade500,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28),
                             ),
@@ -407,30 +384,19 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              if (allImagesUploaded) ...[
-                                Icon(
-                                  Icons.analytics_rounded,
-                                  size: responsive.smallIconSize,
-                                ),
-                                const SizedBox(width: 8),
-                              ],
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: responsive.smallIconSize,
+                              ),
+                              const SizedBox(width: 8),
                               Text(
-                                allImagesUploaded
-                                    ? "Submit for Analysis"
-                                    : "Capture all 9 images to continue",
+                                "Continue",
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: responsive.titleFontSize,
                                   letterSpacing: 0.5,
                                 ),
                               ),
-                              if (allImagesUploaded) ...[
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: responsive.smallIconSize,
-                                ),
-                              ],
                             ],
                           ),
                         ),
@@ -711,6 +677,47 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStepIndicator(int step, bool isActive, Color primary, Responsive responsive) {
+    final isCompleted = step < 3;
+
+    return Container(
+      width: responsive.value(mobile: 32, tablet: 36, desktop: 40),
+      height: responsive.value(mobile: 32, tablet: 36, desktop: 40),
+      decoration: BoxDecoration(
+        color: isActive || isCompleted ? primary : Colors.grey[300],
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: isCompleted
+            ? Icon(
+          Icons.check,
+          color: Colors.white,
+          size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+        )
+            : Text(
+          '$step',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: responsive.bodyFontSize,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepLine(bool isActive, Color primary, Responsive responsive) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: EdgeInsets.symmetric(
+          horizontal: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+        ),
+        color: isActive ? primary : Colors.grey[300],
       ),
     );
   }

@@ -48,518 +48,404 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     final responsive = context.responsive;
     const primary = Color(0xFF2E7D32);
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: primary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Quality Report',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share_rounded, color: Colors.white),
-            tooltip: 'Share report',
-            onPressed: () {
-              // TODO: Share functionality
-            },
-          ),
-        ],
-      ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Success Header
-              Container(
-                width: double.infinity,
-                padding: responsive.padding(
-                  mobile: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-                  tablet: const EdgeInsets.fromLTRB(32, 40, 32, 40),
-                  desktop: const EdgeInsets.fromLTRB(40, 48, 40, 48),
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primary, primary.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(
-                      responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                    ),
-                    bottomRight: Radius.circular(
-                      responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primary.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: responsive.padding(
-                        mobile: const EdgeInsets.all(16),
-                        tablet: const EdgeInsets.all(18),
-                        desktop: const EdgeInsets.all(20),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.check_circle_rounded,
-                        color: Colors.white,
-                        size: responsive.value(
-                          mobile: 48,
-                          tablet: 56,
-                          desktop: 64,
-                        ),
-                      ),
-                    ),
-                    ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                    Text(
-                      "Analysis Complete!",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: responsive.fontSize(
-                          mobile: 24,
-                          tablet: 26,
-                          desktop: 28,
-                        ),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-                    Text(
-                      "Your pepper quality has been graded",
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: responsive.bodyFontSize,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
+      },
 
-              ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor: primary,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Quality Report',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.share_rounded, color: Colors.white),
+              tooltip: 'Share report',
+              onPressed: () {
+                // TODO: Share functionality
+              },
+            ),
+          ],
+        ),
+        body: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
-              // Main Content
-              SlideTransition(
-                position: _slideAnimation,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.pagePadding,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Grade Card
-                      Container(
-                        width: double.infinity,
-                        padding: responsive.padding(
-                          mobile: const EdgeInsets.all(24),
-                          tablet: const EdgeInsets.all(28),
-                          desktop: const EdgeInsets.all(32),
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.green.shade50,
-                              Colors.green.shade100.withOpacity(0.5),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                // Main Content
+                SlideTransition(
+                  position: _slideAnimation,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: responsive.pagePadding,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Grade Card
+                        Container(
+                          width: double.infinity,
+                          padding: responsive.padding(
+                            mobile: const EdgeInsets.all(24),
+                            tablet: const EdgeInsets.all(28),
+                            desktop: const EdgeInsets.all(32),
                           ),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.green.shade300,
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.green.withOpacity(0.2),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.green.shade50,
+                                Colors.green.shade100.withOpacity(0.5),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: responsive.padding(
-                                mobile: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 8,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: Colors.green.shade300,
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.2),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Container(
+                                padding: responsive.padding(
+                                  mobile: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 8,
+                                  ),
+                                  tablet: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 10,
+                                  ),
+                                  desktop: const EdgeInsets.symmetric(
+                                    horizontal: 28,
+                                    vertical: 12,
+                                  ),
                                 ),
-                                tablet: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 10,
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade700,
+                                  borderRadius: BorderRadius.circular(50),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.green.shade700.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                desktop: const EdgeInsets.symmetric(
-                                  horizontal: 28,
-                                  vertical: 12,
+                                child: Text(
+                                  "Premium",
+                                  style: TextStyle(
+                                    fontSize: responsive.fontSize(
+                                      mobile: 20,
+                                      tablet: 22,
+                                      desktop: 24,
+                                    ),
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    letterSpacing: 2,
+                                  ),
                                 ),
                               ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade700,
-                                borderRadius: BorderRadius.circular(50),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.green.shade700.withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
+                              ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    "92",
+                                    style: TextStyle(
+                                      fontSize: responsive.fontSize(
+                                        mobile: 56,
+                                        tablet: 64,
+                                        desktop: 72,
+                                      ),
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.green.shade700,
+                                      height: 1,
+                                    ),
+                                  ),
+                                  Text(
+                                    " / 100",
+                                    style: TextStyle(
+                                      fontSize: responsive.fontSize(
+                                        mobile: 24,
+                                        tablet: 26,
+                                        desktop: 28,
+                                      ),
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.green.shade700,
+                                    ),
                                   ),
                                 ],
                               ),
-                              child: Text(
-                                "GRADE A",
+                              ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
+                              Text(
+                                "Overall Quality Score",
                                 style: TextStyle(
-                                  fontSize: responsive.fontSize(
-                                    mobile: 20,
-                                    tablet: 22,
-                                    desktop: 24,
-                                  ),
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 2,
+                                  fontSize: responsive.bodyFontSize,
+                                  color: Colors.green.shade900,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
+                            ],
+                          ),
+                        ),
+
+                        ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
+
+                        // Batch Information Section
+                        _buildSectionHeader(
+                          responsive,
+                          primary,
+                          'Batch Information',
+                          Icons.info_rounded,
+                        ),
+
+                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildInfoRow(responsive, 'Pepper Type', 'Black Pepper', Icons.grass_rounded),
+                              _buildDivider(responsive),
+                              _buildInfoRow(responsive, 'Pepper Variety', 'Ceylon Pepper', Icons.local_florist_rounded),
+                              _buildDivider(responsive),
+                              _buildInfoRow(responsive, 'Drying Method', 'Sun Dried', Icons.wb_sunny_rounded),
+                              _buildDivider(responsive),
+                              _buildInfoRow(responsive, 'Harvest Date', '12 Aug 2025', Icons.calendar_today_rounded),
+                              _buildDivider(responsive),
+                              _buildInfoRow(responsive, 'Batch Weight', '25 kg', Icons.scale_rounded),
+                              _buildDivider(responsive),
+                              _buildInfoRow(responsive, 'Bulk Density', '540 g/L', Icons.science_rounded),
+                              _buildDivider(responsive),
+                              _buildInfoRow(responsive, 'Certificates', 'GAP, Quality Certificate', Icons.verified_rounded, isLast: true),
+                            ],
+                          ),
+                        ),
+
+                        ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
+
+                        // Quality Breakdown Section
+                        _buildSectionHeader(
+                          responsive,
+                          primary,
+                          'Quality Breakdown',
+                          Icons.analytics_rounded,
+                        ),
+
+                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                        Container(
+                          padding: responsive.padding(
+                            mobile: const EdgeInsets.all(20),
+                            tablet: const EdgeInsets.all(24),
+                            desktop: const EdgeInsets.all(28),
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildScoreBar(responsive, 'Size / Pinheads', 92, Colors.green),
+                              _buildScoreBar(responsive, 'Color Uniformity', 88, Colors.blue),
+                              _buildScoreBar(responsive, 'Surface Defects', 94, Colors.purple),
+                              _buildScoreBar(responsive, 'Extraneous Matter', 98, Colors.orange),
+                              _buildScoreBar(responsive, 'Adulteration', 100, Colors.teal),
+                              _buildScoreBar(responsive, 'Uniformity', 90, Colors.indigo, isLast: true),
+                            ],
+                          ),
+                        ),
+
+                        ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
+
+                        // Improvement Suggestions Section
+                        _buildSectionHeader(
+                          responsive,
+                          primary,
+                          'Improvement Suggestions',
+                          Icons.lightbulb_rounded,
+                        ),
+
+                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                        Container(
+                          padding: responsive.padding(
+                            mobile: const EdgeInsets.all(20),
+                            tablet: const EdgeInsets.all(24),
+                            desktop: const EdgeInsets.all(28),
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blue.shade50,
+                                Colors.blue.shade100.withOpacity(0.5),
+                              ],
                             ),
-                            ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-                            Row(
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.blue.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildSuggestionItem(
+                                responsive,
+                                'Ensure uniform drying to improve color score',
+                                Icons.wb_sunny_rounded,
+                              ),
+                              ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+                              _buildSuggestionItem(
+                                responsive,
+                                'Remove broken berries before packing',
+                                Icons.cleaning_services_rounded,
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
+
+                        // Action Buttons
+                        Container(
+                          width: double.infinity,
+                          height: responsive.buttonHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primary.withOpacity(0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // TODO: Download PDF
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
+                              ),
+                            ),
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
                               children: [
-                                Text(
-                                  "92",
-                                  style: TextStyle(
-                                    fontSize: responsive.fontSize(
-                                      mobile: 56,
-                                      tablet: 64,
-                                      desktop: 72,
-                                    ),
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.green.shade700,
-                                    height: 1,
-                                  ),
+                                Icon(
+                                  Icons.download_rounded,
+                                  size: responsive.smallIconSize,
                                 ),
+                                const SizedBox(width: 8),
                                 Text(
-                                  " / 100",
+                                  "Download Report (PDF)",
                                   style: TextStyle(
-                                    fontSize: responsive.fontSize(
-                                      mobile: 24,
-                                      tablet: 26,
-                                      desktop: 28,
-                                    ),
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.green.shade700,
+                                    fontSize: responsive.titleFontSize,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ],
                             ),
-                            ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-                            Text(
-                              "Overall Quality Score",
-                              style: TextStyle(
-                                fontSize: responsive.bodyFontSize,
-                                color: Colors.green.shade900,
-                                fontWeight: FontWeight.w600,
+                          ),
+                        ),
+
+                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                        Container(
+                          width: double.infinity,
+                          height: responsive.buttonHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(color: primary, width: 2),
+                          ),
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // TODO: View grading algorithm
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: primary,
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
-                      // Batch Information Section
-                      _buildSectionHeader(
-                        responsive,
-                        primary,
-                        'Batch Information',
-                        Icons.info_rounded,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _buildInfoRow(responsive, 'Pepper Type', 'Black Pepper', Icons.grass_rounded),
-                            _buildDivider(responsive),
-                            _buildInfoRow(responsive, 'Pepper Variety', 'Ceylon Pepper (Local)', Icons.local_florist_rounded),
-                            _buildDivider(responsive),
-                            _buildInfoRow(responsive, 'Drying Method', 'Sun Dried', Icons.wb_sunny_rounded),
-                            _buildDivider(responsive),
-                            _buildInfoRow(responsive, 'Harvest Date', '12 Aug 2025', Icons.calendar_today_rounded),
-                            _buildDivider(responsive),
-                            _buildInfoRow(responsive, 'Batch Weight', '25 kg', Icons.scale_rounded),
-                            _buildDivider(responsive),
-                            _buildInfoRow(responsive, 'Bulk Density', '540 g/L', Icons.science_rounded),
-                            _buildDivider(responsive),
-                            _buildInfoRow(responsive, 'Certificates', 'GAP, Quality Certificate', Icons.verified_rounded, isLast: true),
-                          ],
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
-                      // Quality Breakdown Section
-                      _buildSectionHeader(
-                        responsive,
-                        primary,
-                        'Quality Breakdown',
-                        Icons.analytics_rounded,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                      Container(
-                        padding: responsive.padding(
-                          mobile: const EdgeInsets.all(20),
-                          tablet: const EdgeInsets.all(24),
-                          desktop: const EdgeInsets.all(28),
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _buildScoreBar(responsive, 'Size / Pinheads', 92, Colors.green),
-                            _buildScoreBar(responsive, 'Color Uniformity', 88, Colors.blue),
-                            _buildScoreBar(responsive, 'Surface Defects', 94, Colors.purple),
-                            _buildScoreBar(responsive, 'Extraneous Matter', 98, Colors.orange),
-                            _buildScoreBar(responsive, 'Adulteration', 100, Colors.teal),
-                            _buildScoreBar(responsive, 'Uniformity', 90, Colors.indigo, isLast: true),
-                          ],
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
-                      // Observations Section
-                      _buildSectionHeader(
-                        responsive,
-                        primary,
-                        'Observations',
-                        Icons.visibility_rounded,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                      Container(
-                        padding: responsive.padding(
-                          mobile: const EdgeInsets.all(20),
-                          tablet: const EdgeInsets.all(24),
-                          desktop: const EdgeInsets.all(28),
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _buildBulletPoint(responsive, 'Minor color variation detected', Colors.amber),
-                            ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-                            _buildBulletPoint(responsive, 'Bulk density within acceptable range', Colors.green),
-                          ],
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
-                      // Improvement Suggestions Section
-                      _buildSectionHeader(
-                        responsive,
-                        primary,
-                        'Improvement Suggestions',
-                        Icons.lightbulb_rounded,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                      Container(
-                        padding: responsive.padding(
-                          mobile: const EdgeInsets.all(20),
-                          tablet: const EdgeInsets.all(24),
-                          desktop: const EdgeInsets.all(28),
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.blue.shade50,
-                              Colors.blue.shade100.withOpacity(0.5),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.blue.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _buildSuggestionItem(
-                              responsive,
-                              'Ensure uniform drying to improve color score',
-                              Icons.wb_sunny_rounded,
-                            ),
-                            ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                            _buildSuggestionItem(
-                              responsive,
-                              'Remove broken berries before packing',
-                              Icons.cleaning_services_rounded,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-
-                      // Action Buttons
-                      Container(
-                        width: double.infinity,
-                        height: responsive.buttonHeight,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primary.withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // TODO: Download PDF
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.download_rounded,
-                                size: responsive.smallIconSize,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                "Download Report (PDF)",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: responsive.titleFontSize,
-                                  letterSpacing: 0.5,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: responsive.smallIconSize,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                      Container(
-                        width: double.infinity,
-                        height: responsive.buttonHeight,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: primary, width: 2),
-                        ),
-                        child: OutlinedButton(
-                          onPressed: () {
-                            // TODO: View grading algorithm
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: primary,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "View Grading Algorithm",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: responsive.titleFontSize,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.info_outline_rounded,
-                                size: responsive.smallIconSize,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                "View Grading Algorithm",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: responsive.titleFontSize,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
-                      ),
 
-                      ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-                    ],
+                        ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

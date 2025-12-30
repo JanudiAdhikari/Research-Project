@@ -4,6 +4,7 @@ import '../../../widgets/bottom_navigation.dart';
 import '../../../widgets/navigation_wrapper.dart';
 import 'batch_details_screen.dart';
 import 'how_it_works_screen.dart';
+import 'image_capture_guide_screen.dart';
 import 'iot_device_setup_screen.dart';
 import 'past_reports_screen.dart';
 import 'quality_tips_main_screen.dart';
@@ -549,7 +550,12 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           description: "Learn how to capture quality images",
           icon: Icons.camera_alt_rounded,
           color: Colors.teal,
-          onTap: () => _showImageCaptureGuide(context, responsive),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ImageCaptureGuideScreen()),
+              );
+            }
         ),
         SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
         _resourceCard(

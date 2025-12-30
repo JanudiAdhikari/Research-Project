@@ -792,38 +792,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
               ),
             ],
           ),
-          ResponsiveSpacing(mobile: 14, tablet: 18, desktop: 22),
-          Row(
-            children: [
-              Expanded(
-                child: _secondaryFeatureCard(
-                  context,
-                  responsive,
-                  "Traceability",
-                  Icons.qr_code_scanner_rounded,
-                  Colors.indigo.shade400,
-                  Colors.indigo.shade50,
-                      () {
-                    // TODO: Navigate to blockchain traceability
-                  },
-                ),
-              ),
-              ResponsiveSpacing.horizontal(mobile: 14, tablet: 18, desktop: 22),
-              Expanded(
-                child: _secondaryFeatureCard(
-                  context,
-                  responsive,
-                  "Resources",
-                  Icons.menu_book_rounded,
-                  Colors.brown.shade400,
-                  Colors.brown.shade50,
-                      () {
-                    // TODO: Navigate to educational resources
-                  },
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );

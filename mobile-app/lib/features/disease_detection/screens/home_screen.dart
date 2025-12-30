@@ -6,6 +6,7 @@ import 'image_picker_screen.dart';
 import 'posts_view_screen.dart';
 import 'complaint_screen.dart';
 import 'complaint_list_screen.dart';
+import 'analyze_plants_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final User? user;
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (image != null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Photo captured!'),
@@ -53,234 +55,160 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _logout(BuildContext context) async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      Navigator.pushReplacementNamed(context, '/login');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Logout error: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+  void _navigateToAnalyzePlants(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AnalyzePlantsScreen()),
+    );
   }
 
   String _getUserDisplayName() {
-    if (widget.user == null) return 'Guest';
-    return widget.user?.displayName ?? widget.user?.email?.split('@').first ?? 'User';
+    return 'Farmer';
   }
 
   String _getUserEmail() {
-    return widget.user?.email ?? 'No email';
+    return widget.user?.email ?? '';
   }
 
   @override
   Widget build(BuildContext context) {
+    const Color primary = Color(0xFF2E7D32);
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flutter Social App'),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        actions: [
-          // User profile with logout option
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: PopupMenuButton<String>(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.person, color: Colors.blue, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      _getUserDisplayName(),
-                      style: const TextStyle(
-                        color: Colors.blue,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              onSelected: (value) {
-                if (value == 'logout') {
-                  _logout(context);
-                }
-              },
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.logout, size: 20, color: Colors.red),
-                      const SizedBox(width: 8),
-                      const Text('Logout'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: Colors.grey[50],
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Section
+            // ---------------- HEADER ----------------
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.fromLTRB(0, MediaQuery.of(context).padding.top + 20, 0, 30),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(20),
-                  bottomRight: Radius.circular(20),
+                gradient: LinearGradient(
+                  colors: [primary, primary.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ),
-              child: Column(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.blue, size: 60),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Welcome, ${_getUserDisplayName()}!',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _getUserEmail(),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue[700],
-                    ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Hello, ${_getUserDisplayName()} 👋",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      "Disease Detection",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    if (_getUserEmail().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        _getUserEmail(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 24),
 
-            // Features Grid
+            const SizedBox(height: 32),
+
+            // ---------------- FEATURES LIST ----------------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  // Posts Button Card
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      leading: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.dynamic_feed, color: Colors.blue),
-                      ),
-                      title: const Text(
-                        'View Posts',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: const Text('Create and view social posts'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  // View Posts
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: _boxDecoration(),
+                    child: _buildListTile(
+                      title: "View Posts",
+                      subtitle: "Create and view social posts",
+                      icon: Icons.dynamic_feed,
+                      iconColor: const Color(0xFF2196F3),
                       onTap: () => _navigateToPosts(context),
                     ),
                   ),
 
-                  // Complaint Button Card
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      leading: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.report_problem, color: Colors.orange),
-                      ),
-                      title: const Text(
-                        'Make a Complaint',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: const Text('Submit your complaints or issues'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  // Make a Complaint
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: _boxDecoration(),
+                    child: _buildListTile(
+                      title: "Make a Complaint",
+                      subtitle: "Submit your complaints or issues",
+                      icon: Icons.report_problem,
+                      iconColor: const Color(0xFFFF9800),
                       onTap: () => _navigateToComplaint(context),
                     ),
                   ),
 
-                  // Complaint Management Card
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      leading: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.purple.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.admin_panel_settings, color: Colors.purple),
-                      ),
-                      title: const Text(
-                        'Manage Complaints',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: const Text('View and manage all complaints'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  // Manage Complaints
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: _boxDecoration(),
+                    child: _buildListTile(
+                      title: "Manage Complaints",
+                      subtitle: "View and manage all complaints",
+                      icon: Icons.admin_panel_settings,
+                      iconColor: const Color(0xFF9C27B0),
                       onTap: () => _navigateToComplaintManagement(context),
                     ),
                   ),
 
-                  // Camera Button Card
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  // Analyze Plants
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: _boxDecoration(),
+                    child: _buildListTile(
+                      title: "Analyze Plants",
+                      subtitle: "Detect plant diseases with AI",
+                      icon: Icons.eco,
+                      iconColor: const Color(0xFF009688),
+                      onTap: () => _navigateToAnalyzePlants(context),
                     ),
-                    child: ListTile(
-                      leading: Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.camera_alt, color: Colors.green),
-                      ),
-                      title: const Text(
-                        'Open Camera',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: const Text('Capture photos using camera'),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  ),
+
+                  // Open Camera
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: _boxDecoration(),
+                    child: _buildListTile(
+                      title: "Disease Detection Camera",
+                      subtitle: "Scan Disease photos using camera",
+                      icon: Icons.camera_alt,
+                      iconColor: const Color(0xFF4CAF50),
                       onTap: () => _openCamera(context),
                     ),
                   ),
@@ -292,4 +220,51 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  BoxDecoration _boxDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.08),
+          blurRadius: 8,
+          spreadRadius: 1,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildListTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.all(16),
+      leading: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: iconColor),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+      onTap: onTap,
+    );
+  }
 }
+

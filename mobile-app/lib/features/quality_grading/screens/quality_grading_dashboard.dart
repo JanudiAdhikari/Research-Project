@@ -5,6 +5,7 @@ import '../../../widgets/navigation_wrapper.dart';
 import 'batch_details_screen.dart';
 import 'how_it_works_screen.dart';
 import 'past_reports_screen.dart';
+import 'quality_tips_main_screen.dart';
 
 class QualityGradingDashboard extends StatefulWidget {
   const QualityGradingDashboard({super.key});
@@ -405,7 +406,12 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         gradient: LinearGradient(
           colors: [Colors.purple.shade400, Colors.purple.shade600],
         ),
-        onTap: () => _showQualityTipsDialog(context, responsive),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const QualityTipsMainScreen()),
+          );
+        },
       ),
     ];
   }

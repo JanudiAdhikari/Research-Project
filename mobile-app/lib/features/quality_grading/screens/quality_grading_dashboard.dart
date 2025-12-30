@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
+import '../../../widgets/bottom_navigation.dart';
 import '../../../widgets/navigation_wrapper.dart';
 import 'batch_details_screen.dart';
+import 'past_reports_screen.dart';
 
 class QualityGradingDashboard extends StatefulWidget {
   const QualityGradingDashboard({super.key});
@@ -39,10 +41,90 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
 
   @override
   Widget build(BuildContext context) {
-    return NavigationWrapper(
-      showBottomNavigation: true,
-      initialIndex: 3,
-      child: _buildContent(context),
+    final responsive = context.responsive;
+    const primary = Color(0xFF2E7D32);
+
+    return Scaffold(
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        backgroundColor: primary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          "Quality Grading",
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline_rounded, color: Colors.white),
+            onPressed: () => _showQuickGuideDialog(context, responsive),
+          ),
+        ],
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: responsive.value(mobile: 16, tablet: 20, desktop: 24)),
+
+                    // Summary Statistics Cards
+                    _buildSummaryGrid(context, responsive),
+
+                    SizedBox(height: responsive.value(mobile: 20, tablet: 24, desktop: 28)),
+
+                    // Main Action Cards
+                    Text(
+                      "Grading Actions",
+                      style: TextStyle(
+                        fontSize: responsive.titleFontSize,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    SizedBox(height: responsive.value(mobile: 10, tablet: 12, desktop: 16)),
+                    _buildActionCardsGrid(context, responsive, primary),
+
+                    SizedBox(height: responsive.value(mobile: 20, tablet: 24, desktop: 28)),
+
+                    // Educational Resources Section
+                    Text(
+                      "Resources & Support",
+                      style: TextStyle(
+                        fontSize: responsive.titleFontSize,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    SizedBox(height: responsive.value(mobile: 10, tablet: 12, desktop: 16)),
+                    _buildResourceCards(context, responsive, primary),
+
+                    SizedBox(height: responsive.value(mobile: 24, tablet: 32, desktop: 40)),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 2, // Quality tab is index 2
+        onTabSelected: (index) {
+          // Handle navigation based on index
+          if (index != 2) { // If not already on Quality tab
+            Navigator.pop(context); // Go back and let NavigationWrapper handle it
+          }
+        },
+      ),
     );
   }
 
@@ -287,8 +369,11 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           colors: [Colors.blue.shade400, Colors.blue.shade600],
         ),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Opening past reports...")),
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const PastReportsScreen(),
+            ),
           );
         },
       ),

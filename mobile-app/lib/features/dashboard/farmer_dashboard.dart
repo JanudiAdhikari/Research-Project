@@ -8,6 +8,7 @@ import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
 import '../../widgets/navigation_wrapper.dart';
 import '../quality_grading/screens/quality_grading_dashboard.dart';
+import '../chatbot/chatbot_screen.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -628,6 +629,21 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     Color primary,
   ) {
     return [
+      _featureCard(
+        context,
+        responsive,
+        title: "AI Agent",
+        icon: Icons.smart_toy_rounded,
+        gradient: LinearGradient(
+          colors: [Colors.teal.shade400, Colors.teal.shade600],
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ChatbotScreen()),
+          );
+        },
+      ),
       _featureCard(
         context,
         responsive,

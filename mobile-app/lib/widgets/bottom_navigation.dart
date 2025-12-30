@@ -1,3 +1,4 @@
+//v2
 import 'package:flutter/material.dart';
 import 'package:CeylonPepper/utils/responsive.dart';
 
@@ -46,34 +47,40 @@ class _BottomNavigationState extends State<BottomNavigation> {
         child: Container(
           height: responsive.value(mobile: 70, tablet: 75, desktop: 80),
           padding: EdgeInsets.symmetric(
-            horizontal: responsive.value(mobile: 16, tablet: 24, desktop: 32),
+            horizontal: responsive.value(mobile: 8, tablet: 16, desktop: 24),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(
                 index: 0,
-                icon: Icons.home_rounded,
-                label: "Home",
+                icon: Icons.dashboard_rounded,
+                label: "Dashboard",
                 isActive: widget.currentIndex == 0,
               ),
               _buildNavItem(
                 index: 1,
-                icon: Icons.store_rounded,
-                label: "Market Place",
+                icon: Icons.agriculture_rounded,
+                label: "My Farm",
                 isActive: widget.currentIndex == 1,
               ),
               _buildNavItem(
                 index: 2,
-                icon: Icons.insights_rounded,
-                label: "Insights",
+                icon: Icons.verified_rounded,
+                label: "Quality",
                 isActive: widget.currentIndex == 2,
               ),
               _buildNavItem(
                 index: 3,
-                icon: Icons.settings_rounded,
-                label: "Settings",
+                icon: Icons.store_rounded,
+                label: "Market",
                 isActive: widget.currentIndex == 3,
+              ),
+              _buildNavItem(
+                index: 4,
+                icon: Icons.person_rounded,
+                label: "Profile",
+                isActive: widget.currentIndex == 4,
               ),
             ],
           ),
@@ -95,33 +102,37 @@ class _BottomNavigationState extends State<BottomNavigation> {
       onTap: () => widget.onTabSelected(index),
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: responsive.value(mobile: 12, tablet: 16, desktop: 20),
-          vertical: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+          horizontal: responsive.value(mobile: 8, tablet: 12, desktop: 16),
+          vertical: responsive.value(mobile: 6, tablet: 8, desktop: 10),
         ),
         decoration: BoxDecoration(
           color: isActive ? primaryColor.withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(
-            responsive.value(mobile: 16, tablet: 18, desktop: 20),
+            responsive.value(mobile: 12, tablet: 14, desktop: 16),
           ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
               color: isActive
                   ? primaryColor
-                  : const Color.fromARGB(255, 0, 0, 0),
+                  : Colors.grey[600],
               size: responsive.value(mobile: 24, tablet: 26, desktop: 28),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: TextStyle(
-                fontSize: responsive.value(mobile: 10, tablet: 11, desktop: 12),
+                fontSize: responsive.value(mobile: 9, tablet: 10, desktop: 11),
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 color: isActive ? primaryColor : Colors.grey[600],
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -130,7 +141,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
   }
 }
 
-//v2
 // import 'package:flutter/material.dart';
 // import 'package:CeylonPepper/utils/responsive.dart';
 //
@@ -177,25 +187,12 @@ class _BottomNavigationState extends State<BottomNavigation> {
 //       child: SafeArea(
 //         top: false,
 //         child: Container(
-//           height: responsive.value(
-//             mobile: responsive.isSmallPhone ? 65 : 68,
-//             tablet: 72,
-//             desktop: 76,
-//           ),
+//           height: responsive.value(mobile: 70, tablet: 75, desktop: 80),
 //           padding: EdgeInsets.symmetric(
-//             horizontal: responsive.value(
-//               mobile: responsive.isSmallPhone ? 4 : 6,
-//               tablet: 12,
-//               desktop: 20,
-//             ),
-//             vertical: responsive.value(
-//               mobile: 4,
-//               tablet: 6,
-//               desktop: 8,
-//             ),
+//             horizontal: responsive.value(mobile: 16, tablet: 24, desktop: 32),
 //           ),
 //           child: Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceAround,
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
 //             children: [
 //               _buildNavItem(
 //                 index: 0,
@@ -205,27 +202,21 @@ class _BottomNavigationState extends State<BottomNavigation> {
 //               ),
 //               _buildNavItem(
 //                 index: 1,
-//                 icon: Icons.eco_rounded,
-//                 label: "My Farm",
+//                 icon: Icons.store_rounded,
+//                 label: "Market Place",
 //                 isActive: widget.currentIndex == 1,
 //               ),
 //               _buildNavItem(
 //                 index: 2,
-//                 icon: Icons.verified_rounded,
-//                 label: "Quality",
+//                 icon: Icons.insights_rounded,
+//                 label: "Insights",
 //                 isActive: widget.currentIndex == 2,
 //               ),
 //               _buildNavItem(
 //                 index: 3,
-//                 icon: Icons.show_chart_rounded,
-//                 label: "Market",
+//                 icon: Icons.settings_rounded,
+//                 label: "Settings",
 //                 isActive: widget.currentIndex == 3,
-//               ),
-//               _buildNavItem(
-//                 index: 4,
-//                 icon: Icons.more_horiz_rounded,
-//                 label: "More",
-//                 isActive: widget.currentIndex == 4,
 //               ),
 //             ],
 //           ),
@@ -243,80 +234,39 @@ class _BottomNavigationState extends State<BottomNavigation> {
 //     final responsive = context.responsive;
 //     final primaryColor = const Color(0xFF2E7D32);
 //
-//     return Expanded(
-//       child: GestureDetector(
-//         onTap: () => widget.onTabSelected(index),
-//         behavior: HitTestBehavior.opaque,
-//         child: Container(
-//           padding: EdgeInsets.symmetric(
-//             horizontal: responsive.value(
-//               mobile: responsive.isSmallPhone ? 1 : 2,
-//               tablet: 6,
-//               desktop: 10,
-//             ),
-//             vertical: responsive.value(
-//               mobile: 4,
-//               tablet: 6,
-//               desktop: 8,
-//             ),
+//     return GestureDetector(
+//       onTap: () => widget.onTabSelected(index),
+//       child: Container(
+//         padding: EdgeInsets.symmetric(
+//           horizontal: responsive.value(mobile: 12, tablet: 16, desktop: 20),
+//           vertical: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+//         ),
+//         decoration: BoxDecoration(
+//           color: isActive ? primaryColor.withOpacity(0.1) : Colors.transparent,
+//           borderRadius: BorderRadius.circular(
+//             responsive.value(mobile: 16, tablet: 18, desktop: 20),
 //           ),
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             mainAxisAlignment: MainAxisAlignment.center,
-//             children: [
-//               // Icon with conditional background
-//               Container(
-//                 padding: EdgeInsets.all(
-//                   responsive.value(
-//                     mobile: responsive.isSmallPhone ? 4 : 6,
-//                     tablet: 8,
-//                     desktop: 10,
-//                   ),
-//                 ),
-//                 decoration: BoxDecoration(
-//                   color: isActive ? primaryColor.withOpacity(0.1) : Colors.transparent,
-//                   borderRadius: BorderRadius.circular(
-//                     responsive.value(mobile: 10, tablet: 12, desktop: 14),
-//                   ),
-//                 ),
-//                 child: Icon(
-//                   icon,
-//                   color: isActive ? primaryColor : Colors.grey[600],
-//                   size: responsive.value(
-//                     mobile: responsive.isSmallPhone ? 20 : 22,
-//                     tablet: 24,
-//                     desktop: 26,
-//                   ),
-//                 ),
+//         ),
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Icon(
+//               icon,
+//               color: isActive
+//                   ? primaryColor
+//                   : const Color.fromARGB(255, 0, 0, 0),
+//               size: responsive.value(mobile: 24, tablet: 26, desktop: 28),
+//             ),
+//             const SizedBox(height: 4),
+//             Text(
+//               label,
+//               style: TextStyle(
+//                 fontSize: responsive.value(mobile: 10, tablet: 11, desktop: 12),
+//                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+//                 color: isActive ? primaryColor : Colors.grey[600],
 //               ),
-//               SizedBox(
-//                 height: responsive.value(
-//                   mobile: responsive.isSmallPhone ? 2 : 3,
-//                   tablet: 4,
-//                   desktop: 5,
-//                 ),
-//               ),
-//               // Label text with flexible sizing
-//               Flexible(
-//                 child: Text(
-//                   label,
-//                   style: TextStyle(
-//                     fontSize: responsive.value(
-//                       mobile: responsive.isSmallPhone ? 9 : 10,
-//                       tablet: 11,
-//                       desktop: 12,
-//                     ),
-//                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-//                     color: isActive ? primaryColor : Colors.grey[600],
-//                     height: 1.1,
-//                   ),
-//                   textAlign: TextAlign.center,
-//                   maxLines: 1,
-//                   overflow: TextOverflow.ellipsis,
-//                 ),
-//               ),
-//             ],
-//           ),
+//             ),
+//           ],
 //         ),
 //       ),
 //     );

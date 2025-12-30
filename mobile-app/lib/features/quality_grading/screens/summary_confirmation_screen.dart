@@ -55,477 +55,396 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
     final responsive = context.responsive;
     const primary = Color(0xFF2E7D32);
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: primary,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Review & Confirm',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
+    return WillPopScope(
+      onWillPop: () async {
+        return false;
+      },
+
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor: primary,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: Center(
+            child: const Text(
+              'Review & Confirm',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
-      ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Header Section
-              Container(
-                width: double.infinity,
-                padding: responsive.padding(
-                  mobile: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-                  tablet: const EdgeInsets.fromLTRB(32, 28, 32, 32),
-                  desktop: const EdgeInsets.fromLTRB(40, 32, 40, 36),
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primary, primary.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(
-                      responsive.value(mobile: 32, tablet: 36, desktop: 40),
+      
+        body: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header Section
+      
+      
+                ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+      
+                // Content
+                SlideTransition(
+                  position: _slideAnimation,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: responsive.pagePadding,
                     ),
-                    bottomRight: Radius.circular(
-                      responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primary.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: responsive.padding(
-                        mobile: const EdgeInsets.all(12),
-                        tablet: const EdgeInsets.all(14),
-                        desktop: const EdgeInsets.all(16),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.fact_check_rounded,
-                        color: Colors.white,
-                        size: responsive.value(
-                          mobile: 28,
-                          tablet: 32,
-                          desktop: 36,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Batch Information Section
+                        _buildSectionHeader(
+                          responsive,
+                          primary,
+                          'Batch Information',
+                          Icons.info_rounded,
                         ),
-                      ),
-                    ),
-                    ResponsiveSpacing.horizontal(
-                      mobile: 16,
-                      tablet: 18,
-                      desktop: 20,
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Final Review",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: responsive.fontSize(
-                                mobile: 20,
-                                tablet: 22,
-                                desktop: 24,
+      
+                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+      
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
                               ),
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                            ),
-                          ),
-                          ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
-                          Text(
-                            "Please verify all information before analysis",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: responsive.bodyFontSize - 1,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-              // Content
-              SlideTransition(
-                position: _slideAnimation,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.pagePadding,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Batch Information Section
-                      _buildSectionHeader(
-                        responsive,
-                        primary,
-                        'Batch Information',
-                        Icons.info_rounded,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            _buildInfoRow(
-                              responsive,
-                              'Pepper Type',
-                              'Black Pepper',
-                              Icons.grass_rounded,
-                            ),
-                            _buildDivider(responsive),
-                            _buildInfoRow(
-                              responsive,
-                              'Pepper Variety',
-                              'Ceylon Pepper',
-                              Icons.local_florist_rounded,
-                            ),
-                            _buildDivider(responsive),
-                            _buildInfoRow(
-                              responsive,
-                              'Drying Method',
-                              'Sun Dried',
-                              Icons.wb_sunny_rounded,
-                            ),
-                            _buildDivider(responsive),
-                            _buildInfoRow(
-                              responsive,
-                              'Batch Weight',
-                              '25 kg',
-                              Icons.scale_rounded,
-                              isLast: true,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-                      // Bulk Density Section
-                      _buildSectionHeader(
-                        responsive,
-                        primary,
-                        'Bulk Density',
-                        Icons.science_rounded,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                      Container(
-                        padding: responsive.padding(
-                          mobile: const EdgeInsets.all(20),
-                          tablet: const EdgeInsets.all(24),
-                          desktop: const EdgeInsets.all(28),
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.green.shade50,
-                              Colors.green.shade100.withOpacity(0.5),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.green.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
+                          child: Column(
+                            children: [
+                              _buildInfoRow(
+                                responsive,
+                                'Pepper Type',
+                                'Black Pepper',
+                                Icons.grass_rounded,
+                              ),
+                              _buildDivider(responsive),
+                              _buildInfoRow(
+                                responsive,
+                                'Pepper Variety',
+                                'Ceylon Pepper',
+                                Icons.local_florist_rounded,
+                              ),
+                              _buildDivider(responsive),
+                              _buildInfoRow(
+                                responsive,
+                                'Drying Method',
+                                'Sun Dried',
+                                Icons.wb_sunny_rounded,
+                              ),
+                              _buildDivider(responsive),
+                              _buildInfoRow(
+                                responsive,
+                                'Batch Weight',
+                                '25 kg',
+                                Icons.scale_rounded,
+                                isLast: true,
+                              ),
+                            ],
+                          ),
+                        ),
+      
+                        ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+      
+                        // Bulk Density Section
+                        _buildSectionHeader(
+                          responsive,
+                          primary,
+                          'Bulk Density',
+                          Icons.science_rounded,
+                        ),
+      
+                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+      
+                        Container(
+                          padding: responsive.padding(
+                            mobile: const EdgeInsets.all(20),
+                            tablet: const EdgeInsets.all(24),
+                            desktop: const EdgeInsets.all(28),
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.green.shade50,
+                                Colors.green.shade100.withOpacity(0.5),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.green.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(
+                                  responsive.value(
+                                    mobile: 12,
+                                    tablet: 14,
+                                    desktop: 16,
+                                  ),
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.analytics_rounded,
+                                  color: Colors.green.shade700,
+                                  size: responsive.mediumIconSize,
+                                ),
+                              ),
+                              ResponsiveSpacing.horizontal(
+                                mobile: 16,
+                                tablet: 18,
+                                desktop: 20,
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Measured Density',
+                                      style: TextStyle(
+                                        fontSize: responsive.bodyFontSize,
+                                        color: Colors.green.shade800,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    ResponsiveSpacing(mobile: 4, tablet: 5, desktop: 6),
+                                    Text(
+                                      '540 g/L',
+                                      style: TextStyle(
+                                        fontSize: responsive.titleFontSize + 2,
+                                        color: Colors.green.shade900,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.check_circle_rounded,
+                                color: Colors.green.shade600,
+                                size: responsive.mediumIconSize,
+                              ),
+                            ],
+                          ),
+                        ),
+      
+                        ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+      
+                        // Certificates Section
+                        _buildSectionHeader(
+                          responsive,
+                          primary,
+                          'Certificates',
+                          Icons.verified_rounded,
+                        ),
+      
+                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+      
+                        Wrap(
+                          spacing: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                          runSpacing: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                          children: [
+                            _buildCertificateChip(responsive, 'GAP', Colors.blue),
+                            _buildCertificateChip(
+                              responsive,
+                              'Quality Certificate',
+                              Colors.purple,
                             ),
                           ],
                         ),
-                        child: Row(
+      
+                        ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+      
+                        // Captured Images Section
+                        _buildSectionHeader(
+                          responsive,
+                          primary,
+                          'Captured Images',
+                          Icons.photo_library_rounded,
+                        ),
+      
+                        ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+      
+                        Container(
+                          padding: responsive.padding(
+                            mobile: const EdgeInsets.all(12),
+                            tablet: const EdgeInsets.all(14),
+                            desktop: const EdgeInsets.all(16),
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Colors.green.shade600,
+                                    size: responsive.smallIconSize,
+                                  ),
+                                  ResponsiveSpacing.horizontal(
+                                    mobile: 8,
+                                    tablet: 10,
+                                    desktop: 12,
+                                  ),
+                                  Text(
+                                    '${widget.images.values.whereType<File>().length} images captured',
+                                    style: TextStyle(
+                                      fontSize: responsive.bodyFontSize,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.green.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+                              _buildImageGrid(responsive),
+                            ],
+                          ),
+                        ),
+      
+                        ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
+      
+                        // Action Buttons
+                        Row(
                           children: [
-                            Container(
-                              padding: EdgeInsets.all(
-                                responsive.value(
-                                  mobile: 12,
-                                  tablet: 14,
-                                  desktop: 16,
+                            Expanded(
+                              child: Container(
+                                height: responsive.buttonHeight,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(28),
+                                  border: Border.all(
+                                    color: Colors.grey.shade400,
+                                    width: 2,
+                                  ),
                                 ),
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade100,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                Icons.analytics_rounded,
-                                color: Colors.green.shade700,
-                                size: responsive.mediumIconSize,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.grey.shade700,
+                                    side: BorderSide.none,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.edit_rounded,
+                                        size: responsive.smallIconSize,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "Back to Edit",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: responsive.titleFontSize,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                             ResponsiveSpacing.horizontal(
-                              mobile: 16,
-                              tablet: 18,
-                              desktop: 20,
+                              mobile: 12,
+                              tablet: 14,
+                              desktop: 16,
                             ),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Measured Density',
-                                    style: TextStyle(
-                                      fontSize: responsive.bodyFontSize,
-                                      color: Colors.green.shade800,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  ResponsiveSpacing(mobile: 4, tablet: 5, desktop: 6),
-                                  Text(
-                                    '540 g/L',
-                                    style: TextStyle(
-                                      fontSize: responsive.titleFontSize + 2,
-                                      color: Colors.green.shade900,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: Colors.green.shade600,
-                              size: responsive.mediumIconSize,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-                      // Certificates Section
-                      _buildSectionHeader(
-                        responsive,
-                        primary,
-                        'Certificates',
-                        Icons.verified_rounded,
-                      ),
-
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                      Wrap(
-                        spacing: responsive.value(mobile: 8, tablet: 10, desktop: 12),
-                        runSpacing: responsive.value(mobile: 8, tablet: 10, desktop: 12),
-                        children: [
-                          _buildCertificateChip(responsive, 'GAP', Colors.blue),
-                          _buildCertificateChip(
-                            responsive,
-                            'Quality Certificate',
-                            Colors.purple,
-                          ),
-                        ],
-                      ),
-
-                      ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-                      // Captured Images Section
-                      _buildSectionHeader(
-                        responsive,
-                        primary,
-                        'Captured Images',
-                        Icons.photo_library_rounded,
-                      ),
-
-                      ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-
-                      Container(
-                        padding: responsive.padding(
-                          mobile: const EdgeInsets.all(12),
-                          tablet: const EdgeInsets.all(14),
-                          desktop: const EdgeInsets.all(16),
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.check_circle_rounded,
-                                  color: Colors.green.shade600,
-                                  size: responsive.smallIconSize,
-                                ),
-                                ResponsiveSpacing.horizontal(
-                                  mobile: 8,
-                                  tablet: 10,
-                                  desktop: 12,
-                                ),
-                                Text(
-                                  '${widget.images.values.whereType<File>().length} images captured',
-                                  style: TextStyle(
-                                    fontSize: responsive.bodyFontSize,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-                            _buildImageGrid(responsive),
-                          ],
-                        ),
-                      ),
-
-                      ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-
-                      // Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: responsive.buttonHeight,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(28),
-                                border: Border.all(
-                                  color: Colors.grey.shade400,
-                                  width: 2,
-                                ),
-                              ),
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.grey.shade700,
-                                  side: BorderSide.none,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(28),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.edit_rounded,
-                                      size: responsive.smallIconSize,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      "Back to Edit",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: responsive.titleFontSize,
-                                        letterSpacing: 0.5,
-                                      ),
+                              child: Container(
+                                height: responsive.buttonHeight,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(28),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primary.withOpacity(0.3),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                          ),
-                          ResponsiveSpacing.horizontal(
-                            mobile: 12,
-                            tablet: 14,
-                            desktop: 16,
-                          ),
-                          Expanded(
-                            child: Container(
-                              height: responsive.buttonHeight,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(28),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: primary.withOpacity(0.3),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
-                              ),
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const ProcessingScreen(),
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primary,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(28),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Confirm",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: responsive.titleFontSize,
-                                        letterSpacing: 0.5,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const ProcessingScreen(),
                                       ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(28),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Icon(
-                                      Icons.arrow_forward_rounded,
-                                      size: responsive.smallIconSize,
-                                    ),
-                                  ],
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Confirm",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: responsive.titleFontSize,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: responsive.smallIconSize,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-
-                      ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-                    ],
+                          ],
+                        ),
+      
+                        ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

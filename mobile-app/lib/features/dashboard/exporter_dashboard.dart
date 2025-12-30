@@ -1,7 +1,7 @@
 import 'package:CeylonPepper/features/market_forecast/export_price_prediction.dart';
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
-
+import '../blockchain/dashboard.dart';
 
 class ExporterDashboard extends StatefulWidget {
   const ExporterDashboard({super.key});
@@ -29,12 +29,10 @@ class _ExporterDashboardState extends State<ExporterDashboard>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -108,7 +106,11 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                                   fontWeight: FontWeight.w400,
                                 ),
                               ),
-                              ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
+                              ResponsiveSpacing(
+                                mobile: 4,
+                                tablet: 6,
+                                desktop: 8,
+                              ),
                               Text(
                                 "Welcome Back",
                                 style: TextStyle(
@@ -180,7 +182,11 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(
-                            responsive.value(mobile: 16, tablet: 18, desktop: 20),
+                            responsive.value(
+                              mobile: 16,
+                              tablet: 18,
+                              desktop: 20,
+                            ),
                           ),
                           border: Border.all(
                             color: Colors.white.withOpacity(0.2),
@@ -243,8 +249,16 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                   child: Row(
                     children: [
                       Container(
-                        width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
-                        height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+                        width: responsive.value(
+                          mobile: 4,
+                          tablet: 5,
+                          desktop: 6,
+                        ),
+                        height: responsive.value(
+                          mobile: 22,
+                          tablet: 24,
+                          desktop: 26,
+                        ),
                         decoration: BoxDecoration(
                           color: primary,
                           borderRadius: BorderRadius.circular(2),
@@ -318,8 +332,16 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                   child: Row(
                     children: [
                       Container(
-                        width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
-                        height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+                        width: responsive.value(
+                          mobile: 4,
+                          tablet: 5,
+                          desktop: 6,
+                        ),
+                        height: responsive.value(
+                          mobile: 22,
+                          tablet: 24,
+                          desktop: 26,
+                        ),
                         decoration: BoxDecoration(
                           color: primary,
                           borderRadius: BorderRadius.circular(2),
@@ -352,7 +374,11 @@ class _ExporterDashboardState extends State<ExporterDashboard>
 
                 // Tips List
                 SizedBox(
-                  height: responsive.value(mobile: 140, tablet: 160, desktop: 180),
+                  height: responsive.value(
+                    mobile: 140,
+                    tablet: 160,
+                    desktop: 180,
+                  ),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.symmetric(
@@ -410,13 +436,13 @@ class _ExporterDashboardState extends State<ExporterDashboard>
           colors: [Colors.purple.shade400, Colors.purple.shade600],
         ),
         onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ExportPricePrediction(),
-      ),
-    );
-  },
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ExportPricePrediction(),
+            ),
+          );
+        },
       ),
       _featureCard(
         responsive,
@@ -443,18 +469,25 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         gradient: LinearGradient(
           colors: [Colors.orange.shade400, Colors.orange.shade600],
         ),
-        onTap: () {},
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BlockchainDashboard(),
+            ),
+          );
+        },
       ),
     ];
   }
 
   Widget _featureCard(
-      Responsive responsive, {
-        required String title,
-        required IconData icon,
-        required Gradient gradient,
-        required Function onTap,
-      }) {
+    Responsive responsive, {
+    required String title,
+    required IconData icon,
+    required Gradient gradient,
+    required Function onTap,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -508,7 +541,11 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                       ),
                       child: Icon(
                         icon,
-                        size: responsive.value(mobile: 28, tablet: 32, desktop: 36),
+                        size: responsive.value(
+                          mobile: 28,
+                          tablet: 32,
+                          desktop: 36,
+                        ),
                         color: Colors.white,
                       ),
                     ),
@@ -539,12 +576,12 @@ class _ExporterDashboardState extends State<ExporterDashboard>
   }
 
   Widget _tipCard(
-      String text,
-      IconData icon,
-      Color bgColor,
-      Color iconColor,
-      Responsive responsive,
-      ) {
+    String text,
+    IconData icon,
+    Color bgColor,
+    Color iconColor,
+    Responsive responsive,
+  ) {
     return Container(
       margin: EdgeInsets.only(
         right: responsive.value(mobile: 16, tablet: 18, desktop: 20),
@@ -560,10 +597,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 20, tablet: 22, desktop: 24),
         ),
-        border: Border.all(
-          color: iconColor.withOpacity(0.2),
-          width: 1,
-        ),
+        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),

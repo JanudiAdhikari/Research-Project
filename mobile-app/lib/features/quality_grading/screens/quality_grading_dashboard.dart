@@ -3,6 +3,7 @@ import '../../../utils/responsive.dart';
 import '../../../widgets/bottom_navigation.dart';
 import '../../../widgets/navigation_wrapper.dart';
 import 'batch_details_screen.dart';
+import 'how_it_works_screen.dart';
 import 'past_reports_screen.dart';
 
 class QualityGradingDashboard extends StatefulWidget {
@@ -386,7 +387,14 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         gradient: LinearGradient(
           colors: [Colors.orange.shade400, Colors.orange.shade600],
         ),
-        onTap: () => _showHowItWorksDialog(context, responsive),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const HowItWorksScreen(),
+            ),
+          );
+        },
       ),
       _actionCard(
         context,

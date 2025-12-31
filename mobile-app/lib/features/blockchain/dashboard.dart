@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
+import 'QR_scan.dart';
 
 class BlockchainDashboard extends StatefulWidget {
   const BlockchainDashboard({super.key});
@@ -168,20 +169,31 @@ class _BlockchainDashboardState extends State<BlockchainDashboard> {
                       ),
                     ),
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('QR Scanner will open soon'),
-                          duration: Duration(seconds: 2),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const QRScanScreen(),
                         ),
                       );
                     },
-                    child: const Text(
-                      'Start →',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Start',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.arrow_forward,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ],
                     ),
                   ),
                 ),

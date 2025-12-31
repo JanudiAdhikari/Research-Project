@@ -89,350 +89,313 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
           ),
         ),
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Header Section
-              Container(
-                width: double.infinity,
-                padding: responsive.padding(
-                  mobile: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-                  tablet: const EdgeInsets.fromLTRB(32, 28, 32, 32),
-                  desktop: const EdgeInsets.fromLTRB(40, 32, 40, 36),
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primary, primary.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header Section
+                Container(
+                  width: double.infinity,
+                  padding: responsive.padding(
+                    mobile: const EdgeInsets.all(16),
+                    tablet: const EdgeInsets.all(20),
+                    desktop: const EdgeInsets.all(24),
                   ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(
-                      responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                    ),
-                    bottomRight: Radius.circular(
-                      responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                    ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primary.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: responsive.padding(
-                        mobile: const EdgeInsets.all(12),
-                        tablet: const EdgeInsets.all(14),
-                        desktop: const EdgeInsets.all(16),
+                  color: Colors.white,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Step indicator
+                      Row(
+                        children: [
+                          _buildStepIndicator(1, true, primary, responsive),
+                          _buildStepLine(true, primary, responsive),
+                          _buildStepIndicator(2, false, primary, responsive),
+                          _buildStepLine(false, primary, responsive),
+                          _buildStepIndicator(3, false, primary, responsive),
+                        ],
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.description_rounded,
-                        color: Colors.white,
-                        size: responsive.value(
-                          mobile: 28,
-                          tablet: 32,
-                          desktop: 36,
+                      ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+                      Text(
+                        "Batch Information",
+                        style: TextStyle(
+                          fontSize: responsive.fontSize(
+                            mobile: 22,
+                            tablet: 24,
+                            desktop: 26,
+                          ),
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
                         ),
                       ),
+                      ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
+                      Text(
+                        "Enter your pepper batch details",
+                        style: TextStyle(
+                          fontSize: responsive.bodyFontSize,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+
+                // Form Content
+                SlideTransition(
+                  position: _slideAnimation,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: responsive.pagePadding,
                     ),
-                    ResponsiveSpacing.horizontal(
-                      mobile: 16,
-                      tablet: 18,
-                      desktop: 20,
-                    ),
-                    Expanded(
+                    child: Form(
+                      key: _formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Step 1 of 3",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: responsive.bodyFontSize - 1,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          // Pepper Information Section
+                          _buildSectionHeader(
+                            responsive,
+                            primary,
+                            'Pepper Information',
+                            Icons.grass_rounded,
                           ),
-                          ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
-                          Text(
-                            "Batch Information",
-                            style: TextStyle(
+
+                          ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                          _buildDropdownField(
+                            responsive,
+                            primary,
+                            label: 'Pepper Type',
+                            value: _pepperType,
+                            icon: Icons.category_rounded,
+                            items: const ['Black Pepper', 'White Pepper'],
+                            onChanged: (value) => setState(() => _pepperType = value!),
+                          ),
+
+                          _buildDropdownField(
+                            responsive,
+                            primary,
+                            label: 'Pepper Variety',
+                            value: _pepperVariety,
+                            icon: Icons.local_florist_rounded,
+                            items: const [
+                              'Ceylon Pepper',
+                              'Panniyur-1',
+                              'Kuching',
+                              'Dingi Rala',
+                              'Kohukumbure Rala',
+                              'Bootawe Rala',
+                              'Malabar',
+                              'Unknown',
+                            ],
+                            onChanged: (value) => setState(() => _pepperVariety = value!),
+                          ),
+
+                          ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
+
+                          // Harvest & Processing Section
+                          _buildSectionHeader(
+                            responsive,
+                            primary,
+                            'Harvest & Processing',
+                            Icons.agriculture_rounded,
+                          ),
+
+                          ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                          _buildDatePickerField(
+                            context: context,
+                            responsive: responsive,
+                            primary: primary,
+                            label: 'Harvest Date',
+                            selectedDate: _harvestDate,
+                            onDateSelected: (date) => setState(() => _harvestDate = date),
+                          ),
+
+                          _buildDropdownField(
+                            responsive,
+                            primary,
+                            label: 'Drying Method',
+                            value: _dryingMethod,
+                            icon: Icons.wb_sunny_rounded,
+                            items: const ['Sun Dried', 'Machine Dried'],
+                            onChanged: (value) => setState(() => _dryingMethod = value!),
+                          ),
+
+                          ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
+
+                          // Certificates Section
+                          _buildSectionHeader(
+                            responsive,
+                            primary,
+                            'Certificates & Compliance',
+                            Icons.verified_rounded,
+                          ),
+
+                          ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+
+                          Container(
+                            decoration: BoxDecoration(
                               color: Colors.white,
-                              fontSize: responsive.fontSize(
-                                mobile: 20,
-                                tablet: 22,
-                                desktop: 24,
-                              ),
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-              // Form Content
-              SlideTransition(
-                position: _slideAnimation,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.pagePadding,
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Pepper Information Section
-                        _buildSectionHeader(
-                          responsive,
-                          primary,
-                          'Pepper Information',
-                          Icons.grass_rounded,
-                        ),
-
-                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                        _buildDropdownField(
-                          responsive,
-                          primary,
-                          label: 'Pepper Type',
-                          value: _pepperType,
-                          icon: Icons.category_rounded,
-                          items: const ['Black Pepper', 'White Pepper'],
-                          onChanged: (value) => setState(() => _pepperType = value!),
-                        ),
-
-                        _buildDropdownField(
-                          responsive,
-                          primary,
-                          label: 'Pepper Variety',
-                          value: _pepperVariety,
-                          icon: Icons.local_florist_rounded,
-                          items: const [
-                            'Ceylon Pepper',
-                            'Panniyur-1',
-                            'Kuching',
-                            'Dingi Rala',
-                            'Kohukumbure Rala',
-                            'Bootawe Rala',
-                            'Malabar',
-                            'Unknown',
-                          ],
-                          onChanged: (value) => setState(() => _pepperVariety = value!),
-                        ),
-
-                        ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
-                        // Harvest & Processing Section
-                        _buildSectionHeader(
-                          responsive,
-                          primary,
-                          'Harvest & Processing',
-                          Icons.agriculture_rounded,
-                        ),
-
-                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                        _buildDatePickerField(
-                          context: context,
-                          responsive: responsive,
-                          primary: primary,
-                          label: 'Harvest Date',
-                          selectedDate: _harvestDate,
-                          onDateSelected: (date) => setState(() => _harvestDate = date),
-                        ),
-
-                        _buildDropdownField(
-                          responsive,
-                          primary,
-                          label: 'Drying Method',
-                          value: _dryingMethod,
-                          icon: Icons.wb_sunny_rounded,
-                          items: const ['Sun Dried', 'Machine Dried'],
-                          onChanged: (value) => setState(() => _dryingMethod = value!),
-                        ),
-
-                        ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
-                        // Certificates Section
-                        _buildSectionHeader(
-                          responsive,
-                          primary,
-                          'Certificates & Compliance',
-                          Icons.verified_rounded,
-                        ),
-
-                        ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: _certificates.keys.map((cert) {
-                              final index = _certificates.keys.toList().indexOf(cert);
-                              final isLast = index == _certificates.length - 1;
-
-                              return Column(
-                                children: [
-                                  CheckboxListTile(
-                                    contentPadding: EdgeInsets.symmetric(
-                                      horizontal: responsive.value(
-                                        mobile: 16,
-                                        tablet: 18,
-                                        desktop: 20,
-                                      ),
-                                      vertical: 4,
-                                    ),
-                                    title: Text(
-                                      cert,
-                                      style: TextStyle(
-                                        fontSize: responsive.bodyFontSize,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.grey[800],
-                                      ),
-                                    ),
-                                    value: _certificates[cert],
-                                    activeColor: primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _certificates[cert] = value ?? false;
-                                      });
-                                    },
-                                  ),
-                                  if (!isLast)
-                                    Divider(
-                                      height: 1,
-                                      indent: responsive.value(
-                                        mobile: 16,
-                                        tablet: 18,
-                                        desktop: 20,
-                                      ),
-                                      endIndent: responsive.value(
-                                        mobile: 16,
-                                        tablet: 18,
-                                        desktop: 20,
-                                      ),
-                                    ),
-                                ],
-                              );
-                            }).toList(),
-                          ),
-                        ),
-
-                        ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
-                        // Quantity Section
-                        _buildSectionHeader(
-                          responsive,
-                          primary,
-                          'Quantity',
-                          Icons.scale_rounded,
-                        ),
-
-                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                        _buildTextField(
-                          responsive,
-                          primary,
-                          label: 'Batch Weight (kg)',
-                          controller: _batchWeightController,
-                          icon: Icons.balance_rounded,
-                          keyboardType: TextInputType.number,
-                          isRequired: true,
-                        ),
-
-                        ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-
-                        // Continue Button
-                        Container(
-                          width: double.infinity,
-                          height: responsive.buttonHeight,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: primary.withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const BulkDensityScreen(),
-                                  ),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Continue to Bulk Density",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: responsive.titleFontSize,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: responsive.smallIconSize,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
+                            child: Column(
+                              children: _certificates.keys.map((cert) {
+                                final index = _certificates.keys.toList().indexOf(cert);
+                                final isLast = index == _certificates.length - 1;
 
-                        ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-                      ],
+                                return Column(
+                                  children: [
+                                    CheckboxListTile(
+                                      contentPadding: EdgeInsets.symmetric(
+                                        horizontal: responsive.value(
+                                          mobile: 16,
+                                          tablet: 18,
+                                          desktop: 20,
+                                        ),
+                                        vertical: 4,
+                                      ),
+                                      title: Text(
+                                        cert,
+                                        style: TextStyle(
+                                          fontSize: responsive.bodyFontSize,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.grey[800],
+                                        ),
+                                      ),
+                                      value: _certificates[cert],
+                                      activeColor: primary,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _certificates[cert] = value ?? false;
+                                        });
+                                      },
+                                    ),
+                                    if (!isLast)
+                                      Divider(
+                                        height: 1,
+                                        indent: responsive.value(
+                                          mobile: 16,
+                                          tablet: 18,
+                                          desktop: 20,
+                                        ),
+                                        endIndent: responsive.value(
+                                          mobile: 16,
+                                          tablet: 18,
+                                          desktop: 20,
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              }).toList(),
+                            ),
+                          ),
+
+                          ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
+
+                          // Quantity Section
+                          _buildSectionHeader(
+                            responsive,
+                            primary,
+                            'Quantity',
+                            Icons.scale_rounded,
+                          ),
+
+                          ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                          _buildTextField(
+                            responsive,
+                            primary,
+                            label: 'Batch Weight (kg)',
+                            controller: _batchWeightController,
+                            icon: Icons.balance_rounded,
+                            keyboardType: TextInputType.number,
+                            isRequired: true,
+                          ),
+
+                          ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
+
+                          // Continue Button
+                          Container(
+                            width: double.infinity,
+                            height: responsive.buttonHeight,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: primary.withOpacity(0.3),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_formKey.currentState!.validate()) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const BulkDensityScreen(),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "Continue to Bulk Density",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: responsive.titleFontSize,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: responsive.smallIconSize,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -471,6 +434,39 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStepIndicator(int step, bool isActive, Color primary, Responsive responsive) {
+    return Container(
+      width: responsive.value(mobile: 32, tablet: 36, desktop: 40),
+      height: responsive.value(mobile: 32, tablet: 36, desktop: 40),
+      decoration: BoxDecoration(
+        color: isActive ? primary : Colors.grey[300],
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '$step',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: responsive.bodyFontSize,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepLine(bool isActive, Color primary, Responsive responsive) {
+    return Expanded(
+      child: Container(
+        height: 2,
+        margin: EdgeInsets.symmetric(
+          horizontal: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+        ),
+        color: isActive ? primary : Colors.grey[300],
+      ),
     );
   }
 

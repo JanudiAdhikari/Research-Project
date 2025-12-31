@@ -1,12 +1,12 @@
-import 'package:CeylonPepper/features/market_forecast/navigation.dart';
 import 'package:flutter/material.dart';
+import 'package:CeylonPepper/features/market_forecast/navigation.dart';
+import '../../widgets/bottom_navigation.dart';
 import '../disease_detection/screens/home_screen.dart';
 import '../disease_detection/services/weather_service.dart';
 import '../disease_detection/services/location_service.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
-import '../../widgets/navigation_wrapper.dart';
 import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
 
@@ -30,13 +30,16 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   bool _isLoadingWeather = true;
   String _locationName = 'Loading...';
   String _temperature = '--°C';
+  String _weatherCondition = 'clear';
+
+  // Mock data for dashboard statistics
+  int _totalCrops = 0;
+  int _activeAlerts = 0;
+  double _avgQuality = 0.0;
 
   @override
   void initState() {
     super.initState();
-
-    print('🚀 FarmerDashboard initState called');
-    print('Initial state: loading=$_isLoadingWeather, location=$_locationName, temp=$_temperature');
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -54,14 +57,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
     _animationController.forward();
 
-    print('⏰ Scheduling _fetchWeatherData() to run after build');
-    // Delay weather fetch to ensure widget is built
+    // Load initial data
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
-        print('✅ Widget is mounted, calling _fetchWeatherData()');
         _fetchWeatherData();
-      } else {
-        print('❌ Widget not mounted, skipping weather fetch');
+        _loadDashboardStats();
       }
     });
   }
@@ -72,602 +72,645 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     super.dispose();
   }
 
-  Future<void> _fetchWeatherData() async {
-    print('🌤️ Starting weather fetch...');
-    print('Current state BEFORE: loading=$_isLoadingWeather, location=$_locationName');
+  Future<void> _loadDashboardStats() async {
+    // Simulate loading dashboard statistics
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      setState(() {
+        _totalCrops = 5; // Mock data - replace with actual data
+        _activeAlerts = 2;
+        _avgQuality = 87.5;
+      });
+    }
+  }
 
-    // Force update to show we're loading
+  Future<void> _fetchWeatherData() async {
     setState(() {
       _isLoadingWeather = true;
       _locationName = 'Loading...';
       _temperature = '--°C';
     });
-    print('State set to loading=true');
 
     try {
-      print('📍 Getting location... (30 second timeout)');
-      final locationData = await _locationService.getCurrentLocation()
-          .timeout(const Duration(seconds: 30), onTimeout: () {
-        print('⏱️ Location fetch timeout after 30 seconds');
-        return null;
-      });
+      final locationData = await _locationService.getCurrentLocation().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => null,
+      );
 
-      if (locationData == null) {
-        print('❌ Location is null - Using fallback location (Colombo)');
-        // Use Colombo, Sri Lanka as fallback
-        final fallbackLat = 6.9271;
-        final fallbackLon = 79.8612;
+      double lat = 6.9271; // Colombo fallback
+      double lon = 79.8612;
 
-        if (!mounted) return;
-
-        print('🌐 Fetching weather data for fallback location...');
-        final weatherData = await _weatherService.getWeatherData(
-          fallbackLat,
-          fallbackLon,
-        ).timeout(const Duration(seconds: 15), onTimeout: () {
-          print('⏱️ Weather API timeout');
-          return null;
-        });
-
-        if (weatherData != null) {
-          final parsedData = _weatherService.parseWeatherData(weatherData);
-          if (parsedData != null && mounted) {
-            setState(() {
-              _locationName = '${parsedData['location']} (Default)';
-              _temperature = '${parsedData['temperature']}°C';
-              _isLoadingWeather = false;
-            });
-            print('✅ Using fallback weather data');
-            return;
-          }
-        }
-
-        // If fallback also fails
-        if (!mounted) return;
-        setState(() {
-          _isLoadingWeather = false;
-          _locationName = 'Enable GPS';
-          _temperature = '--°C';
-        });
-        print('State updated: Enable GPS');
-        return;
+      if (locationData != null) {
+        lat = locationData.latitude;
+        lon = locationData.longitude;
       }
 
-      print('✅ Location received: ${locationData.latitude}, ${locationData.longitude}');
-      print('🌐 Fetching weather data...');
+      if (!mounted) return;
 
-      final weatherData = await _weatherService.getWeatherData(
-        locationData.latitude,
-        locationData.longitude,
-      ).timeout(const Duration(seconds: 15), onTimeout: () {
-        print('⏱️ Weather API timeout');
-        return null;
-      });
+      final weatherData = await _weatherService
+          .getWeatherData(lat, lon)
+          .timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => null,
+      );
 
-      print('Weather data received: $weatherData');
-
-      if (weatherData != null) {
-        print('✅ Weather data is not null');
+      if (weatherData != null && mounted) {
         final parsedData = _weatherService.parseWeatherData(weatherData);
-        print('Parsed data: $parsedData');
-
-        if (!mounted) return;
         if (parsedData != null) {
-          print('✅ Setting state with location: ${parsedData['location']}, temp: ${parsedData['temperature']}');
           setState(() {
-            _locationName = parsedData['location'] ?? 'Unknown';
+            _locationName = locationData == null
+                ? '${parsedData['location']} (Default)'
+                : parsedData['location'] ?? 'Unknown';
             _temperature = '${parsedData['temperature']}°C';
+            _weatherCondition = parsedData['condition']?.toLowerCase() ?? 'clear';
             _isLoadingWeather = false;
           });
-          print('✅ State updated successfully - location=$_locationName, temp=$_temperature, loading=$_isLoadingWeather');
-        } else {
-          print('❌ Parsed data is null');
-          setState(() {
-            _isLoadingWeather = false;
-            _locationName = 'Parse Error';
-            _temperature = '--°C';
-          });
+          return;
         }
-      } else {
-        print('❌ Weather data is null');
-        if (!mounted) return;
-        setState(() {
-          _isLoadingWeather = false;
-          _locationName = 'API Error';
-          _temperature = '--°C';
-        });
-        print('State updated: API Error');
       }
-    } catch (e, stackTrace) {
-      print('❌ Weather fetch error: $e');
-      print('Stack trace: $stackTrace');
+
       if (!mounted) return;
       setState(() {
         _isLoadingWeather = false;
-        _locationName = 'Error: ${e.toString().substring(0, 20)}';
+        _locationName = locationData == null ? 'Enable GPS' : 'Weather Error';
         _temperature = '--°C';
       });
-      print('State updated: Error');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingWeather = false;
+        _locationName = 'Error';
+        _temperature = '--°C';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return NavigationWrapper(
-      showBottomNavigation: true,
-      initialIndex: 0, // Home tab is active
-      child: _buildDashboardContent(),
-    );
-  }
-
-  Widget _buildDashboardContent() {
     final responsive = context.responsive;
     final primary = const Color(0xFF2E7D32);
-
-    print('📱 Building FarmerDashboard content - Weather loading: $_isLoadingWeather, Location: $_locationName, Temp: $_temperature');
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Enhanced Header
-                Container(
-                  padding: responsive.padding(
-                    mobile: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-                    tablet: const EdgeInsets.fromLTRB(32, 24, 32, 36),
-                    desktop: const EdgeInsets.fromLTRB(40, 28, 40, 42),
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [primary, primary.withOpacity(0.8)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(
-                        responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                      ),
-                      bottomRight: Radius.circular(
-                        responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                      ),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primary.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Hello, Farmer 👋",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: responsive.bodyFontSize,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              ResponsiveSpacing(
-                                mobile: 4,
-                                tablet: 6,
-                                desktop: 8,
-                              ),
-                              Text(
-                                "Welcome Back",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: responsive.fontSize(
-                                    mobile: 26,
-                                    tablet: 28,
-                                    desktop: 32,
-                                  ),
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          PopupMenuButton<String>(
-                            icon: CircleAvatar(
-                              radius: responsive.value(
-                                mobile: 26,
-                                tablet: 28,
-                                desktop: 32,
-                              ),
-                              backgroundColor: Colors.white,
-                              child: Icon(
-                                Icons.person_rounded,
-                                color: primary,
-                                size: responsive.value(
-                                  mobile: 26,
-                                  tablet: 28,
-                                  desktop: 32,
-                                ),
-                              ),
-                            ),
-                            onSelected: (value) async {
-                              if (value == 'logout') {
-                                await _authService.logout();
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await _fetchWeatherData();
+              await _loadDashboardStats();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Enhanced Header with Weather
+                  _buildHeader(responsive, primary),
 
-                                if (!mounted) return;
+                  ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
 
-                                Navigator.pushAndRemoveUntil(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const LoginPage(),
-                                  ),
-                                  (route) => false,
-                                );
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: 'logout',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.logout, color: Colors.red),
-                                    const SizedBox(width: 10),
-                                    const Text("Logout"),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-                      GestureDetector(
-                        onTap: () {
-                          print('🔄 Manual weather refresh triggered');
-                          _fetchWeatherData();
-                        },
-                        child: Container(
-                          padding: responsive.padding(
-                            mobile: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            tablet: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 14,
-                            ),
-                            desktop: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
-                            ),
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(
-                              responsive.value(
-                                mobile: 16,
-                                tablet: 18,
-                                desktop: 20,
-                              ),
-                            ),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_rounded,
-                                color: Colors.white.withOpacity(0.9),
-                                size: responsive.smallIconSize,
-                              ),
-                              ResponsiveSpacing.horizontal(
-                                mobile: 8,
-                                tablet: 10,
-                                desktop: 12,
-                              ),
-                              Text(
-                                _isLoadingWeather ? 'Loading... ⏳' : _locationName,
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: responsive.bodyFontSize,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Spacer(),
-                              if (_isLoadingWeather)
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                  ),
-                                )
-                              else
-                                Icon(
-                                  Icons.cloud_outlined,
-                                  color: Colors.white,
-                                  size: responsive.smallIconSize,
-                                ),
-                              ResponsiveSpacing.horizontal(
-                                mobile: 8,
-                                tablet: 10,
-                                desktop: 12,
-                              ),
-                              Text(
-                                _isLoadingWeather ? '--°C' : _temperature,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: responsive.bodyFontSize,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
+                  // Quick Stats Cards
+                  _buildQuickStats(responsive, primary),
+
+                  ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+
+                  // Section: Main Features
+                  _buildSectionTitle(
+                    responsive,
+                    primary,
+                    "Smart Farming Tools",
+                    Icons.agriculture_rounded,
                   ),
-                ),
 
-                ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+                  ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
-                // Section Title
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.pagePadding,
+                  // Main Feature Grid
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: _buildMainFeatureGrid(context, responsive, primary),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: responsive.value(
-                          mobile: 4,
-                          tablet: 5,
-                          desktop: 6,
-                        ),
-                        height: responsive.value(
-                          mobile: 22,
-                          tablet: 24,
-                          desktop: 26,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primary,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      ResponsiveSpacing.horizontal(
-                        mobile: 12,
-                        tablet: 14,
-                        desktop: 16,
-                      ),
-                      Text(
-                        "Quick Actions",
-                        style: TextStyle(
-                          fontSize: responsive.headingFontSize,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
 
-                ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
+                  ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
-                // Enhanced Quick Action Grid
-                SlideTransition(
-                  position: _slideAnimation,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: responsive.pagePadding,
-                    ),
-                    child: ResponsiveBuilder(
-                      mobile: GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.95,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(
-                          context,
-                          responsive,
-                          primary,
-                        ),
-                      ),
-                      tablet: GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        crossAxisSpacing: 20,
-                        mainAxisSpacing: 20,
-                        childAspectRatio: 1.0,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(
-                          context,
-                          responsive,
-                          primary,
-                        ),
-                      ),
-                      desktop: GridView.count(
-                        crossAxisCount: 4,
-                        shrinkWrap: true,
-                        crossAxisSpacing: 24,
-                        mainAxisSpacing: 24,
-                        childAspectRatio: 0.95,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: _buildFeatureCards(
-                          context,
-                          responsive,
-                          primary,
-                        ),
-                      ),
-                    ),
+                  // Section: Additional Features
+                  _buildSectionTitle(
+                    responsive,
+                    primary,
+                    "More Services",
+                    Icons.dashboard_customize_rounded,
                   ),
-                ),
 
-                ResponsiveSpacing(
-                  mobile: 32,
-                  tablet: 40,
-                  desktop: 48,
-                ), // Tips Section Header
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.pagePadding,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: responsive.value(
-                          mobile: 4,
-                          tablet: 5,
-                          desktop: 6,
-                        ),
-                        height: responsive.value(
-                          mobile: 22,
-                          tablet: 24,
-                          desktop: 26,
-                        ),
-                        decoration: BoxDecoration(
-                          color: primary,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      ResponsiveSpacing.horizontal(
-                        mobile: 12,
-                        tablet: 14,
-                        desktop: 16,
-                      ),
-                      Text(
-                        "Recommended Tips",
-                        style: TextStyle(
-                          fontSize: responsive.headingFontSize,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const Spacer(),
-                      Icon(
-                        Icons.lightbulb_rounded,
-                        color: Colors.amber[700],
-                        size: responsive.mediumIconSize,
-                      ),
-                    ],
-                  ),
-                ),
+                  ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
-                ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
+                  // Additional Features
+                  _buildAdditionalFeatures(context, responsive, primary),
 
-                // Enhanced Tips Cards
-                SizedBox(
-                  height: responsive.value(
-                    mobile: 140,
-                    tablet: 160,
-                    desktop: 180,
-                  ),
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: responsive.pagePadding,
-                    ),
-                    children: [
-                      _tipCard(
-                        "Improve drying process",
-                        Icons.wb_sunny_rounded,
-                        Colors.orange.shade50,
-                        Colors.orange.shade700,
-                        responsive,
-                      ),
-                      _tipCard(
-                        "Prevent fungal infection",
-                        Icons.shield_rounded,
-                        Colors.red.shade50,
-                        Colors.red.shade700,
-                        responsive,
-                      ),
-                      _tipCard(
-                        "Enhance soil nutrients",
-                        Icons.eco_rounded,
-                        Colors.green.shade50,
-                        Colors.green.shade700,
-                        responsive,
-                      ),
-                      _tipCard(
-                        "Optimize irrigation",
-                        Icons.water_drop_rounded,
-                        Colors.blue.shade50,
-                        Colors.blue.shade700,
-                        responsive,
-                      ),
-                    ],
-                  ),
-                ),
+                  ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
-                ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
-              ],
+                  // Recommended Tips Section
+                  _buildSectionTitle(
+                    responsive,
+                    primary,
+                    "Farming Tips & Insights",
+                    Icons.lightbulb_rounded,
+                    iconColor: Colors.amber[700],
+                  ),
+
+                  ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
+
+                  _buildTipsSection(responsive),
+
+                  ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
+                ],
+              ),
             ),
           ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 0,
+        onTabSelected: (index) {
+          if (index != 0) {
+            // Handle navigation
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeader(Responsive responsive, Color primary) {
+    return Container(
+      padding: responsive.padding(
+        mobile: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+        tablet: const EdgeInsets.fromLTRB(32, 24, 32, 36),
+        desktop: const EdgeInsets.fromLTRB(40, 28, 40, 42),
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primary, primary.withOpacity(0.85)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(
+            responsive.value(mobile: 32, tablet: 36, desktop: 40),
+          ),
+          bottomRight: Radius.circular(
+            responsive.value(mobile: 32, tablet: 36, desktop: 40),
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Hello, Farmer 👋",
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.95),
+                        fontSize: responsive.bodyFontSize,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
+                    Text(
+                      "Ceylon Pepper",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: responsive.fontSize(
+                          mobile: 24,
+                          tablet: 26,
+                          desktop: 30,
+                        ),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: Container(
+                  padding: EdgeInsets.all(
+                    responsive.value(mobile: 2, tablet: 3, desktop: 4),
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    radius: responsive.value(mobile: 22, tablet: 24, desktop: 28),
+                    backgroundColor: primary.withOpacity(0.1),
+                    child: Icon(
+                      Icons.person_rounded,
+                      color: primary,
+                      size: responsive.value(mobile: 24, tablet: 26, desktop: 30),
+                    ),
+                  ),
+                ),
+                onSelected: (value) async {
+                  if (value == 'logout') {
+                    await _authService.logout();
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                          (route) => false,
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'profile',
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_outline, size: 20),
+                        SizedBox(width: 12),
+                        Text("Profile"),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings_outlined, size: 20),
+                        SizedBox(width: 12),
+                        Text("Settings"),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    value: 'logout',
+                    child: Row(
+                      children: [
+                        Icon(Icons.logout, color: Colors.red, size: 20),
+                        SizedBox(width: 12),
+                        Text("Logout", style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
+          // Weather Widget
+          GestureDetector(
+            onTap: _fetchWeatherData,
+            child: Container(
+              padding: responsive.padding(
+                mobile: const EdgeInsets.all(16),
+                tablet: const EdgeInsets.all(18),
+                desktop: const EdgeInsets.all(20),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(
+                  responsive.value(mobile: 16, tablet: 18, desktop: 20),
+                ),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.25),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_on_rounded,
+                    color: Colors.white.withOpacity(0.95),
+                    size: responsive.smallIconSize,
+                  ),
+                  ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isLoadingWeather ? 'Fetching location...' : _locationName,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: responsive.bodyFontSize,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (!_isLoadingWeather)
+                          Text(
+                            'Tap to refresh',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: responsive.fontSize(
+                                mobile: 12,
+                                tablet: 13,
+                                desktop: 14,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (_isLoadingWeather)
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  else
+                    Row(
+                      children: [
+                        Icon(
+                          _getWeatherIcon(),
+                          color: Colors.white,
+                          size: responsive.mediumIconSize,
+                        ),
+                        ResponsiveSpacing.horizontal(
+                          mobile: 8,
+                          tablet: 10,
+                          desktop: 12,
+                        ),
+                        Text(
+                          _temperature,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: responsive.titleFontSize,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getWeatherIcon() {
+    if (_weatherCondition.contains('rain')) return Icons.water_drop_rounded;
+    if (_weatherCondition.contains('cloud')) return Icons.cloud_rounded;
+    if (_weatherCondition.contains('sun') || _weatherCondition.contains('clear')) {
+      return Icons.wb_sunny_rounded;
+    }
+    return Icons.cloud_outlined;
+  }
+
+  Widget _buildQuickStats(Responsive responsive, Color primary) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      child: ResponsiveBuilder(
+        mobile: _buildStatsRow(responsive, primary),
+        tablet: _buildStatsRow(responsive, primary),
+        desktop: _buildStatsRow(responsive, primary),
+      ),
+    );
+  }
+
+  Widget _buildStatsRow(Responsive responsive, Color primary) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            responsive,
+            "Total Crops",
+            _totalCrops.toString(),
+            Icons.grass_rounded,
+            Colors.green.shade600,
+            Colors.green.shade50,
+          ),
+        ),
+        ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
+        Expanded(
+          child: _buildStatCard(
+            responsive,
+            "Active Alerts",
+            _activeAlerts.toString(),
+            Icons.notification_important_rounded,
+            Colors.orange.shade600,
+            Colors.orange.shade50,
+          ),
+        ),
+        ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
+        Expanded(
+          child: _buildStatCard(
+            responsive,
+            "Avg Quality",
+            "${_avgQuality.toStringAsFixed(1)}%",
+            Icons.verified_rounded,
+            Colors.blue.shade600,
+            Colors.blue.shade50,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(
+      Responsive responsive,
+      String label,
+      String value,
+      IconData icon,
+      Color iconColor,
+      Color bgColor,
+      ) {
+    return Container(
+      padding: responsive.padding(
+        mobile: const EdgeInsets.all(16),
+        tablet: const EdgeInsets.all(18),
+        desktop: const EdgeInsets.all(20),
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(
+          responsive.value(mobile: 16, tablet: 18, desktop: 20),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(
+              responsive.value(mobile: 8, tablet: 10, desktop: 12),
+            ),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: responsive.mediumIconSize),
+          ),
+          ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: responsive.titleFontSize,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[800],
+            ),
+          ),
+          ResponsiveSpacing(mobile: 2, tablet: 4, desktop: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: responsive.fontSize(mobile: 12, tablet: 13, desktop: 14),
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(
+      Responsive responsive,
+      Color primary,
+      String title,
+      IconData icon, {
+        Color? iconColor,
+      }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      child: Row(
+        children: [
+          Container(
+            width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
+            height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+            decoration: BoxDecoration(
+              color: primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: responsive.headingFontSize,
+                fontWeight: FontWeight.w700,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Icon(
+            icon,
+            color: iconColor ?? primary,
+            size: responsive.mediumIconSize,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainFeatureGrid(
+      BuildContext context,
+      Responsive responsive,
+      Color primary,
+      ) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      child: ResponsiveBuilder(
+        mobile: GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 14,
+          childAspectRatio: 0.95,
+          physics: const NeverScrollableScrollPhysics(),
+          children: _buildMainFeatureCards(context, responsive),
+        ),
+        tablet: GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          crossAxisSpacing: 18,
+          mainAxisSpacing: 18,
+          childAspectRatio: 1.0,
+          physics: const NeverScrollableScrollPhysics(),
+          children: _buildMainFeatureCards(context, responsive),
+        ),
+        desktop: GridView.count(
+          crossAxisCount: 4,
+          shrinkWrap: true,
+          crossAxisSpacing: 22,
+          mainAxisSpacing: 22,
+          childAspectRatio: 0.95,
+          physics: const NeverScrollableScrollPhysics(),
+          children: _buildMainFeatureCards(context, responsive),
         ),
       ),
     );
   }
 
-  // ... Keep all your existing methods (_buildFeatureCards, _featureCard, _tipCard) exactly as they were ...
-  List<Widget> _buildFeatureCards(
-    BuildContext context,
-    Responsive responsive,
-    Color primary,
-  ) {
+  List<Widget> _buildMainFeatureCards(BuildContext context, Responsive responsive) {
     return [
       _featureCard(
         context,
         responsive,
-        title: "AI Agent",
-        icon: Icons.smart_toy_rounded,
-        gradient: LinearGradient(
-          colors: [Colors.teal.shade400, Colors.teal.shade600],
-        ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ChatbotScreen()),
-          );
-        },
-      ),
-      _featureCard(
-        context,
-        responsive,
-        title: "Predict\nHarvest",
+        title: "Yield\nPrediction",
+        subtitle: "Forecast harvest",
         icon: Icons.analytics_rounded,
         gradient: LinearGradient(
           colors: [Colors.green.shade400, Colors.green.shade600],
         ),
         onTap: () {
-          // TODO: Navigate to harvest prediction
+          // TODO: Navigate to yield prediction
         },
       ),
       _featureCard(
         context,
         responsive,
         title: "Disease\nDetection",
+        subtitle: "AI diagnosis",
         icon: Icons.biotech_rounded,
         gradient: LinearGradient(
-          colors: [Colors.orange.shade400, Colors.orange.shade600],
+          colors: [Colors.red.shade400, Colors.red.shade600],
         ),
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen()),
+            MaterialPageRoute(builder: (_) => HomeScreen()),
           );
         },
       ),
@@ -675,6 +718,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         context,
         responsive,
         title: "Quality\nGrading",
+        subtitle: "ISO standards",
         icon: Icons.verified_rounded,
         gradient: LinearGradient(
           colors: [Colors.blue.shade400, Colors.blue.shade600],
@@ -689,7 +733,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
       _featureCard(
         context,
         responsive,
-        title: "Market\nPrices",
+        title: "Market\nForecast",
+        subtitle: "Price trends",
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
           colors: [Colors.purple.shade400, Colors.purple.shade600],
@@ -697,25 +742,180 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => PriceNavigation()),
+            MaterialPageRoute(builder: (_) => PriceNavigation()),
           );
         },
       ),
     ];
   }
 
-  Widget _featureCard(
-    BuildContext context,
-    Responsive responsive, {
-    required String title,
-    required IconData icon,
-    required Gradient gradient,
-    required Function onTap,
-  }) {
+  Widget _buildAdditionalFeatures(
+      BuildContext context,
+      Responsive responsive,
+      Color primary,
+      ) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _secondaryFeatureCard(
+                  context,
+                  responsive,
+                  "AI Assistant",
+                  Icons.smart_toy_rounded,
+                  Colors.teal.shade400,
+                  Colors.teal.shade50,
+                      () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ChatbotScreen()),
+                    );
+                  },
+                ),
+              ),
+              ResponsiveSpacing.horizontal(mobile: 14, tablet: 18, desktop: 22),
+              Expanded(
+                child: _secondaryFeatureCard(
+                  context,
+                  responsive,
+                  "Marketplace",
+                  Icons.store_rounded,
+                  Colors.orange.shade400,
+                  Colors.orange.shade50,
+                      () {
+                    // TODO: Navigate to marketplace
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _secondaryFeatureCard(
+      BuildContext context,
+      Responsive responsive,
+      String title,
+      IconData icon,
+      Color iconColor,
+      Color bgColor,
+      VoidCallback onTap,
+      ) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => onTap(),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(
+          responsive.value(mobile: 16, tablet: 18, desktop: 20),
+        ),
+        child: Container(
+          padding: responsive.padding(
+            mobile: const EdgeInsets.all(20),
+            tablet: const EdgeInsets.all(22),
+            desktop: const EdgeInsets.all(24),
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(
+              responsive.value(mobile: 16, tablet: 18, desktop: 20),
+            ),
+            border: Border.all(color: bgColor, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(
+                  responsive.value(mobile: 12, tablet: 14, desktop: 16),
+                ),
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: iconColor,
+                  size: responsive.mediumIconSize,
+                ),
+              ),
+              ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: responsive.bodyFontSize,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    ResponsiveSpacing(mobile: 2, tablet: 3, desktop: 4),
+                    Row(
+                      children: [
+                        Text(
+                          "Explore",
+                          style: TextStyle(
+                            fontSize: responsive.fontSize(
+                              mobile: 12,
+                              tablet: 13,
+                              desktop: 14,
+                            ),
+                            color: iconColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        ResponsiveSpacing.horizontal(
+                          mobile: 4,
+                          tablet: 5,
+                          desktop: 6,
+                        ),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: iconColor,
+                          size: responsive.value(
+                            mobile: 14,
+                            tablet: 15,
+                            desktop: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _featureCard(
+      BuildContext context,
+      Responsive responsive, {
+        required String title,
+        required String subtitle,
+        required IconData icon,
+        required Gradient gradient,
+        required VoidCallback onTap,
+      }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 20, tablet: 22, desktop: 24),
         ),
@@ -727,25 +927,23 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Stack(
             children: [
-              // Background pattern
               Positioned(
-                right: -10,
-                bottom: -10,
+                right: -15,
+                bottom: -15,
                 child: Icon(
                   icon,
-                  size: responsive.value(mobile: 70, tablet: 80, desktop: 90),
-                  color: Colors.white.withOpacity(0.15),
+                  size: responsive.value(mobile: 80, tablet: 90, desktop: 100),
+                  color: Colors.white.withOpacity(0.12),
                 ),
               ),
-              // Content
               Padding(
                 padding: responsive.padding(
                   mobile: const EdgeInsets.all(18),
@@ -767,11 +965,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       ),
                       child: Icon(
                         icon,
-                        size: responsive.value(
-                          mobile: 28,
-                          tablet: 32,
-                          desktop: 36,
-                        ),
+                        size: responsive.value(mobile: 28, tablet: 32, desktop: 36),
                         color: Colors.white,
                       ),
                     ),
@@ -785,10 +979,23 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         height: 1.2,
                       ),
                     ),
-                    ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
+                    ResponsiveSpacing(mobile: 4, tablet: 5, desktop: 6),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(
+                          mobile: 12,
+                          tablet: 13,
+                          desktop: 14,
+                        ),
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.85),
+                      ),
+                    ),
+                    ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withOpacity(0.9),
                       size: responsive.smallIconSize,
                     ),
                   ],
@@ -801,29 +1008,76 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     );
   }
 
+  Widget _buildTipsSection(Responsive responsive) {
+    return SizedBox(
+      height: responsive.value(mobile: 145, tablet: 165, desktop: 185),
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+        children: [
+          _tipCard(
+            "Monitor soil moisture regularly",
+            Icons.water_drop_rounded,
+            Colors.blue.shade50,
+            Colors.blue.shade700,
+            responsive,
+          ),
+          _tipCard(
+            "Apply organic fertilizers monthly",
+            Icons.eco_rounded,
+            Colors.green.shade50,
+            Colors.green.shade700,
+            responsive,
+          ),
+          _tipCard(
+            "Check for pest damage daily",
+            Icons.bug_report_rounded,
+            Colors.red.shade50,
+            Colors.red.shade700,
+            responsive,
+          ),
+          _tipCard(
+            "Maintain proper plant spacing",
+            Icons.space_dashboard_rounded,
+            Colors.purple.shade50,
+            Colors.purple.shade700,
+            responsive,
+          ),
+          _tipCard(
+            "Harvest at optimal maturity",
+            Icons.calendar_today_rounded,
+            Colors.orange.shade50,
+            Colors.orange.shade700,
+            responsive,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _tipCard(
-    String text,
-    IconData icon,
-    Color bgColor,
-    Color iconColor,
-    Responsive responsive,
-  ) {
+      String text,
+      IconData icon,
+      Color bgColor,
+      Color iconColor,
+      Responsive responsive,
+      ) {
     return Container(
       margin: EdgeInsets.only(
-        right: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+        right: responsive.value(mobile: 14, tablet: 16, desktop: 18),
       ),
       padding: responsive.padding(
         mobile: const EdgeInsets.all(18),
         tablet: const EdgeInsets.all(20),
         desktop: const EdgeInsets.all(24),
       ),
-      width: responsive.value(mobile: 200, tablet: 220, desktop: 240),
+      width: responsive.value(mobile: 210, tablet: 230, desktop: 250),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(
-          responsive.value(mobile: 20, tablet: 22, desktop: 24),
+          responsive.value(mobile: 18, tablet: 20, desktop: 22),
         ),
-        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
+        border: Border.all(color: iconColor.withOpacity(0.2), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -865,8 +1119,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
               fontWeight: FontWeight.w600,
               fontSize: responsive.bodyFontSize,
               color: Colors.grey[800],
-              height: 1.3,
+              height: 1.35,
             ),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

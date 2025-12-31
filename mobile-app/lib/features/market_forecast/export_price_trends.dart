@@ -124,6 +124,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
       appBar: AppBar(
         title: const Text('Past Export Price Trends'),
         backgroundColor: const Color(0xFF2E7D32),
+        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -146,36 +147,67 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
   // Filters
   Widget _filtersSection() {
     final responsive = context.responsive;
-    return Row(
-      children: [
-        Expanded(
-          child: _customDropdown('Year', selectedYear, years, (value) {
-            setState(() => selectedYear = value);
-          }),
-        ),
-        SizedBox(width: responsive.smallSpacing),
-        Expanded(
-          child: _customDropdown('From', months[selectedMonthFrom], months, (
-            value,
-          ) {
-            final index = months.indexOf(value);
-            if (index != -1 && index <= selectedMonthTo) {
-              setState(() => selectedMonthFrom = index);
-            }
-          }),
-        ),
-        SizedBox(width: responsive.smallSpacing),
-        Expanded(
-          child: _customDropdown('To', months[selectedMonthTo], months, (
-            value,
-          ) {
-            final index = months.indexOf(value);
-            if (index != -1 && index >= selectedMonthFrom) {
-              setState(() => selectedMonthTo = index);
-            }
-          }),
-        ),
-      ],
+    return Container(
+      padding: EdgeInsets.all(responsive.mediumSpacing),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Filter Data',
+            style: TextStyle(
+              fontSize: responsive.bodyFontSize,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: responsive.mediumSpacing),
+          Row(
+            children: [
+              Expanded(
+                child: _customDropdown('Year', selectedYear, years, (value) {
+                  setState(() => selectedYear = value);
+                }),
+              ),
+              SizedBox(width: responsive.smallSpacing),
+              Expanded(
+                child: _customDropdown(
+                  'From',
+                  months[selectedMonthFrom],
+                  months,
+                  (value) {
+                    final index = months.indexOf(value);
+                    if (index != -1 && index <= selectedMonthTo) {
+                      setState(() => selectedMonthFrom = index);
+                    }
+                  },
+                ),
+              ),
+              SizedBox(width: responsive.smallSpacing),
+              Expanded(
+                child: _customDropdown('To', months[selectedMonthTo], months, (
+                  value,
+                ) {
+                  final index = months.indexOf(value);
+                  if (index != -1 && index >= selectedMonthFrom) {
+                    setState(() => selectedMonthTo = index);
+                  }
+                }),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -233,6 +265,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                       style: TextStyle(
                         color: Colors.black87,
                         fontSize: responsive.bodyFontSize,
+                        fontWeight: FontWeight.w500,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -240,6 +273,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                   Icon(
                     Icons.arrow_drop_down_rounded,
                     size: responsive.mediumIconSize,
+                    color: const Color(0xFF2E7D32),
                   ),
                 ],
               ),
@@ -288,6 +322,8 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                       height: itemHeight,
                       child: ListTile(
                         title: Text(item),
+                        selectedTileColor: Colors.green.withOpacity(0.1),
+                        selected: item == value,
                         onTap: () {
                           onChanged(item);
                           _overlayEntry!.remove();
@@ -318,19 +354,34 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Global Black Pepper Price Trends',
-            style: TextStyle(
-              fontSize: responsive.titleFontSize,
-              fontWeight: FontWeight.bold,
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: responsive.smallSpacing + 4,
+              vertical: responsive.smallSpacing / 2,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2E7D32).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFF2E7D32).withOpacity(0.2),
+              ),
+            ),
+            child: Text(
+              'Global Black Pepper Price Trends',
+              style: TextStyle(
+                fontSize: responsive.titleFontSize,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF2E7D32),
+              ),
             ),
           ),
-          SizedBox(height: responsive.smallSpacing / 2),
+          SizedBox(height: responsive.smallSpacing),
           Text(
             dateRange,
             style: TextStyle(
               color: Colors.grey,
               fontSize: responsive.bodyFontSize,
+              fontWeight: FontWeight.w500,
             ),
           ),
           SizedBox(height: responsive.mediumSpacing),
@@ -431,38 +482,70 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     return Row(
       children: [
         Expanded(
-          child: _statCard('Peak Price', 'Rs.${stats['peak']!.toInt()} /kg'),
+          child: _statCard(
+            'Peak Price',
+            'Rs.${stats['peak']!.toInt()} /kg',
+            Icons.trending_up,
+            const Color(0xFF43A047),
+          ),
         ),
         SizedBox(width: responsive.smallSpacing),
         Expanded(
           child: _statCard(
             'Lowest Price',
             'Rs.${stats['lowest']!.toInt()} /kg',
+            Icons.trending_down,
+            const Color(0xFFE53935),
           ),
         ),
         SizedBox(width: responsive.smallSpacing),
         Expanded(
-          child: _statCard('Average', 'Rs.${stats['average']!.toInt()} /kg'),
+          child: _statCard(
+            'Average',
+            'Rs.${stats['average']!.toInt()} /kg',
+            Icons.show_chart,
+            const Color(0xFF1565C0),
+          ),
         ),
       ],
     );
   }
 
-  Widget _statCard(String title, String value) {
+  Widget _statCard(String title, String value, IconData icon, Color color) {
     final responsive = context.responsive;
     return Container(
       padding: EdgeInsets.all(responsive.smallSpacing + 4),
-      decoration: _cardDecoration(),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        border: Border.all(color: color.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(14),
+      ),
       child: Column(
         children: [
-          Text(title, style: TextStyle(fontSize: responsive.smallFontSize)),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
           SizedBox(height: responsive.smallSpacing / 2),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: responsive.smallFontSize,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: responsive.smallSpacing / 3),
           Text(
             value,
             style: TextStyle(
-              fontSize: responsive.bodyFontSize,
+              fontSize: responsive.bodyFontSize + 2,
               fontWeight: FontWeight.bold,
-              color: Colors.green,
+              color: color,
             ),
           ),
         ],
@@ -493,12 +576,25 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Insights',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w600,
-              fontSize: responsive.smallFontSize + 4,
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: responsive.smallSpacing + 4,
+              vertical: responsive.smallSpacing / 2,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2E7D32).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFF2E7D32).withOpacity(0.2),
+              ),
+            ),
+            child: Text(
+              'Key Insights',
+              style: TextStyle(
+                color: const Color(0xFF2E7D32),
+                fontWeight: FontWeight.w600,
+                fontSize: responsive.smallFontSize + 4,
+              ),
             ),
           ),
           SizedBox(height: responsive.mediumSpacing),
@@ -579,7 +675,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
               color: color.withOpacity(0.18),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color),
+            child: Icon(icon, color: color, size: 20),
           ),
           SizedBox(width: responsive.smallSpacing),
           Expanded(
@@ -591,13 +687,14 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: responsive.bodyFontSize,
+                    color: Colors.black87,
                   ),
                 ),
                 SizedBox(height: responsive.smallSpacing / 3),
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.black87,
+                    color: Colors.black54,
                     fontSize: responsive.smallFontSize + 1,
                   ),
                 ),

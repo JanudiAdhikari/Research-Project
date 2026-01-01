@@ -3,8 +3,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
+import 'features/auth/login_page.dart';
 import 'screens/signup_screen.dart';
-import 'screens/image_picker_screen.dart';
+import 'features/auth/signup_page.dart';
+import 'features/disease_detection/screens/image_picker_screen.dart';
+import 'features/auth/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,12 +31,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Black Pepper',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        fontFamily: 'Poppins',
-      ),
-      home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
+      debugShowCheckedModeBanner: false,
+      title: 'CeylonPepper',
+      theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Poppins'),
+      // home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
+      home: error != null ? ErrorScreen(error: error!) : const SplashScreen(),
       navigatorObservers: [FirebaseErrorObserver()],
     );
   }
@@ -52,14 +54,16 @@ class MainScreen extends StatelessWidget {
   void _navigateToLogin(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      // MaterialPageRoute(builder: (context) => const LoginScreen()),
+      MaterialPageRoute(builder: (context) => const LoginPage()),
     );
   }
 
   void _navigateToSignUp(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const SignupScreen()),
+      // MaterialPageRoute(builder: (context) => const SignupScreen()),
+      MaterialPageRoute(builder: (context) => const SignupPage()),
     );
   }
 
@@ -72,11 +76,7 @@ class MainScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.green[50]!,
-              Colors.white,
-              Colors.green[50]!,
-            ],
+            colors: [Colors.green[50]!, Colors.white, Colors.green[50]!],
           ),
         ),
         child: SafeArea(
@@ -115,7 +115,7 @@ class MainScreen extends StatelessWidget {
                       const SizedBox(height: 30),
                       // App Title
                       const Text(
-                        'Black Pepper',
+                        'CeylonPepper',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -143,7 +143,10 @@ class MainScreen extends StatelessWidget {
                 flex: 1,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 30,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: const BorderRadius.only(
@@ -277,11 +280,7 @@ class ErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 80,
-              ),
+              const Icon(Icons.error_outline, color: Colors.red, size: 80),
               const SizedBox(height: 20),
               const Text(
                 'Initialization Error',
@@ -295,10 +294,7 @@ class ErrorScreen extends StatelessWidget {
               Text(
                 error,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 14,
-                ),
+                style: const TextStyle(color: Colors.grey, fontSize: 14),
               ),
               const SizedBox(height: 30),
               ElevatedButton(

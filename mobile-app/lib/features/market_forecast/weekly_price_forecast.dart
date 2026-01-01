@@ -335,7 +335,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                         Padding(
                           padding: const EdgeInsets.only(top: 16),
                           child: Text(
-                            "Weather Details",
+                            "Weather Conditions",
                             style: TextStyle(
                               fontSize: responsive.bodyFontSize - 0.5,
                               fontWeight: FontWeight.w600,
@@ -345,47 +345,150 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                         ),
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
 
-                        Wrap(
-                          spacing: responsive.value(
-                            mobile: 12,
-                            tablet: 16,
-                            desktop: 20,
+                        // WEATHER SECTION
+                        Container(
+                          padding: EdgeInsets.all(
+                            responsive.value(
+                              mobile: 20,
+                              tablet: 24,
+                              desktop: 28,
+                            ),
                           ),
-                          runSpacing: responsive.value(
-                            mobile: 12,
-                            tablet: 16,
-                            desktop: 20,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blue.shade50,
+                                Colors.cyan.shade50,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(
+                              responsive.value(
+                                mobile: 20,
+                                tablet: 24,
+                                desktop: 28,
+                              ),
+                            ),
+                            border: Border.all(
+                              color: Colors.blue.shade200,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.withOpacity(0.1),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
                           ),
-                          children: [
-                            _buildWeatherCard(
-                              imagePath:
-                                  "assets/images/market_forecast/rainfall.png",
-                              label: "Rainfall",
-                              value: "120 mm",
-                              responsive: responsive,
-                            ),
-                            _buildWeatherCard(
-                              imagePath:
-                                  "assets/images/market_forecast/temperature.png",
-                              label: "Temperature",
-                              value: "29°C",
-                              responsive: responsive,
-                            ),
-                            _buildWeatherCard(
-                              imagePath:
-                                  "assets/images/market_forecast/humidity.png",
-                              label: "Humidity",
-                              value: "78%",
-                              responsive: responsive,
-                            ),
-                            _buildWeatherCard(
-                              imagePath:
-                                  "assets/images/market_forecast/wind_speed.png",
-                              label: "Wind Speed",
-                              value: "12 km/h",
-                              responsive: responsive,
-                            ),
-                          ],
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Weather Grid - 2x2
+                              GridView.count(
+                                crossAxisCount: 2,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                crossAxisSpacing: responsive.value(
+                                  mobile: 12,
+                                  tablet: 14,
+                                  desktop: 16,
+                                ),
+                                mainAxisSpacing: responsive.value(
+                                  mobile: 12,
+                                  tablet: 14,
+                                  desktop: 16,
+                                ),
+                                childAspectRatio: 0.95,
+                                children: [
+                                  _buildEnhancedWeatherCard(
+                                    icon: Icons.opacity,
+                                    iconColor: Colors.blue,
+                                    label: "Rainfall",
+                                    value: "120",
+                                    unit: "mm",
+                                    responsive: responsive,
+                                    description: "Moderate Rain",
+                                  ),
+                                  _buildEnhancedWeatherCard(
+                                    icon: Icons.thermostat,
+                                    iconColor: Colors.orange,
+                                    label: "Temperature",
+                                    value: "29",
+                                    unit: "°C",
+                                    responsive: responsive,
+                                    description: "Warm",
+                                  ),
+                                  _buildEnhancedWeatherCard(
+                                    icon: Icons.water_drop,
+                                    iconColor: Colors.cyan,
+                                    label: "Humidity",
+                                    value: "78",
+                                    unit: "%",
+                                    responsive: responsive,
+                                    description: "High Moisture",
+                                  ),
+                                  _buildEnhancedWeatherCard(
+                                    icon: Icons.air,
+                                    iconColor: Colors.teal,
+                                    label: "Wind Speed",
+                                    value: "12",
+                                    unit: "km/h",
+                                    responsive: responsive,
+                                    description: "Light Breeze",
+                                  ),
+                                ],
+                              ),
+
+                              ResponsiveSpacing(
+                                mobile: 16,
+                                tablet: 18,
+                                desktop: 20,
+                              ),
+
+                              // Weather Summary Card
+                              Container(
+                                padding: EdgeInsets.all(
+                                  responsive.value(
+                                    mobile: 14,
+                                    tablet: 16,
+                                    desktop: 18,
+                                  ),
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.blue.shade200,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: Colors.blue.shade600,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        "Good conditions for crop growth. Expect moderate rainfall with warm temperatures.",
+                                        style: TextStyle(
+                                          fontSize:
+                                              responsive.bodyFontSize - 1.5,
+                                          color: Colors.blue.shade800,
+                                          fontWeight: FontWeight.w500,
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
 
                         ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
@@ -420,11 +523,11 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                   return; // stop navigation
                                 }
 
-                                // All good → navigate
+                                // All good → navigate with animation
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) => WeeklyPrediction(
+                                  _buildCustomPageRoute(
+                                    WeeklyPrediction(
                                       year: selectedYear,
                                       month: selectedMonth,
                                       week: selectedWeek,
@@ -533,54 +636,114 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     );
   }
 
-  Widget _buildWeatherCard({
-    required String imagePath,
+  Widget _buildEnhancedWeatherCard({
+    required IconData icon,
+    required Color iconColor,
     required String label,
     required String value,
+    required String unit,
     required Responsive responsive,
+    required String description,
   }) {
     return Container(
-      width: responsive.value(mobile: 120, tablet: 160, desktop: 180),
-      padding: EdgeInsets.all(
-        responsive.value(mobile: 16, tablet: 18, desktop: 20),
-      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 16, tablet: 18, desktop: 20),
         ),
+        border: Border.all(color: iconColor.withOpacity(0.2), width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: iconColor.withOpacity(0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(
-            imagePath,
-            width: responsive.value(mobile: 36, tablet: 40, desktop: 44),
-            height: responsive.value(mobile: 36, tablet: 40, desktop: 44),
+      child: Container(
+        padding: EdgeInsets.all(
+          responsive.value(mobile: 14, tablet: 16, desktop: 18),
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, iconColor.withOpacity(0.03)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: responsive.bodyFontSize + 1,
-              fontWeight: FontWeight.w600,
+          borderRadius: BorderRadius.circular(
+            responsive.value(mobile: 16, tablet: 18, desktop: 20),
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Icon Badge
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: responsive.value(mobile: 24, tablet: 28, desktop: 32),
+              ),
             ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: responsive.bodyFontSize - 2,
-              color: Colors.grey.shade600,
+
+            // Value and Unit
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: value,
+                        style: TextStyle(
+                          fontSize: responsive.fontSize(
+                            mobile: 24,
+                            tablet: 28,
+                            desktop: 32,
+                          ),
+                          fontWeight: FontWeight.w700,
+                          color: iconColor,
+                        ),
+                      ),
+                      TextSpan(
+                        text: unit,
+                        style: TextStyle(
+                          fontSize: responsive.bodyFontSize,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize - 1,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize - 2,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -643,5 +806,25 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     );
 
     Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  PageRouteBuilder _buildCustomPageRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.0, 1.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+
+        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 600),
+    );
   }
 }

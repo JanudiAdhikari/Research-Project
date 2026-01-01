@@ -617,71 +617,108 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Per kg Price',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Per kg Price',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        predictedPricePerKg != null
-                            ? _formatCurrency(predictedPricePerKg!)
-                            : '—',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.5,
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'LKR',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              predictedPricePerKg != null
+                                  ? _formatCurrencyNumber(predictedPricePerKg!)
+                                  : '—',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Monthly Total',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Monthly Total',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        predictedMonthlyTotal != null
-                            ? _formatCurrency(predictedMonthlyTotal!)
-                            : '—',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.5,
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              'LKR',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              predictedMonthlyTotal != null
+                                  ? _formatCurrencyNumber(
+                                      predictedMonthlyTotal!,
+                                    )
+                                  : '—',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -951,7 +988,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     return base + seasonalBump + yearlyTrend;
   }
 
-  String _formatCurrency(double value) {
+  String _formatCurrencyNumber(double value) {
     final rounded = value.round();
     final chars = rounded.toString().split('').reversed.toList();
     final buffer = StringBuffer();
@@ -959,8 +996,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
       if (i != 0 && i % 3 == 0) buffer.write(',');
       buffer.write(chars[i]);
     }
-    final formatted = buffer.toString().split('').reversed.join();
-    return 'LKR $formatted';
+    return buffer.toString().split('').reversed.join();
   }
 
   Widget _buildResultRowEnhanced(String label, String value, IconData icon) {

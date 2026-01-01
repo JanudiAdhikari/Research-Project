@@ -310,10 +310,356 @@ class Recommendations extends StatelessWidget {
                   ],
                 ),
               ),
+
+              SizedBox(height: responsive.largeSpacing),
+
+              // Price Comparison Cards
+              Text(
+                'Price Analysis',
+                style: TextStyle(
+                  fontSize: responsive.titleFontSize - 2,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: responsive.mediumSpacing),
+
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: responsive.mediumSpacing,
+                mainAxisSpacing: responsive.mediumSpacing,
+                childAspectRatio: 1.15,
+                children: [
+                  _buildPriceComparisonCard(
+                    responsive,
+                    'Previous Week',
+                    'Rs. ${previousPrice.toInt()}/kg',
+                    Icons.history,
+                    Colors.grey[600]!,
+                  ),
+                  _buildPriceComparisonCard(
+                    responsive,
+                    'Current Week',
+                    'Rs. ${currentPrice.toInt()}/kg',
+                    Icons.calendar_today,
+                    Colors.blue[600]!,
+                  ),
+                  _buildPriceComparisonCard(
+                    responsive,
+                    'Next Week (Predicted)',
+                    'Rs. ${predictedPrice.toInt()}/kg',
+                    Icons.trending_up,
+                    Colors.green[600]!,
+                  ),
+                  _buildPriceComparisonCard(
+                    responsive,
+                    'Average Price',
+                    'Rs. ${averagePrice.toInt()}/kg',
+                    Icons.bar_chart,
+                    Colors.purple[600]!,
+                  ),
+                ],
+              ),
+
+              SizedBox(height: responsive.largeSpacing),
+
+              // Key Factors Section
+              Text(
+                'Key Factors',
+                style: TextStyle(
+                  fontSize: responsive.titleFontSize - 2,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              SizedBox(height: responsive.mediumSpacing),
+
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(responsive.mediumSpacing),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: getKeyFactors().asMap().entries.map((entry) {
+                    final isLast = entry.key == getKeyFactors().length - 1;
+                    return Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              margin: const EdgeInsets.only(top: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.green[700],
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                entry.value,
+                                style: TextStyle(
+                                  fontSize: responsive.bodyFontSize - 1,
+                                  color: Colors.grey[800],
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!isLast) ...[
+                          const SizedBox(height: 12),
+                          Divider(color: Colors.grey[200], height: 1),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+
+              SizedBox(height: responsive.largeSpacing),
+
+              // Market Insights Section
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(responsive.mediumSpacing),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.amber[50]!, Colors.orange[50]!],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.amber[200]!, width: 1.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          color: Colors.amber[700],
+                          size: 24,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Market Insights',
+                          style: TextStyle(
+                            fontSize: responsive.bodyFontSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.amber[900],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: responsive.smallSpacing),
+                    Text(
+                      _getMarketInsight(),
+                      style: TextStyle(
+                        fontSize: responsive.bodyFontSize - 1,
+                        color: Colors.amber[900],
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: responsive.largeSpacing),
+
+              // Action Items Section
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(responsive.mediumSpacing),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.checklist,
+                          color: Colors.green[700],
+                          size: 24,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Recommended Actions',
+                          style: TextStyle(
+                            fontSize: responsive.bodyFontSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.grey[900],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: responsive.smallSpacing),
+                    ..._getActionItems().asMap().entries.map((entry) {
+                      final isLast = entry.key == _getActionItems().length - 1;
+                      return Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: Colors.green[100],
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${entry.key + 1}',
+                                    style: TextStyle(
+                                      fontSize: responsive.smallFontSize - 1,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.green[700],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  entry.value,
+                                  style: TextStyle(
+                                    fontSize: responsive.bodyFontSize - 1,
+                                    color: Colors.grey[800],
+                                    height: 1.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (!isLast)
+                            SizedBox(height: responsive.smallSpacing),
+                        ],
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: responsive.largeSpacing * 2),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildPriceComparisonCard(
+    Responsive responsive,
+    String label,
+    String price,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2)),
+        ],
+      ),
+      padding: EdgeInsets.all(responsive.mediumSpacing),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: responsive.smallFontSize,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                price,
+                style: TextStyle(
+                  fontSize: responsive.bodyFontSize,
+                  color: color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getMarketInsight() {
+    final priceChange = ((predictedPrice - currentPrice) / currentPrice) * 100;
+    if (priceChange > 5) {
+      return 'The market shows a strong upward trend with prices expected to increase significantly. This is a favorable time to hold your inventory for better returns.';
+    } else if (priceChange > 0) {
+      return 'Market conditions are stable with slight upward movement expected. Consider waiting for better prices if storage facilities allow.';
+    } else if (priceChange < -5) {
+      return 'The market is experiencing a downward trend. It is recommended to sell immediately to avoid further price drops.';
+    } else {
+      return 'Market prices are relatively stable with minimal changes expected. Sell when you have good storage conditions and time permits.';
+    }
+  }
+
+  List<String> _getActionItems() {
+    final recommendation = getRecommendation();
+    if (recommendation == 'WAIT') {
+      return [
+        'Store your pepper in a dry, cool place to maintain quality',
+        'Monitor market prices daily for optimal selling timing',
+        'Prepare logistics and transport arrangements in advance',
+        'Check weather forecasts for any unexpected market impacts',
+        'Contact potential buyers to lock in selling arrangements',
+      ];
+    } else {
+      return [
+        'Harvest and prepare your pepper for immediate sale',
+        'Contact local traders and buyers for best offers',
+        'Arrange quality grading and packaging',
+        'Complete sales transaction as soon as possible',
+        'Document all sales records and transactions properly',
+      ];
+    }
   }
 }

@@ -131,6 +131,8 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _descriptionSection(),
+            SizedBox(height: responsive.mediumSpacing),
             _filtersSection(),
             SizedBox(height: responsive.mediumSpacing),
             _chartCard(),
@@ -140,6 +142,72 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
             _insightsCard(),
           ],
         ),
+      ),
+    );
+  }
+
+  // Description Section
+  Widget _descriptionSection() {
+    final responsive = context.responsive;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(responsive.mediumSpacing),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFFC8E6C9), const Color(0xFFA5D6A7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black.withOpacity(0.08)),
+            ),
+            child: const Icon(
+              Icons.analytics_rounded,
+              color: Colors.black87,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Historical Export Price Analysis',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize + 2,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Filter data to view past export prices of black pepper in Sri Lanka. Analyze trends and make informed decisions.',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize - 1,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

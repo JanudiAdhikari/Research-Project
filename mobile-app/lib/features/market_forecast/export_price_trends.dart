@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../utils/responsive.dart';
+import 'export_details_by_country.dart';
 
 class ExportPriceTrends extends StatefulWidget {
   const ExportPriceTrends({super.key});
@@ -133,6 +134,8 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
           children: [
             _descriptionSection(),
             SizedBox(height: responsive.mediumSpacing),
+            _countryNavCard(responsive), // quick navigation to country details
+            SizedBox(height: responsive.mediumSpacing),
             _filtersSection(),
             SizedBox(height: responsive.mediumSpacing),
             _chartCard(),
@@ -159,6 +162,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.green.withOpacity(0.2),
@@ -203,6 +207,102 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                     fontSize: responsive.bodyFontSize - 1,
                     color: Colors.black87,
                   ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Navigation card to "Export Details by Country"
+  Widget _countryNavCard(Responsive responsive) {
+    return Container(
+      padding: EdgeInsets.all(responsive.mediumSpacing),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE8F5E9), Color(0xFFD0F2E4)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color.fromARGB(255, 255, 255, 255)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color.fromARGB(255, 89, 96, 95).withOpacity(0.12),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Color(0xFF2E7D32), Color(0xFF43A047)],
+              ),
+            ),
+            child: const Icon(Icons.public, color: Colors.white, size: 22),
+          ),
+          SizedBox(width: responsive.mediumSpacing),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Export Details by Country',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize + 3,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: responsive.smallSpacing / 2),
+                Text(
+                  'Tap to view country-wise volumes, prices, and trends.',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: responsive.smallSpacing),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2E7D32),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: EdgeInsets.symmetric(
+                horizontal: responsive.smallSpacing + 8,
+                vertical: responsive.smallSpacing + 2,
+              ),
+              elevation: 4,
+              shadowColor: const Color(0xFF2E7D32).withOpacity(0.35),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ExportDetailsByCountry(),
+                ),
+              );
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Text('View', style: TextStyle(color: Colors.white)),
+                SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 18,
+                  color: Colors.white,
                 ),
               ],
             ),

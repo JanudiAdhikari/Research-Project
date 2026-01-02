@@ -155,11 +155,8 @@ class WeeklyPrediction extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F7FA),
 
       appBar: AppBar(
-        title: const Text(
-          "Market Forecast Overview",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.green[700],
+        title: const Text('Price Forecast Analysis'),
+        backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
       ),
 

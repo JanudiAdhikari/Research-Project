@@ -154,6 +154,7 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.green.withOpacity(0.2),

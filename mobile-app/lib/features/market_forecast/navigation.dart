@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'weekly_price_forecast.dart';
 import 'export_price_trends.dart';
+import 'export_details_by_country.dart';
 
 class PriceNavigation extends StatelessWidget {
   const PriceNavigation({Key? key}) : super(key: key);
@@ -18,10 +19,10 @@ class PriceNavigation extends StatelessWidget {
             children: [
               // ---------------- HEADER  ----------------
               Container(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [primary, primary.withOpacity(0.8)],
+                    colors: [primary, const Color(0xFF43A047)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -31,8 +32,8 @@ class PriceNavigation extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: primary.withOpacity(0.3),
-                      blurRadius: 20,
+                      color: primary.withOpacity(0.30),
+                      blurRadius: 22,
                       offset: const Offset(0, 10),
                     ),
                   ],
@@ -43,9 +44,9 @@ class PriceNavigation extends StatelessWidget {
                     Text(
                       "Hello, Farmer 👋",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withOpacity(0.92),
                         fontSize: 16,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -54,47 +55,45 @@ class PriceNavigation extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.3,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       "Explore market forecasts and export trends",
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+                        color: Colors.white.withOpacity(0.92),
+                        fontSize: 15,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-
-                    const SizedBox(height: 20),
-
+                    const SizedBox(height: 18),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withOpacity(0.16),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withOpacity(0.22),
                         ),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.location_on_rounded,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withOpacity(0.95),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             "Colombo",
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withOpacity(0.95),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           const Spacer(),
@@ -107,8 +106,8 @@ class PriceNavigation extends StatelessWidget {
                             "29°C",
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
@@ -118,7 +117,7 @@ class PriceNavigation extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
 
               // ---------------- FIRST BOX ----------------
               Padding(
@@ -142,7 +141,7 @@ class PriceNavigation extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
               // ---------------- SECOND BOX ----------------
               Padding(
@@ -165,6 +164,32 @@ class PriceNavigation extends StatelessWidget {
                   ),
                 ),
               ),
+
+              const SizedBox(height: 18),
+
+              // ---------------- THIRD BOX ----------------
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: _boxDecoration(),
+                  child: _buildListTile(
+                    title: "Export Details by Country of Destination",
+                    subtitle: "Track export volumes and prices globally",
+                    icon: Icons.public,
+                    iconColor: const Color(0xFFFF6F00),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ExportDetailsByCountry(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 26),
             ],
           ),
         ),
@@ -172,21 +197,24 @@ class PriceNavigation extends StatelessWidget {
     );
   }
 
+  // Elevated, rounded white card
   BoxDecoration _boxDecoration() {
     return BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.08),
-          blurRadius: 8,
-          spreadRadius: 1,
-          offset: const Offset(0, 3),
+          color: Colors.black.withOpacity(0.06),
+          blurRadius: 14,
+          spreadRadius: 0,
+          offset: const Offset(0, 6),
         ),
       ],
+      border: Border.all(color: Colors.grey.withOpacity(0.06)),
     );
   }
 
+  // List tile with accent icon container and arrow
   Widget _buildListTile({
     required String title,
     required String subtitle,
@@ -197,23 +225,30 @@ class PriceNavigation extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.all(16),
       leading: Container(
-        width: 48,
-        height: 48,
+        width: 50,
+        height: 50,
         decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+          color: iconColor.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: iconColor),
+        child: Icon(icon, color: iconColor, size: 24),
       ),
       title: Text(
         title,
-        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16.5),
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          subtitle,
+          style: TextStyle(fontSize: 14.2, color: Colors.grey[600]),
+        ),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+      trailing: Icon(
+        Icons.arrow_forward_ios_rounded,
+        size: 16,
+        color: Colors.grey[500],
+      ),
       onTap: onTap,
     );
   }

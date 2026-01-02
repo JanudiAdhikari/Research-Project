@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../utils/responsive.dart';
 import 'export_details_by_country.dart';
+import '../../services/auth_service.dart';
 
 class ExportPriceTrends extends StatefulWidget {
   const ExportPriceTrends({super.key});
@@ -17,6 +18,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
 
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
+  final AuthService _authService = AuthService();
+  String? userRole;
+  bool isLoading = true;
 
   final List<String> years = ['2022', '2023', '2024', '2025'];
   final List<String> months = [
@@ -112,6 +116,20 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    final role = await _authService.storage.read(key: "role");
+    setState(() {
+      userRole = role;
+      isLoading = false;
+    });
+  }
+
+  @override
   void dispose() {
     _overlayEntry?.remove();
     super.dispose();
@@ -134,8 +152,11 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
           children: [
             _descriptionSection(),
             SizedBox(height: responsive.mediumSpacing),
-            _countryNavCard(responsive), // quick navigation to country details
-            SizedBox(height: responsive.mediumSpacing),
+            // Only show country navigation for exporters
+            if (userRole == 'exporter') ...[
+              _countryNavCard(responsive),
+              SizedBox(height: responsive.mediumSpacing),
+            ],
             _filtersSection(),
             SizedBox(height: responsive.mediumSpacing),
             _chartCard(),

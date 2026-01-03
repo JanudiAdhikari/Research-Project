@@ -354,7 +354,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         subtitle: "Start grading",
         icon: Icons.add_circle_outline,
         gradient: LinearGradient(
-          colors: [Colors.green.shade400, Colors.green.shade600],
+          colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
         ),
         onTap: () {
           Navigator.push(
@@ -370,7 +370,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         subtitle: "View history",
         icon: Icons.history_rounded,
         gradient: LinearGradient(
-          colors: [Colors.blue.shade400, Colors.blue.shade600],
+          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
         ),
         onTap: () {
           Navigator.push(
@@ -388,7 +388,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         subtitle: "Learn process",
         icon: Icons.school_rounded,
         gradient: LinearGradient(
-          colors: [Colors.orange.shade400, Colors.orange.shade600],
+          colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
         ),
         onTap: () {
           Navigator.push(
@@ -406,7 +406,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         subtitle: "Improve grade",
         icon: Icons.lightbulb_outline_rounded,
         gradient: LinearGradient(
-          colors: [Colors.purple.shade400, Colors.purple.shade600],
+          colors: [Color(0xFF388E3C), Color(0xFF2E7D32)],
         ),
         onTap: () {
           Navigator.push(
@@ -684,7 +684,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Got it"),
+            child: const Text("Got it", style: TextStyle(color: Color(0xFF43A047))),
           ),
         ],
       ),
@@ -760,125 +760,6 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text("Close"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showIoTInstructions(BuildContext context, Responsive responsive) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.bluetooth_rounded, color: Colors.indigo.shade600),
-            const SizedBox(width: 12),
-            const Expanded(child: Text("IoT Device Setup")),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _instructionStep(1, "Power on the ESP32 device"),
-              _instructionStep(2, "Enable Bluetooth on your phone"),
-              _instructionStep(3, "Tap 'Connect Device' in the app"),
-              _instructionStep(4, "Select 'Pepper-Scale-XXXX'"),
-              _instructionStep(5, "Place standard cup on sensor"),
-              _instructionStep(6, "Fill cup with pepper sample"),
-              _instructionStep(7, "Wait for reading to stabilize"),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_rounded, color: Colors.blue.shade700, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "Ensure cup is clean and dry before measurement",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue.shade900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Got it"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showImageCaptureGuide(BuildContext context, Responsive responsive) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.camera_alt_rounded, color: Colors.teal.shade600),
-            const SizedBox(width: 12),
-            const Expanded(child: Text("Image Capture Guide")),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _instructionStep(1, "Spread pepper on clean white A4 sheet"),
-              _instructionStep(2, "Ensure good natural lighting"),
-              _instructionStep(3, "Hold phone camera directly above"),
-              _instructionStep(4, "Keep distance: 20-30 cm from sample"),
-              _instructionStep(5, "Capture 9 images from different angles"),
-              _instructionStep(6, "Avoid shadows and reflections"),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.warning_rounded, color: Colors.orange.shade700, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        "Blurry images will reduce grading accuracy",
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.orange.shade900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Got it"),
           ),
         ],
       ),

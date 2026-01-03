@@ -7,6 +7,7 @@ import '../disease_detection/services/location_service.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
+import '../marketplace/marketplace_screen.dart';
 import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
 
@@ -785,8 +786,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   Icons.store_rounded,
                   Color(0xFF2E7D32),
                   Color(0xFFE8F5E9),
-                      () {
-                    // TODO: Navigate to marketplace
+                   () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MarketplaceScreen()),
+                    );
                   },
                 ),
               ),

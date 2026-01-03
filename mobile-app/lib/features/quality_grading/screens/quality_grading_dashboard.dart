@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import '../../../widgets/bottom_navigation.dart';
-import '../../../widgets/navigation_wrapper.dart';
 import 'batch_details_screen.dart';
 import 'how_it_works_screen.dart';
 import 'image_capture_guide_screen.dart';

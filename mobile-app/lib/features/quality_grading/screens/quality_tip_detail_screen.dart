@@ -34,48 +34,6 @@ class _QualityTipDetailScreenState extends State<QualityTipDetailScreen> {
         physics: const BouncingScrollPhysics(),
         child: Column(
           children: [
-            // Header Section
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(responsive.value(mobile: 24, tablet: 28, desktop: 32)),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    content['color'] as Color,
-                    (content['color'] as Color).withOpacity(0.8),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      content['icon'] as IconData,
-                      color: Colors.white,
-                      size: 48,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    content['subtitle'] as String,
-                    style: TextStyle(
-                      fontSize: responsive.value(mobile: 16, tablet: 18, desktop: 20),
-                      color: Colors.white.withOpacity(0.95),
-                      height: 1.4,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-
             // Content Section
             Padding(
               padding: EdgeInsets.all(responsive.pagePadding),
@@ -393,9 +351,7 @@ class _QualityTipDetailScreenState extends State<QualityTipDetailScreen> {
     final contentMap = {
       'variety': {
         'title': 'Variety & Piperine',
-        'subtitle': 'Choose high-piperine varieties for premium quality',
-        'icon': Icons.spa_rounded,
-        'color': const Color(0xFF10B981),
+        'color': const Color(0xFF2E7D32),
         'whyMatters':
         'Piperine content determines the pungency and market value of your pepper. Ceylon pepper varieties typically contain 7-15% piperine, significantly higher than imported varieties (2-7%), making them more valuable in international markets.',
         'tips': [
@@ -416,9 +372,7 @@ class _QualityTipDetailScreenState extends State<QualityTipDetailScreen> {
       },
       'color': {
         'title': 'Color Uniformity',
-        'subtitle': 'Achieve consistent color for premium appearance',
-        'icon': Icons.palette_rounded,
-        'color': const Color(0xFFF59E0B),
+        'color': const Color(0xFF2E7D32),
         'whyMatters':
         'Color uniformity indicates proper drying and processing. Black pepper should be brownish to dark brownish/blackish, while white pepper should be matt grey to pale ivory white. Consistent color suggests uniform quality throughout the batch.',
         'tips': [
@@ -440,9 +394,7 @@ class _QualityTipDetailScreenState extends State<QualityTipDetailScreen> {
       },
       'size': {
         'title': 'Size & Shape Consistency',
-        'subtitle': 'Maintain uniform berry size for better grading',
-        'icon': Icons.straighten_rounded,
-        'color': const Color(0xFF3B82F6),
+        'color': const Color(0xFF2E7D32),
         'whyMatters':
         'IPC standards specify size ranges: Black pepper 2.5-7.0 mm, White pepper 2.0-6.0 mm. Consistent sizing indicates mature harvest and proper processing. Pinheads (berries <2mm) significantly reduce grade value.',
         'tips': [
@@ -464,9 +416,7 @@ class _QualityTipDetailScreenState extends State<QualityTipDetailScreen> {
       },
       'mold': {
         'title': 'Mold Prevention',
-        'subtitle': 'Keep your pepper mold-free for safety and quality',
-        'icon': Icons.health_and_safety_rounded,
-        'color': const Color(0xFFEF4444),
+        'color': const Color(0xFF2E7D32),
         'whyMatters':
         'Mold presence affects food safety, flavor, and export compliance. IPC Grade I allows maximum 1% moldy berries. Mold indicates improper drying, storage, or high moisture content.',
         'tips': [
@@ -488,9 +438,7 @@ class _QualityTipDetailScreenState extends State<QualityTipDetailScreen> {
       },
       'drying': {
         'title': 'Drying Process',
-        'subtitle': 'Master the drying process for optimal quality',
-        'icon': Icons.wb_sunny_rounded,
-        'color': const Color(0xFFF59E0B),
+        'color': const Color(0xFF2E7D32),
         'whyMatters':
         'Proper drying is critical for developing characteristic wrinkled texture in black pepper, preventing mold growth, and achieving target bulk density. It affects color, aroma, piperine concentration, and storage stability.',
         'tips': [
@@ -514,9 +462,7 @@ class _QualityTipDetailScreenState extends State<QualityTipDetailScreen> {
       },
       'storage': {
         'title': 'Storage Tips',
-        'subtitle': 'Preserve quality with proper storage practices',
-        'icon': Icons.inventory_2_rounded,
-        'color': const Color(0xFF8B5CF6),
+        'color': const Color(0xFF2E7D32),
         'whyMatters':
         'Even well-processed pepper can degrade during storage. Proper storage prevents moisture absorption, mold growth, insect infestation, and loss of volatile oils and piperine content.',
         'tips': [

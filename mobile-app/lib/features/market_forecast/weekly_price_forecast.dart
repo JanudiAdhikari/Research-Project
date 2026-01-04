@@ -100,463 +100,379 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     final responsive = context.responsive;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: SingleChildScrollView(
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ---------- HEADER ----------
-                  Container(
-                    padding: responsive.padding(
-                      mobile: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-                      tablet: const EdgeInsets.fromLTRB(32, 24, 32, 36),
-                      desktop: const EdgeInsets.fromLTRB(40, 28, 40, 42),
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [primary, primary.withOpacity(0.8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(
-                          responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                        ),
-                        bottomRight: Radius.circular(
-                          responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                        ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primary.withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Hello, Farmer 👋",
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: responsive.bodyFontSize,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "Weekly Pepper Price Forecast",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: responsive.fontSize(
-                                      mobile: 24,
-                                      tablet: 28,
-                                      desktop: 32,
-                                    ),
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                Text(
-                                  "Discover how prices may change in upcoming weeks...",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: responsive.fontSize(
-                                      mobile: 15,
-                                      tablet: 22,
-                                      desktop: 24,
-                                    ),
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+      backgroundColor: const Color(0xFFF5F7FA),
+      appBar: AppBar(
+        title: const Text('Weekly Price Forecast'),
+        backgroundColor: const Color(0xFF2E7D32),
+        elevation: 0,
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
-                        ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-
-                        Container(
-                          padding: responsive.padding(
-                            mobile: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            tablet: const EdgeInsets.symmetric(
-                              horizontal: 18,
-                              vertical: 14,
-                            ),
-                            desktop: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
-                            ),
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(
-                              responsive.value(
-                                mobile: 16,
-                                tablet: 18,
-                                desktop: 20,
-                              ),
-                            ),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_rounded,
-                                color: Colors.white.withOpacity(0.9),
-                                size: responsive.smallIconSize,
-                              ),
-                              ResponsiveSpacing.horizontal(
-                                mobile: 8,
-                                tablet: 10,
-                                desktop: 12,
-                              ),
-                              Text(
-                                "Colombo",
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: responsive.bodyFontSize,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Spacer(),
-                              Icon(
-                                Icons.wb_sunny_rounded,
-                                color: Colors.amber[300],
-                                size: responsive.smallIconSize,
-                              ),
-                              ResponsiveSpacing.horizontal(
-                                mobile: 8,
-                                tablet: 10,
-                                desktop: 12,
-                              ),
-                              Text(
-                                "29°C",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: responsive.bodyFontSize,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                // ---------- DESCRIPTION CARD ----------
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsive.pagePadding,
                   ),
+                  child: _buildDescriptionCard(responsive),
+                ),
 
-                  ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+                ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
-                  // ---------- DROPDOWNS ----------
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: responsive.pagePadding,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildDropdownField(
-                          "District",
-                          selectedDistrict,
-                          districts,
-                          (val) => setState(() => selectedDistrict = val),
-                          required: true,
-                        ),
-                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                        _buildDropdownField(
-                          "Pepper Type",
-                          selectedPepperType,
-                          pepperTypes,
-                          (val) => setState(() => selectedPepperType = val),
-                          required: true,
-                        ),
-                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                        _buildDropdownField(
-                          "Grade",
-                          selectedGrade,
-                          grades,
-                          (val) => setState(() => selectedGrade = val),
-                        ),
-                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildDropdownField(
-                                "Year",
-                                selectedYear,
-                                years,
-                                (val) => setState(() => selectedYear = val),
-                                required: true,
-                              ),
-                            ),
-                            ResponsiveSpacing.horizontal(
-                              mobile: 16,
-                              tablet: 18,
-                              desktop: 20,
-                            ),
-                            Expanded(
-                              child: _buildDropdownField(
-                                "Month",
-                                selectedMonth,
-                                months,
-                                (val) => setState(() => selectedMonth = val),
-                                required: true,
-                              ),
-                            ),
-                          ],
-                        ),
-                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                        _buildDropdownField(
-                          "Week",
-                          selectedWeek,
-                          weeks,
-                          (val) => setState(() => selectedWeek = val),
-                          required: true,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Text(
-                            "Weather Conditions",
-                            style: TextStyle(
-                              fontSize: responsive.bodyFontSize - 0.5,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                // ---------- DROPDOWNS ----------
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsive.pagePadding,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDropdownField(
+                        "District",
+                        selectedDistrict,
+                        districts,
+                        (val) => setState(() => selectedDistrict = val),
+                        required: true,
+                      ),
+                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+                      _buildDropdownField(
+                        "Pepper Type",
+                        selectedPepperType,
+                        pepperTypes,
+                        (val) => setState(() => selectedPepperType = val),
+                        required: true,
+                      ),
+                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+                      _buildDropdownField(
+                        "Grade",
+                        selectedGrade,
+                        grades,
+                        (val) => setState(() => selectedGrade = val),
+                      ),
+                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDropdownField(
+                              "Year",
+                              selectedYear,
+                              years,
+                              (val) => setState(() => selectedYear = val),
+                              required: true,
                             ),
                           ),
+                          ResponsiveSpacing.horizontal(
+                            mobile: 16,
+                            tablet: 18,
+                            desktop: 20,
+                          ),
+                          Expanded(
+                            child: _buildDropdownField(
+                              "Month",
+                              selectedMonth,
+                              months,
+                              (val) => setState(() => selectedMonth = val),
+                              required: true,
+                            ),
+                          ),
+                        ],
+                      ),
+                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+                      _buildDropdownField(
+                        "Week",
+                        selectedWeek,
+                        weeks,
+                        (val) => setState(() => selectedWeek = val),
+                        required: true,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Text(
+                          "Weather Conditions",
+                          style: TextStyle(
+                            fontSize: responsive.bodyFontSize - 0.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
                         ),
-                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+                      ),
+                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
 
-                        // WEATHER SECTION
-                        Container(
-                          padding: EdgeInsets.all(
+                      // WEATHER SECTION
+                      Container(
+                        padding: EdgeInsets.all(
+                          responsive.value(mobile: 20, tablet: 24, desktop: 28),
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.blue.shade50, Colors.cyan.shade50],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(
                             responsive.value(
                               mobile: 20,
                               tablet: 24,
                               desktop: 28,
                             ),
                           ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.blue.shade50,
-                                Colors.cyan.shade50,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              responsive.value(
-                                mobile: 20,
-                                tablet: 24,
-                                desktop: 28,
-                              ),
-                            ),
-                            border: Border.all(
-                              color: Colors.blue.shade200,
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.1),
-                                blurRadius: 15,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
+                          border: Border.all(
+                            color: Colors.blue.shade200,
+                            width: 1.5,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Weather Grid - 2x2
-                              GridView.count(
-                                crossAxisCount: 2,
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                crossAxisSpacing: responsive.value(
-                                  mobile: 12,
-                                  tablet: 14,
-                                  desktop: 16,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.1),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Weather Grid - 2x2
+                            GridView.count(
+                              crossAxisCount: 2,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              crossAxisSpacing: responsive.value(
+                                mobile: 12,
+                                tablet: 14,
+                                desktop: 16,
+                              ),
+                              mainAxisSpacing: responsive.value(
+                                mobile: 12,
+                                tablet: 14,
+                                desktop: 16,
+                              ),
+                              childAspectRatio: 0.95,
+                              children: [
+                                _buildEnhancedWeatherCard(
+                                  icon: Icons.opacity,
+                                  iconColor: Colors.blue,
+                                  label: "Rainfall",
+                                  value: "120",
+                                  unit: "mm",
+                                  responsive: responsive,
+                                  description: "Moderate Rain",
                                 ),
-                                mainAxisSpacing: responsive.value(
-                                  mobile: 12,
-                                  tablet: 14,
-                                  desktop: 16,
+                                _buildEnhancedWeatherCard(
+                                  icon: Icons.thermostat,
+                                  iconColor: Colors.orange,
+                                  label: "Temperature",
+                                  value: "29",
+                                  unit: "°C",
+                                  responsive: responsive,
+                                  description: "Warm",
                                 ),
-                                childAspectRatio: 0.95,
+                                _buildEnhancedWeatherCard(
+                                  icon: Icons.water_drop,
+                                  iconColor: Colors.cyan,
+                                  label: "Humidity",
+                                  value: "78",
+                                  unit: "%",
+                                  responsive: responsive,
+                                  description: "High Moisture",
+                                ),
+                                _buildEnhancedWeatherCard(
+                                  icon: Icons.air,
+                                  iconColor: Colors.teal,
+                                  label: "Wind Speed",
+                                  value: "12",
+                                  unit: "km/h",
+                                  responsive: responsive,
+                                  description: "Light Breeze",
+                                ),
+                              ],
+                            ),
+
+                            ResponsiveSpacing(
+                              mobile: 16,
+                              tablet: 18,
+                              desktop: 20,
+                            ),
+
+                            // Weather Summary Card
+                            Container(
+                              padding: EdgeInsets.all(
+                                responsive.value(
+                                  mobile: 14,
+                                  tablet: 16,
+                                  desktop: 18,
+                                ),
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.6),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.blue.shade200,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
                                 children: [
-                                  _buildEnhancedWeatherCard(
-                                    icon: Icons.opacity,
-                                    iconColor: Colors.blue,
-                                    label: "Rainfall",
-                                    value: "120",
-                                    unit: "mm",
-                                    responsive: responsive,
-                                    description: "Moderate Rain",
+                                  Icon(
+                                    Icons.info_outline,
+                                    color: Colors.blue.shade600,
+                                    size: 20,
                                   ),
-                                  _buildEnhancedWeatherCard(
-                                    icon: Icons.thermostat,
-                                    iconColor: Colors.orange,
-                                    label: "Temperature",
-                                    value: "29",
-                                    unit: "°C",
-                                    responsive: responsive,
-                                    description: "Warm",
-                                  ),
-                                  _buildEnhancedWeatherCard(
-                                    icon: Icons.water_drop,
-                                    iconColor: Colors.cyan,
-                                    label: "Humidity",
-                                    value: "78",
-                                    unit: "%",
-                                    responsive: responsive,
-                                    description: "High Moisture",
-                                  ),
-                                  _buildEnhancedWeatherCard(
-                                    icon: Icons.air,
-                                    iconColor: Colors.teal,
-                                    label: "Wind Speed",
-                                    value: "12",
-                                    unit: "km/h",
-                                    responsive: responsive,
-                                    description: "Light Breeze",
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      "Good conditions for crop growth. Expect moderate rainfall with warm temperatures.",
+                                      style: TextStyle(
+                                        fontSize: responsive.bodyFontSize - 1.5,
+                                        color: Colors.blue.shade800,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.5,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-
-                              ResponsiveSpacing(
-                                mobile: 16,
-                                tablet: 18,
-                                desktop: 20,
-                              ),
-
-                              // Weather Summary Card
-                              Container(
-                                padding: EdgeInsets.all(
-                                  responsive.value(
-                                    mobile: 14,
-                                    tablet: 16,
-                                    desktop: 18,
-                                  ),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.6),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: Colors.blue.shade200,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline,
-                                      color: Colors.blue.shade600,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        "Good conditions for crop growth. Expect moderate rainfall with warm temperatures.",
-                                        style: TextStyle(
-                                          fontSize:
-                                              responsive.bodyFontSize - 1.5,
-                                          color: Colors.blue.shade800,
-                                          fontWeight: FontWeight.w500,
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
+                      ),
 
-                        ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+                      ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
-                        Center(
-                          child: SizedBox(
-                            width:
-                                MediaQuery.of(context).size.width *
-                                0.6, // 60% width
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                  horizontal: 20,
-                                ),
-                                backgroundColor: Colors.green,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
+                      Center(
+                        child: SizedBox(
+                          width:
+                              MediaQuery.of(context).size.width *
+                              0.6, // 60% width
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 20,
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  showErrors = true; // enable error messages
-                                });
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                showErrors = true; // enable error messages
+                              });
 
-                                // Check required fields
-                                if (selectedDistrict == null ||
-                                    selectedPepperType == null ||
-                                    selectedYear == null ||
-                                    selectedMonth == null ||
-                                    selectedWeek == null) {
-                                  return; // stop navigation
-                                }
+                              // Check required fields
+                              if (selectedDistrict == null ||
+                                  selectedPepperType == null ||
+                                  selectedYear == null ||
+                                  selectedMonth == null ||
+                                  selectedWeek == null) {
+                                return; // stop navigation
+                              }
 
-                                // All good → navigate with animation
-                                Navigator.push(
-                                  context,
-                                  _buildCustomPageRoute(
-                                    WeeklyPrediction(
-                                      year: selectedYear,
-                                      month: selectedMonth,
-                                      week: selectedWeek,
-                                    ),
+                              // All good → navigate
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WeeklyPrediction(
+                                    year: selectedYear,
+                                    month: selectedMonth,
+                                    week: selectedWeek,
                                   ),
-                                );
-                              },
-
-                              child: const Text(
-                                'Predict the Price',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
                                 ),
+                              );
+                            },
+
+                            child: const Text(
+                              'Predict the Price',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
 
-                  ResponsiveSpacing(mobile: 32, tablet: 36, desktop: 40),
-                ],
-              ),
+                ResponsiveSpacing(mobile: 32, tablet: 36, desktop: 40),
+              ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDescriptionCard(Responsive responsive) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(responsive.mediumSpacing),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFFC8E6C9), const Color(0xFFA5D6A7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black.withOpacity(0.08)),
+            ),
+            child: const Icon(
+              Icons.trending_up_rounded,
+              color: Colors.black87,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Weekly Price Forecast',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize + 2,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Predict price trends for upcoming weeks. Select your district, pepper type, and timeframe to receive weekly price forecasts.',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize - 1,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -808,23 +724,4 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     Overlay.of(context).insert(_overlayEntry!);
   }
 
-  PageRouteBuilder _buildCustomPageRoute(Widget page) {
-    return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(0.0, 1.0);
-        const end = Offset.zero;
-        const curve = Curves.easeInOut;
-
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-        var offsetAnimation = animation.drive(tween);
-
-        return SlideTransition(
-          position: offsetAnimation,
-          child: child,
-        );
-      },
-      transitionDuration: const Duration(milliseconds: 600),
-    );
-  }
 }

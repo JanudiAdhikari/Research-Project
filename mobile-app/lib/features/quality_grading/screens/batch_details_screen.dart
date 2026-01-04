@@ -19,7 +19,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
 
   DateTime? _harvestDate;
 
-  final TextEditingController _batchWeightController = TextEditingController();
+  final TextEditingController _batchWeightKgController = TextEditingController();
+  final TextEditingController _batchWeightGController = TextEditingController();
 
   final Map<String, bool> _certificates = {
     'GAP': false,
@@ -63,7 +64,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
   @override
   void dispose() {
     _animationController.dispose();
-    _batchWeightController.dispose();
+    _batchWeightKgController.dispose();
+    _batchWeightGController.dispose();
     super.dispose();
   }
 
@@ -322,15 +324,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
 
                           ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
 
-                          _buildTextField(
-                            responsive,
-                            primary,
-                            label: 'Batch Weight (kg)',
-                            controller: _batchWeightController,
-                            icon: Icons.balance_rounded,
-                            keyboardType: TextInputType.number,
-                            isRequired: true,
-                          ),
+                          _buildSplitWeightField(responsive, primary),
 
                           ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
@@ -711,6 +705,125 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSplitWeightField(Responsive responsive, Color primary) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Batch Weight (Optional)',
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontSize: responsive.bodyFontSize,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              // KG Field
+              Expanded(
+                flex: 3,
+                child: TextFormField(
+                  controller: _batchWeightKgController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize + 1,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Kilograms',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: responsive.bodyFontSize + 1,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    prefixIcon: Icon(
+                      Icons.balance_rounded,
+                      color: Colors.grey[600],
+                      size: responsive.mediumIconSize,
+                    ),
+                    suffixText: 'kg',
+                    suffixStyle: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: responsive.bodyFontSize,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: responsive.mediumSpacing,
+                      vertical: responsive.value(mobile: 18, tablet: 20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: primary, width: 2),
+                    ),
+                  ),
+                ),
+              ),
+
+              SizedBox(width: responsive.value(mobile: 12, tablet: 14, desktop: 16)),
+
+              // G Field
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  controller: _batchWeightGController,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize + 1,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Grams',
+                    hintStyle: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: responsive.bodyFontSize + 1,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    suffixText: 'g',
+                    suffixStyle: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: responsive.bodyFontSize,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: responsive.value(mobile: 12, tablet: 14, desktop: 16),
+                      vertical: responsive.value(mobile: 18, tablet: 20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: primary, width: 2),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Enter weight in kg and/or grams',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: responsive.fontSize(mobile: 12, tablet: 13, desktop: 14),
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],

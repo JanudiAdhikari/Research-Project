@@ -36,7 +36,7 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    const primary = Color(0xFF7B2CBF);
+    const primary = Color(0xFF2E7D32);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -61,10 +61,6 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Hero Section
-                _buildHeroSection(responsive),
-                SizedBox(height: responsive.value(mobile: 24, tablet: 28, desktop: 32)),
-
                 // Categories Grid
                 Text(
                   "Explore Quality Factors",
@@ -87,68 +83,6 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeroSection(Responsive responsive) {
-    return Container(
-      padding: EdgeInsets.all(responsive.value(mobile: 20, tablet: 24, desktop: 28)),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7B2CBF), Color(0xFF9D4EDD)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF7B2CBF).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.lightbulb_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  "Master Pepper Quality",
-                  style: TextStyle(
-                    fontSize: responsive.value(mobile: 22, tablet: 26, desktop: 30),
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: responsive.value(mobile: 12, tablet: 14, desktop: 16)),
-          Text(
-            "Learn expert tips to improve your pepper quality grade and maximize market value",
-            style: TextStyle(
-              fontSize: responsive.value(mobile: 14, tablet: 16, desktop: 18),
-              color: Colors.white.withOpacity(0.95),
-              height: 1.5,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -360,12 +294,12 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF7B2CBF).withOpacity(0.1),
+                  color: const Color(0xFF2E7D32).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.tips_and_updates_rounded,
-                  color: Color(0xFF7B2CBF),
+                  color: Color(0xFF2E7D32),
                   size: 24,
                 ),
               ),

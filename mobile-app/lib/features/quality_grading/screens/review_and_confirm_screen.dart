@@ -82,9 +82,6 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // Header Section
-      
-      
                 ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
       
                 // Content
@@ -163,24 +160,14 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                           'Bulk Density',
                           Icons.science_rounded,
                         ),
-      
+
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-      
+
                         Container(
-                          padding: responsive.padding(
-                            mobile: const EdgeInsets.all(20),
-                            tablet: const EdgeInsets.all(24),
-                            desktop: const EdgeInsets.all(28),
-                          ),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.green.shade50,
-                                Colors.green.shade100.withOpacity(0.5),
-                              ],
-                            ),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.green.shade200),
+                            border: Border.all(color: Colors.grey.shade200),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.05),
@@ -189,59 +176,21 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                               ),
                             ],
                           ),
-                          child: Row(
+                          child: Column(
                             children: [
-                              Container(
-                                padding: EdgeInsets.all(
-                                  responsive.value(
-                                    mobile: 12,
-                                    tablet: 14,
-                                    desktop: 16,
-                                  ),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade100,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.analytics_rounded,
-                                  color: Colors.green.shade700,
-                                  size: responsive.mediumIconSize,
-                                ),
+                              _buildInfoRow(
+                                responsive,
+                                'Measured Density',
+                                '540 g/L',
+                                Icons.analytics_rounded,
                               ),
-                              ResponsiveSpacing.horizontal(
-                                mobile: 16,
-                                tablet: 18,
-                                desktop: 20,
-                              ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Measured Density',
-                                      style: TextStyle(
-                                        fontSize: responsive.bodyFontSize,
-                                        color: Colors.green.shade800,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    ResponsiveSpacing(mobile: 4, tablet: 5, desktop: 6),
-                                    Text(
-                                      '540 g/L',
-                                      style: TextStyle(
-                                        fontSize: responsive.titleFontSize + 2,
-                                        color: Colors.green.shade900,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
+                              _buildDivider(responsive),
+                              _buildInfoRow(
+                                responsive,
+                                'Status',
+                                'Verified',
                                 Icons.check_circle_rounded,
-                                color: Colors.green.shade600,
-                                size: responsive.mediumIconSize,
+                                isLast: true,
                               ),
                             ],
                           ),
@@ -545,19 +494,21 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
       ) {
     return Container(
       padding: responsive.padding(
-        mobile: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        tablet: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        desktop: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        mobile: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        tablet: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        desktop: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
-          ],
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(50),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

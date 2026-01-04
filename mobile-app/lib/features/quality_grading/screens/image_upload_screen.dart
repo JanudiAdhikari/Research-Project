@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../utils/responsive.dart';
-import 'image_capture_instructions_screen.dart';
+import 'image_capture_guide_screen.dart';
 import 'processing_screen.dart';
-import 'summary_confirmation_screen.dart';
+import 'review_and_confirm_screen.dart';
 
 class ImageUploadScreen extends StatefulWidget {
   const ImageUploadScreen({super.key});
@@ -217,29 +217,44 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                       // Info Card with View More Instructions Button
                       Container(
                         padding: responsive.padding(
-                          mobile: const EdgeInsets.all(16),
-                          tablet: const EdgeInsets.all(18),
-                          desktop: const EdgeInsets.all(20),
+                          mobile: const EdgeInsets.all(20),
+                          tablet: const EdgeInsets.all(24),
+                          desktop: const EdgeInsets.all(28),
                         ),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.blue.shade50,
-                              Colors.blue.shade100.withOpacity(0.5),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.blue.shade200),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                Icon(
-                                  Icons.camera_enhance_rounded,
-                                  color: Colors.blue.shade700,
-                                  size: responsive.mediumIconSize,
+                                Container(
+                                  padding: EdgeInsets.all(
+                                    responsive.value(
+                                      mobile: 10,
+                                      tablet: 11,
+                                      desktop: 12,
+                                    ),
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.info_outline_rounded,
+                                    color: Colors.blue.shade700,
+                                    size: responsive.mediumIconSize,
+                                  ),
                                 ),
                                 ResponsiveSpacing.horizontal(
                                   mobile: 12,
@@ -248,16 +263,24 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                 ),
                                 Expanded(
                                   child: Text(
-                                    'Capture 9 images (3 angles × 3 layers) for accurate analysis',
+                                    'Image Capture Instructions',
                                     style: TextStyle(
-                                      fontSize: responsive.bodyFontSize - 1,
-                                      color: Colors.blue.shade900,
-                                      height: 1.4,
-                                      fontWeight: FontWeight.w500,
+                                      fontSize: responsive.titleFontSize,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
                                     ),
                                   ),
                                 ),
                               ],
+                            ),
+                            ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+                            Text(
+                              '1. Place pepper on clean white A4 paper\n2. Ensure good natural lighting\n3. Capture 9 images (3 angles × 3 layers)\n4. Keep camera 20-30 cm above sample',
+                              style: TextStyle(
+                                fontSize: responsive.bodyFontSize,
+                                color: Colors.grey[700],
+                                height: 1.6,
+                              ),
                             ),
                             ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                             InkWell(
@@ -265,7 +288,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const InstructionsScreen(),
+                                    builder: (_) => const ImageCaptureGuideScreen(),
                                   ),
                                 );
                               },
@@ -284,23 +307,26 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                   ),
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.shade700,
+                                  color: Colors.blue.shade50,
                                   borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Colors.blue.shade200,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       Icons.help_outline_rounded,
-                                      color: Colors.white,
+                                      color: Colors.blue.shade700,
                                       size: responsive.smallIconSize,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'View More Instructions',
+                                      'View detailed instructions',
                                       style: TextStyle(
                                         fontSize: responsive.bodyFontSize - 1,
-                                        color: Colors.white,
+                                        color: Colors.blue.shade700,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),

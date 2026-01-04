@@ -10,6 +10,7 @@ import '../auth/login_page.dart';
 import '../marketplace/marketplace_screen.dart';
 import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
+import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -686,7 +687,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
   List<Widget> _buildMainFeatureCards(BuildContext context, Responsive responsive) {
     return [
-      _featureCard(
+       _featureCard(
         context,
         responsive,
         title: "Yield\nPrediction",
@@ -696,7 +697,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
         ),
         onTap: () {
-          // TODO: Navigate to yield prediction
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const HarvestPredictionDashboard(),
+            ),
+          );
         },
       ),
       _featureCard(

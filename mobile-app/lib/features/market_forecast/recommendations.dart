@@ -201,7 +201,7 @@ class Recommendations extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${month ?? 'Month'} - ${week ?? 'Week'}',
+                              week ?? 'Date Range',
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize,
                                 color: Colors.grey[900],

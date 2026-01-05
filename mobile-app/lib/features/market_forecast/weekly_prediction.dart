@@ -213,7 +213,7 @@ class WeeklyPrediction extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${month ?? 'Month'} - ${week ?? 'Week'}, ${year ?? 'Year'}',
+                            week ?? 'Date Range',
                             style: TextStyle(
                               fontSize: responsive.bodyFontSize,
                               color: Colors.white,

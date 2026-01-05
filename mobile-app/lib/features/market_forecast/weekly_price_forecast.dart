@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../utils/responsive.dart';
 import 'weekly_prediction.dart';
+import 'package:intl/intl.dart';
 
 class WeeklyPriceForecast extends StatefulWidget {
   const WeeklyPriceForecast({Key? key}) : super(key: key);
@@ -21,9 +23,20 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
   String? selectedDistrict;
   String? selectedPepperType;
   String? selectedGrade;
-  String? selectedYear;
-  String? selectedMonth;
-  String? selectedWeek;
+
+  // Visibility toggles
+  bool showWeekDetails = false;
+  bool showWeatherDetails = false;
+
+  // Loading states
+  bool isLoadingWeekDetails = false;
+  bool isLoadingWeatherDetails = false;
+
+  // Auto-calculated next week values
+  late String nextWeekMonth;
+  late int nextWeekNumber;
+  late String nextWeekYear;
+  late String weekDateRange;
 
   // Sample dropdown options
   final List<String> districts = [
@@ -44,7 +57,8 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
   ];
   final List<String> pepperTypes = ['Black', 'White'];
   final List<String> grades = ['Grade 1', 'Grade 2', 'Grade 3'];
-  final List<String> years = ['2026', '2027'];
+
+  // Month names for mapping
   final List<String> months = [
     'January',
     'February',
@@ -59,16 +73,44 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     'November',
     'December',
   ];
-  final List<String> weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
 
   bool showErrors = false; // To control error message visibility
 
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 
+  // Calculate next week's date
+  void _calculateNextWeek() {
+    DateTime today = DateTime.now();
+    DateTime nextWeek = today.add(const Duration(days: 7));
+
+    // Get month name
+    nextWeekMonth = months[nextWeek.month - 1];
+
+    // Calculate week number
+    nextWeekNumber = _getWeekNumber(nextWeek);
+
+    // Get year
+    nextWeekYear = nextWeek.year.toString();
+
+    // Calculate date range
+    weekDateRange = _getWeekDateRange(nextWeek);
+  }
+
+  // Calculate ISO week number
+  int _getWeekNumber(DateTime date) {
+    final dayOfWeek = date.weekday;
+    final ordinalDayOfYear =
+        date.difference(DateTime(date.year, 1, 1)).inDays + 1;
+    return ((ordinalDayOfYear - dayOfWeek + 10) / 7).floor();
+  }
+
   @override
   void initState() {
     super.initState();
+
+    // Calculate next week's date automatically
+    _calculateNextWeek();
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -157,192 +199,23 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                         (val) => setState(() => selectedGrade = val),
                       ),
                       ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildDropdownField(
-                              "Year",
-                              selectedYear,
-                              years,
-                              (val) => setState(() => selectedYear = val),
-                              required: true,
-                            ),
-                          ),
-                          ResponsiveSpacing.horizontal(
-                            mobile: 16,
-                            tablet: 18,
-                            desktop: 20,
-                          ),
-                          Expanded(
-                            child: _buildDropdownField(
-                              "Month",
-                              selectedMonth,
-                              months,
-                              (val) => setState(() => selectedMonth = val),
-                              required: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                      _buildDropdownField(
-                        "Week",
-                        selectedWeek,
-                        weeks,
-                        (val) => setState(() => selectedWeek = val),
-                        required: true,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: Text(
-                          "Weather Conditions",
-                          style: TextStyle(
-                            fontSize: responsive.bodyFontSize - 0.5,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
 
-                      // WEATHER SECTION
-                      Container(
-                        padding: EdgeInsets.all(
-                          responsive.value(mobile: 20, tablet: 24, desktop: 28),
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.blue.shade50, Colors.cyan.shade50],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(
-                            responsive.value(
-                              mobile: 20,
-                              tablet: 24,
-                              desktop: 28,
-                            ),
-                          ),
-                          border: Border.all(
-                            color: Colors.blue.shade200,
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.blue.withOpacity(0.1),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Weather Grid - 2x2
-                            GridView.count(
-                              crossAxisCount: 2,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              crossAxisSpacing: responsive.value(
-                                mobile: 12,
-                                tablet: 14,
-                                desktop: 16,
-                              ),
-                              mainAxisSpacing: responsive.value(
-                                mobile: 12,
-                                tablet: 14,
-                                desktop: 16,
-                              ),
-                              childAspectRatio: 0.95,
-                              children: [
-                                _buildEnhancedWeatherCard(
-                                  icon: Icons.opacity,
-                                  iconColor: Colors.blue,
-                                  label: "Rainfall",
-                                  value: "120",
-                                  unit: "mm",
-                                  responsive: responsive,
-                                  description: "Moderate Rain",
-                                ),
-                                _buildEnhancedWeatherCard(
-                                  icon: Icons.thermostat,
-                                  iconColor: Colors.orange,
-                                  label: "Temperature",
-                                  value: "29",
-                                  unit: "°C",
-                                  responsive: responsive,
-                                  description: "Warm",
-                                ),
-                                _buildEnhancedWeatherCard(
-                                  icon: Icons.water_drop,
-                                  iconColor: Colors.cyan,
-                                  label: "Humidity",
-                                  value: "78",
-                                  unit: "%",
-                                  responsive: responsive,
-                                  description: "High Moisture",
-                                ),
-                                _buildEnhancedWeatherCard(
-                                  icon: Icons.air,
-                                  iconColor: Colors.teal,
-                                  label: "Wind Speed",
-                                  value: "12",
-                                  unit: "km/h",
-                                  responsive: responsive,
-                                  description: "Light Breeze",
-                                ),
-                              ],
-                            ),
+                      // ---------- WEEK DETAILS SECTION ----------
+                      _buildWeekDetailsSection(responsive),
 
-                            ResponsiveSpacing(
-                              mobile: 16,
-                              tablet: 18,
-                              desktop: 20,
-                            ),
+                      ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+                    ],
+                  ),
+                ),
 
-                            // Weather Summary Card
-                            Container(
-                              padding: EdgeInsets.all(
-                                responsive.value(
-                                  mobile: 14,
-                                  tablet: 16,
-                                  desktop: 18,
-                                ),
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.6),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.blue.shade200,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    color: Colors.blue.shade600,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      "Good conditions for crop growth. Expect moderate rainfall with warm temperatures.",
-                                      style: TextStyle(
-                                        fontSize: responsive.bodyFontSize - 1.5,
-                                        color: Colors.blue.shade800,
-                                        fontWeight: FontWeight.w500,
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                _buildWeatherSection(responsive),
 
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: responsive.pagePadding,
+                  ),
+                  child: Column(
+                    children: [
                       ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
                       Center(
@@ -368,21 +241,18 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
 
                               // Check required fields
                               if (selectedDistrict == null ||
-                                  selectedPepperType == null ||
-                                  selectedYear == null ||
-                                  selectedMonth == null ||
-                                  selectedWeek == null) {
+                                  selectedPepperType == null) {
                                 return; // stop navigation
                               }
 
-                              // All good → navigate
+                              // All good → navigate with calculated week data
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => WeeklyPrediction(
-                                    year: selectedYear,
-                                    month: selectedMonth,
-                                    week: selectedWeek,
+                                    year: nextWeekYear,
+                                    month: nextWeekMonth,
+                                    week: weekDateRange,
                                   ),
                                 ),
                               );
@@ -399,11 +269,11 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           ),
                         ),
                       ),
+
+                      ResponsiveSpacing(mobile: 32, tablet: 36, desktop: 40),
                     ],
                   ),
                 ),
-
-                ResponsiveSpacing(mobile: 32, tablet: 36, desktop: 40),
               ],
             ),
           ),
@@ -463,7 +333,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Predict price trends for upcoming weeks. Select your district, pepper type, and timeframe to receive weekly price forecasts.',
+                  'Predict price trends for the upcoming week. Select your district and pepper type to receive weekly price forecast.',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize - 1,
                     color: Colors.black87,
@@ -472,6 +342,341 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNextWeekCard(Responsive responsive) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(responsive.mediumSpacing),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade50, Colors.cyan.shade50],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade200, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Predicting Price For',
+            style: TextStyle(
+              fontSize: responsive.bodyFontSize - 0.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Center(
+              child: Text(
+                weekDateRange,
+                style: TextStyle(
+                  fontSize: responsive.bodyFontSize + 1,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.blue.shade700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(Icons.calendar_today, color: Colors.blue.shade600, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Get price predictions for this week period',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize - 1.5,
+                    color: Colors.blue.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getWeekDateRange(DateTime date) {
+    // Get the Monday of the week (start of week)
+    DateTime monday = date.subtract(Duration(days: date.weekday - 1));
+    // Get the Sunday of the week (end of week)
+    DateTime sunday = monday.add(const Duration(days: 6));
+
+    // Format the date range
+    String startDate = DateFormat('MMM dd').format(monday);
+    String endDate = DateFormat('MMM dd, yyyy').format(sunday);
+
+    return '$startDate - $endDate';
+  }
+
+  Widget _buildFetchButton({
+    required bool isLoading,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: color.withOpacity(0.6),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          elevation: isLoading ? 0 : 3,
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(scale: animation, child: child),
+            );
+          },
+          child: isLoading
+              ? SizedBox(
+                  key: const ValueKey('loading'),
+                  width: 100,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CupertinoActivityIndicator(color: Colors.white),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Loading',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : const Text(
+                  key: ValueKey('fetch'),
+                  'Fetch Details',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeekDetailsSection(Responsive responsive) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Week Details',
+          style: TextStyle(
+            fontSize: responsive.bodyFontSize - 0.5,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+        if (!showWeekDetails)
+          Center(
+            child: _buildFetchButton(
+              isLoading: isLoadingWeekDetails,
+              onPressed: () async {
+                setState(() {
+                  isLoadingWeekDetails = true;
+                });
+                // Simulate API call delay
+                await Future.delayed(const Duration(milliseconds: 1500));
+                setState(() {
+                  isLoadingWeekDetails = false;
+                  showWeekDetails = true;
+                });
+              },
+              color: Colors.green.shade700,
+            ),
+          ),
+        if (showWeekDetails) ...[_buildNextWeekCard(responsive)],
+      ],
+    );
+  }
+
+  Widget _buildWeatherSection(Responsive responsive) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Weather Conditions',
+            style: TextStyle(
+              fontSize: responsive.bodyFontSize - 0.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+          if (!showWeatherDetails)
+            Center(
+              child: _buildFetchButton(
+                isLoading: isLoadingWeatherDetails,
+                onPressed: () async {
+                  setState(() {
+                    isLoadingWeatherDetails = true;
+                  });
+                  // Simulate API call delay
+                  await Future.delayed(const Duration(milliseconds: 1500));
+                  setState(() {
+                    isLoadingWeatherDetails = false;
+                    showWeatherDetails = true;
+                  });
+                },
+                color: Colors.green.shade700,
+              ),
+            ),
+          if (showWeatherDetails) ...[
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade50, Colors.cyan.shade50],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(
+                  responsive.value(mobile: 16, tablet: 20, desktop: 24),
+                ),
+                border: Border.all(color: Colors.blue.shade200, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.1),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(
+                  responsive.value(mobile: 6, tablet: 8, desktop: 10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Weather Grid - 2x2
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 6,
+                      mainAxisSpacing: 6,
+                      childAspectRatio: 0.78,
+                      children: [
+                        _buildEnhancedWeatherCard(
+                          icon: Icons.opacity,
+                          iconColor: Colors.blue,
+                          label: "Rainfall",
+                          value: "120",
+                          unit: "mm",
+                          responsive: responsive,
+                          description: "Moderate Rain",
+                        ),
+                        _buildEnhancedWeatherCard(
+                          icon: Icons.thermostat,
+                          iconColor: Colors.orange,
+                          label: "Temperature",
+                          value: "29",
+                          unit: "°C",
+                          responsive: responsive,
+                          description: "Warm",
+                        ),
+                        _buildEnhancedWeatherCard(
+                          icon: Icons.water_drop,
+                          iconColor: Colors.cyan,
+                          label: "Humidity",
+                          value: "78",
+                          unit: "%",
+                          responsive: responsive,
+                          description: "High Moisture",
+                        ),
+                        _buildEnhancedWeatherCard(
+                          icon: Icons.air,
+                          iconColor: Colors.teal,
+                          label: "Wind Speed",
+                          value: "12",
+                          unit: "km/h",
+                          responsive: responsive,
+                          description: "Light Breeze",
+                        ),
+                      ],
+                    ),
+                    ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
+                    // Weather Summary Card
+                    Container(
+                      padding: EdgeInsets.all(
+                        responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.blue.shade200,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: Colors.blue.shade600,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              "Good conditions for crop growth. Expect moderate rainfall with warm temperatures.",
+                              style: TextStyle(
+                                fontSize: responsive.bodyFontSize - 1.5,
+                                color: Colors.blue.shade800,
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -723,5 +928,4 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
 
     Overlay.of(context).insert(_overlayEntry!);
   }
-
 }

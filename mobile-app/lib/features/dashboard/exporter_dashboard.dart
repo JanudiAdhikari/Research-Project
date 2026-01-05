@@ -574,7 +574,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         subtitle: "Market trends",
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
-          colors: [Colors.purple.shade400, Colors.purple.shade600],
+          colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
         ),
         onTap: () {
           Navigator.push(
@@ -592,7 +592,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         subtitle: "Certifications",
         icon: Icons.verified_user_rounded,
         gradient: LinearGradient(
-          colors: [Colors.blue.shade400, Colors.blue.shade600],
+          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
         ),
         onTap: () {},
       ),
@@ -603,7 +603,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         subtitle: "Shipments",
         icon: Icons.inventory_2_rounded,
         gradient: LinearGradient(
-          colors: [Colors.teal.shade400, Colors.teal.shade600],
+          colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
         ),
         onTap: () {},
       ),
@@ -614,7 +614,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         subtitle: "Blockchain",
         icon: Icons.qr_code_rounded,
         gradient: LinearGradient(
-          colors: [Colors.orange.shade400, Colors.orange.shade600],
+          colors: [Color(0xFF388E3C), Color(0xFF2E7D32)],
         ),
         onTap: () {
           Navigator.push(

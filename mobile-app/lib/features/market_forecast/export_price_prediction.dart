@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../../utils/responsive.dart';
 import 'export_price_trends.dart';
 
@@ -11,40 +13,35 @@ class ExportPricePrediction extends StatefulWidget {
 }
 
 class _ExportPricePredictionState extends State<ExportPricePrediction> {
-  final List<String> pepperTypes = ['Black', 'White'];
-  final List<String> years = ['2026', '2027'];
-  final List<String> months = const [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
   String? selectedPepperType = 'Black';
-  String? selectedYear;
-  String? selectedMonth;
+  late String nextMonth;
+  late String nextYear;
   final TextEditingController _volumeController = TextEditingController();
 
   bool showErrors = false;
   bool showResult = false;
   bool isLoading = false;
+  bool showMonthDetails = false;
+  bool isLoadingMonthDetails = false;
   double? predictedPricePerKg;
   double? predictedMonthlyTotal;
 
-  final LayerLink _layerLink = LayerLink();
-  OverlayEntry? _overlayEntry;
+  @override
+  void initState() {
+    super.initState();
+    _calculateNextMonth();
+  }
+
+  void _calculateNextMonth() {
+    DateTime now = DateTime.now();
+    DateTime nextMonthDate = DateTime(now.year, now.month + 1, 1);
+
+    nextMonth = DateFormat('MMMM').format(nextMonthDate);
+    nextYear = nextMonthDate.year.toString();
+  }
 
   @override
   void dispose() {
-    _overlayEntry?.remove();
     _volumeController.dispose();
     super.dispose();
   }
@@ -97,8 +94,6 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
         child: GestureDetector(
           onTap: () {
             FocusScope.of(context).unfocus();
-            _overlayEntry?.remove();
-            _overlayEntry = null;
           },
           child: SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
@@ -280,29 +275,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
                     _buildNumberField(),
                     SizedBox(height: responsive.mediumSpacing),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildDropdownField(
-                            'Year',
-                            selectedYear,
-                            years,
-                            (val) => setState(() => selectedYear = val),
-                            required: true,
-                          ),
-                        ),
-                        SizedBox(width: responsive.mediumSpacing),
-                        Expanded(
-                          child: _buildDropdownField(
-                            'Month',
-                            selectedMonth,
-                            months,
-                            (val) => setState(() => selectedMonth = val),
-                            required: true,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildMonthDetailsSection(responsive),
 
                     SizedBox(height: responsive.largeSpacing),
 
@@ -588,13 +561,13 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
                 const SizedBox(height: 12),
                 _buildResultRowEnhanced(
                   'Month',
-                  selectedMonth ?? '-',
+                  nextMonth,
                   Icons.calendar_month_rounded,
                 ),
                 const SizedBox(height: 12),
                 _buildResultRowEnhanced(
                   'Year',
-                  selectedYear ?? '-',
+                  nextYear,
                   Icons.date_range_rounded,
                 ),
                 const SizedBox(height: 12),
@@ -728,79 +701,6 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-  Widget _buildDropdownField(
-    String title,
-    String? value,
-    List<String> items,
-    ValueChanged<String?> onChanged, {
-    bool required = false,
-  }) {
-    final key = GlobalKey();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 6),
-        CompositedTransformTarget(
-          link: _layerLink,
-          child: GestureDetector(
-            key: key,
-            onTap: () => _toggleDropdown(key, items, value, onChanged),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: (showErrors && required && value == null)
-                      ? Colors.red
-                      : Colors.grey.shade300,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 5,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    value ?? 'Select $title',
-                    style: TextStyle(
-                      color: value == null
-                          ? Colors.grey.shade600
-                          : Colors.black87,
-                    ),
-                  ),
-                  const Icon(Icons.arrow_drop_down_rounded),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (showErrors && required && value == null)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              '$title is required',
-              style: const TextStyle(color: Colors.red, fontSize: 12),
-            ),
-          ),
-      ],
-    );
-  }
-
   Widget _buildNumberField() {
     final hasError = showErrors && _volumeController.text.isEmpty;
 
@@ -859,64 +759,6 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-  void _toggleDropdown(
-    GlobalKey key,
-    List<String> items,
-    String? value,
-    ValueChanged<String?> onChanged,
-  ) {
-    if (_overlayEntry != null) {
-      _overlayEntry!.remove();
-      _overlayEntry = null;
-      return;
-    }
-
-    const double itemHeight = 48.0;
-    final double dropdownHeight = items.length > 3
-        ? itemHeight * 3
-        : itemHeight * items.length;
-
-    final renderBox = key.currentContext!.findRenderObject() as RenderBox;
-    final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Positioned(
-        left: offset.dx,
-        top: offset.dy + size.height,
-        width: size.width,
-        child: Material(
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: dropdownHeight),
-            child: ListView(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              children: items
-                  .map(
-                    (item) => SizedBox(
-                      height: itemHeight,
-                      child: ListTile(
-                        title: Text(item),
-                        onTap: () {
-                          onChanged(item);
-                          _overlayEntry!.remove();
-                          _overlayEntry = null;
-                        },
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
   Widget _buildChip(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -935,15 +777,183 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+  Widget _buildMonthDetailsSection(Responsive responsive) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Year & Month',
+          style: TextStyle(
+            fontSize: responsive.bodyFontSize - 0.5,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+        if (!showMonthDetails)
+          Center(
+            child: _buildFetchButton(
+              isLoading: isLoadingMonthDetails,
+              onPressed: () async {
+                setState(() {
+                  isLoadingMonthDetails = true;
+                });
+                // Simulate API call delay
+                await Future.delayed(const Duration(milliseconds: 1500));
+                setState(() {
+                  isLoadingMonthDetails = false;
+                  showMonthDetails = true;
+                });
+              },
+              color: Colors.green.shade700,
+            ),
+          ),
+        if (showMonthDetails) ...[_buildMonthCard(responsive)],
+      ],
+    );
+  }
+
+  Widget _buildFetchButton({
+    required bool isLoading,
+    required VoidCallback onPressed,
+    required Color color,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: color.withOpacity(0.6),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          elevation: isLoading ? 0 : 3,
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(scale: animation, child: child),
+            );
+          },
+          child: isLoading
+              ? SizedBox(
+                  key: const ValueKey('loading'),
+                  width: 100,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CupertinoActivityIndicator(color: Colors.white),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'Loading',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : const Text(
+                  key: ValueKey('fetch'),
+                  'Fetch Details',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMonthCard(Responsive responsive) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(responsive.mediumSpacing),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade50, Colors.cyan.shade50],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.blue.shade200, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Predicting Price For',
+            style: TextStyle(
+              fontSize: responsive.bodyFontSize - 0.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue.shade700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Center(
+              child: Text(
+                '$nextMonth $nextYear',
+                style: TextStyle(
+                  fontSize: responsive.bodyFontSize + 1,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.blue.shade700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(Icons.calendar_today, color: Colors.blue.shade600, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Get export price predictions for this month',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize - 1.5,
+                    color: Colors.blue.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _onSubmit() {
     setState(() {
       showErrors = true;
     });
 
     if (selectedPepperType == null ||
-        selectedYear == null ||
-        selectedMonth == null ||
-        _volumeController.text.isEmpty) {
+        _volumeController.text.isEmpty ||
+        !showMonthDetails) {
       return;
     }
 
@@ -969,23 +979,39 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
   void _resetForm() {
     setState(() {
       _volumeController.clear();
-      selectedYear = null;
-      selectedMonth = null;
       showErrors = false;
       showResult = false;
       isLoading = false;
       predictedPricePerKg = null;
       predictedMonthlyTotal = null;
+      showMonthDetails = false;
+      isLoadingMonthDetails = false;
     });
-    _overlayEntry?.remove();
-    _overlayEntry = null;
   }
 
   double _estimateUnitPrice() {
-    final base = selectedPepperType == 'White' ? 1120.0 : 3650.0;
-    final seasonalBump = (months.indexOf(selectedMonth!) % 4) * 22.5;
-    final yearlyTrend = selectedYear == '2027' ? 45.0 : 0.0;
-    return base + seasonalBump + yearlyTrend;
+    // Base price per kg in LKR - varies by month and pepper type
+    Map<String, Map<String, double>> basePrices = {
+      'February': {'Black': 1480.0, 'White': 3250.0},
+    };
+
+    double basePrice = basePrices[nextMonth]?[selectedPepperType] ?? 1500.0;
+
+    // Volume-based discount
+    double volumeInKg = double.tryParse(_volumeController.text) ?? 0;
+    double volumeDiscount = 0.0;
+
+    if (volumeInKg >= 1000) {
+      volumeDiscount = 0.10; // 10% discount for large volumes
+    } else if (volumeInKg >= 500) {
+      volumeDiscount = 0.05; // 5% discount for medium volumes
+    }
+
+    // Year-based price adjustment (future year might have inflation)
+    int currentYear = DateTime.now().year;
+    double yearAdjustment = int.parse(nextYear) > currentYear ? 1.05 : 1.0;
+
+    return basePrice * (1 - volumeDiscount) * yearAdjustment;
   }
 
   String _formatCurrencyNumber(double value) {

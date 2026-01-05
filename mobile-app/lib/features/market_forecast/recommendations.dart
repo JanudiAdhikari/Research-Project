@@ -82,16 +82,9 @@ class Recommendations extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text(
-          "Market Recommendations",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.green[700],
+        title: const Text('Recommendations'),
+        backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -208,7 +201,7 @@ class Recommendations extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${month ?? 'Month'} - ${week ?? 'Week'}',
+                              week ?? 'Date Range',
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize,
                                 color: Colors.grey[900],
@@ -361,74 +354,6 @@ class Recommendations extends StatelessWidget {
                     Colors.purple[600]!,
                   ),
                 ],
-              ),
-
-              SizedBox(height: responsive.largeSpacing),
-
-              // Key Factors Section
-              Text(
-                'Key Factors',
-                style: TextStyle(
-                  fontSize: responsive.titleFontSize - 2,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black87,
-                ),
-              ),
-              SizedBox(height: responsive.mediumSpacing),
-
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(responsive.mediumSpacing),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: getKeyFactors().asMap().entries.map((entry) {
-                    final isLast = entry.key == getKeyFactors().length - 1;
-                    return Column(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              margin: const EdgeInsets.only(top: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.green[700],
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                entry.value,
-                                style: TextStyle(
-                                  fontSize: responsive.bodyFontSize - 1,
-                                  color: Colors.grey[800],
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (!isLast) ...[
-                          const SizedBox(height: 12),
-                          Divider(color: Colors.grey[200], height: 1),
-                          const SizedBox(height: 12),
-                        ],
-                      ],
-                    );
-                  }).toList(),
-                ),
               ),
 
               SizedBox(height: responsive.largeSpacing),

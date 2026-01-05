@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
-import 'bulk_density_instructions_screen.dart';
 import 'image_upload_screen.dart';
+import 'iot_device_setup_screen.dart';
 
 class BulkDensityScreen extends StatefulWidget {
   const BulkDensityScreen({super.key});
@@ -317,7 +317,7 @@ class _BulkDensityScreenState extends State<BulkDensityScreen>
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const BulkDensityInstructionsScreen(),
+                                    builder: (_) => const IotDeviceSetupScreen(),
                                   ),
                                 );
                               },
@@ -430,9 +430,9 @@ class _BulkDensityScreenState extends State<BulkDensityScreen>
                       Center(
                         child: Container(
                           padding: responsive.padding(
-                            mobile: const EdgeInsets.all(24),
-                            tablet: const EdgeInsets.all(28),
-                            desktop: const EdgeInsets.all(32),
+                            mobile: const EdgeInsets.all(20),
+                            tablet: const EdgeInsets.all(24),
+                            desktop: const EdgeInsets.all(28),
                           ),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -459,87 +459,177 @@ class _BulkDensityScreenState extends State<BulkDensityScreen>
                             ],
                           ),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.straighten_rounded,
-                                size: responsive.value(
-                                  mobile: 40,
-                                  tablet: 46,
-                                  desktop: 52,
-                                ),
-                                color: _densityValue != null
-                                    ? primary
-                                    : Colors.grey.shade400,
-                              ),
-                              ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                              Text(
-                                _densityValue == null
-                                    ? 'No reading yet'
-                                    : '${_densityValue!.toStringAsFixed(1)} g/L',
-                                style: TextStyle(
-                                  fontSize: responsive.fontSize(
-                                    mobile: 36,
-                                    tablet: 42,
-                                    desktop: 48,
-                                  ),
-                                  fontWeight: FontWeight.bold,
-                                  color: _densityValue != null
-                                      ? primary
-                                      : Colors.grey.shade400,
-                                ),
-                              ),
-                              ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-                              Text(
-                                'Bulk Density Value',
-                                style: TextStyle(
-                                  fontSize: responsive.bodyFontSize,
-                                  color: Colors.grey[600],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              if (_densityValue != null) ...[
-                                ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: responsive.value(
-                                      mobile: 12,
-                                      tablet: 14,
-                                      desktop: 16,
-                                    ),
-                                    vertical: responsive.value(
-                                      mobile: 6,
-                                      tablet: 7,
-                                      desktop: 8,
-                                    ),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade50,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.green.shade200,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.check_circle,
-                                        color: Colors.green.shade700,
-                                        size: responsive.smallIconSize,
+                              // Header Row
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(
+                                      responsive.value(
+                                        mobile: 10,
+                                        tablet: 11,
+                                        desktop: 12,
                                       ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Reading Complete',
-                                        style: TextStyle(
-                                          fontSize: responsive.bodyFontSize - 2,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.green.shade700,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _densityValue != null
+                                          ? Colors.green.shade50
+                                          : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.straighten_rounded,
+                                      color: _densityValue != null
+                                          ? primary
+                                          : Colors.grey.shade400,
+                                      size: responsive.mediumIconSize,
+                                    ),
+                                  ),
+                                  ResponsiveSpacing.horizontal(
+                                    mobile: 12,
+                                    tablet: 14,
+                                    desktop: 16,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'Bulk Density Reading',
+                                      style: TextStyle(
+                                        fontSize: responsive.titleFontSize,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
+
+                              // Main Content - Reading Display
+                              Center(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      _densityValue == null
+                                          ? 'Not ready yet'
+                                          : '${_densityValue!.toStringAsFixed(1)} g/L',
+                                      style: TextStyle(
+                                        fontSize: responsive.fontSize(
+                                          mobile: 32,
+                                          tablet: 38,
+                                          desktop: 44,
                                         ),
+                                        fontWeight: FontWeight.bold,
+                                        color: _densityValue != null
+                                            ? primary
+                                            : Colors.grey.shade400,
                                       ),
-                                    ],
+                                    ),
+                                    ResponsiveSpacing(mobile: 6, tablet: 8, desktop: 10),
+                                    Text(
+                                      _densityValue == null
+                                          ? 'Click "Read from Device" to measure'
+                                          : 'Measurement complete',
+                                      style: TextStyle(
+                                        fontSize: responsive.bodyFontSize,
+                                        color: Colors.grey[600],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                              // Status Badge at Bottom
+                              if (_densityValue != null)
+                                Center(
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: responsive.value(
+                                        mobile: 12,
+                                        tablet: 14,
+                                        desktop: 16,
+                                      ),
+                                      vertical: responsive.value(
+                                        mobile: 8,
+                                        tablet: 9,
+                                        desktop: 10,
+                                      ),
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade50,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.green.shade200,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle,
+                                          color: Colors.green.shade700,
+                                          size: responsive.smallIconSize,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Reading Complete',
+                                          style: TextStyle(
+                                            fontSize: responsive.bodyFontSize - 2,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.green.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                Center(
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: responsive.value(
+                                        mobile: 12,
+                                        tablet: 14,
+                                        desktop: 16,
+                                      ),
+                                      vertical: responsive.value(
+                                        mobile: 8,
+                                        tablet: 9,
+                                        desktop: 10,
+                                      ),
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.pending_rounded,
+                                          color: Colors.grey.shade600,
+                                          size: responsive.smallIconSize,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Waiting for reading',
+                                          style: TextStyle(
+                                            fontSize: responsive.bodyFontSize - 2,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ],
                             ],
                           ),
                         ),

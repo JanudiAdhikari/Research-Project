@@ -1,5 +1,9 @@
+import 'package:CeylonPepper/features/quality_grading/screens/quality_grading_dashboard.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
+import '../../market_forecast/navigation.dart';
+import 'batch_details_screen.dart';
+import 'how_it_works_screen.dart';
 
 class ResultSummaryScreen extends StatefulWidget {
   const ResultSummaryScreen({super.key});
@@ -43,6 +47,8 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     super.dispose();
   }
 
+  // COMPLETE IMPROVED VERSION - Replace entire build method content
+
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
@@ -50,15 +56,27 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
 
     return WillPopScope(
       onWillPop: () async {
+        // Navigate back to dashboard
+        Navigator.of(context).popUntil((route) => route.isFirst);
         return false;
       },
-
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
           backgroundColor: primary,
           elevation: 0,
-          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: const Icon(Icons.close_rounded, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const QualityGradingDashboard(),
+                ),
+              );
+            },
+          ),
+
           title: const Text(
             'Quality Report',
             style: TextStyle(
@@ -83,7 +101,6 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
               children: [
                 ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
-                // Main Content
                 SlideTransition(
                   position: _slideAnimation,
                   child: Padding(
@@ -93,7 +110,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Grade Card
+                        // IMPROVED GRADE CARD - More Balanced Design
                         Container(
                           width: double.infinity,
                           padding: responsive.padding(
@@ -102,22 +119,15 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                             desktop: const EdgeInsets.all(32),
                           ),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.green.shade50,
-                                Colors.green.shade100.withOpacity(0.5),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: Colors.green.shade300,
+                              color: Colors.green.shade200,
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.green.withOpacity(0.2),
+                                color: Colors.black.withOpacity(0.08),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -125,85 +135,144 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                           ),
                           child: Column(
                             children: [
-                              Container(
-                                padding: responsive.padding(
-                                  mobile: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 8,
-                                  ),
-                                  tablet: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 10,
-                                  ),
-                                  desktop: const EdgeInsets.symmetric(
-                                    horizontal: 28,
-                                    vertical: 12,
-                                  ),
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade700,
-                                  borderRadius: BorderRadius.circular(50),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.green.shade700.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Text(
-                                  "Premium",
-                                  style: TextStyle(
-                                    fontSize: responsive.fontSize(
-                                      mobile: 20,
-                                      tablet: 22,
-                                      desktop: 24,
-                                    ),
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                              ),
-                              ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
+                              // Grade Badge
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    "92",
-                                    style: TextStyle(
-                                      fontSize: responsive.fontSize(
-                                        mobile: 56,
-                                        tablet: 64,
-                                        desktop: 72,
+                                  Container(
+                                    padding: responsive.padding(
+                                      mobile: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 8,
                                       ),
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.green.shade700,
-                                      height: 1,
+                                      tablet: const EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 10,
+                                      ),
+                                      desktop: const EdgeInsets.symmetric(
+                                        horizontal: 28,
+                                        vertical: 12,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    " / 100",
-                                    style: TextStyle(
-                                      fontSize: responsive.fontSize(
-                                        mobile: 24,
-                                        tablet: 26,
-                                        desktop: 28,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.green.shade600,
+                                          Colors.green.shade700,
+                                        ],
                                       ),
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.green.shade700,
+                                      borderRadius: BorderRadius.circular(50),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.green.shade700.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.stars_rounded,
+                                          color: Colors.white,
+                                          size: responsive.value(
+                                            mobile: 18,
+                                            tablet: 20,
+                                            desktop: 22,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "PREMIUM",
+                                          style: TextStyle(
+                                            fontSize: responsive.fontSize(
+                                              mobile: 16,
+                                              tablet: 18,
+                                              desktop: 20,
+                                            ),
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                            letterSpacing: 1.5,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                              ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
+                              ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+
+                              // Score Display
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Score Circle
+                                  Container(
+                                    width: responsive.value(
+                                      mobile: 140,
+                                      tablet: 160,
+                                      desktop: 180,
+                                    ),
+                                    height: responsive.value(
+                                      mobile: 140,
+                                      tablet: 160,
+                                      desktop: 180,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Colors.green.shade50,
+                                          Colors.green.shade100,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      border: Border.all(
+                                        color: Colors.green.shade300,
+                                        width: 3,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          "92",
+                                          style: TextStyle(
+                                            fontSize: responsive.fontSize(
+                                              mobile: 48,
+                                              tablet: 56,
+                                              desktop: 64,
+                                            ),
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.green.shade700,
+                                            height: 1,
+                                          ),
+                                        ),
+                                        Text(
+                                          "/ 100",
+                                          style: TextStyle(
+                                            fontSize: responsive.fontSize(
+                                              mobile: 16,
+                                              tablet: 18,
+                                              desktop: 20,
+                                            ),
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.green.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
                               Text(
                                 "Overall Quality Score",
                                 style: TextStyle(
-                                  fontSize: responsive.bodyFontSize,
-                                  color: Colors.green.shade900,
+                                  fontSize: responsive.titleFontSize,
+                                  color: Colors.grey.shade700,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -316,12 +385,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                             desktop: const EdgeInsets.all(28),
                           ),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.blue.shade50,
-                                Colors.blue.shade100.withOpacity(0.5),
-                              ],
-                            ),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: Colors.blue.shade200),
                             boxShadow: [
@@ -348,6 +412,21 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                             ],
                           ),
                         ),
+
+                        ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
+
+                        // NEW: Quick Actions Section
+                        _buildSectionHeader(
+                          responsive,
+                          primary,
+                          'Next Steps',
+                          Icons.explore_rounded,
+                        ),
+
+                        ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                        // Quick action cards in a grid
+                        _buildQuickActionsGrid(context, responsive, primary),
 
                         ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
@@ -409,7 +488,12 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                           ),
                           child: OutlinedButton(
                             onPressed: () {
-                              // TODO: View grading algorithm
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HowItWorksScreen(),
+                                ),
+                              );
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: primary,
@@ -422,12 +506,12 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.info_outline_rounded,
+                                  Icons.help_outline_rounded,
                                   size: responsive.smallIconSize,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  "View Grading Algorithm",
+                                  "How is Quality Calculated?",
                                   style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: responsive.titleFontSize,
@@ -446,6 +530,130 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+// NEW METHOD: Quick Actions Grid
+  Widget _buildQuickActionsGrid(BuildContext context, Responsive responsive, Color primary) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickActionCard(
+                context,
+                responsive,
+                title: 'Check Market Price',
+                subtitle: 'Get current rates',
+                icon: Icons.trending_up_rounded,
+                color: Colors.blue,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => PriceNavigation()),
+                  );
+                },
+              ),
+            ),
+            ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
+            Expanded(
+              child: _buildQuickActionCard(
+                context,
+                responsive,
+                title: 'Start New Test',
+                subtitle: 'Grade another batch',
+                icon: Icons.add_circle_outline_rounded,
+                color: Colors.green,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const BatchDetailsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+// NEW METHOD: Quick Action Card
+  Widget _buildQuickActionCard(
+      BuildContext context,
+      Responsive responsive, {
+        required String title,
+        required String subtitle,
+        required IconData icon,
+        required Color color,
+        required VoidCallback onTap,
+      }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: responsive.padding(
+            mobile: const EdgeInsets.all(14),
+            tablet: const EdgeInsets.all(16),
+            desktop: const EdgeInsets.all(18),
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: EdgeInsets.all(
+                  responsive.value(mobile: 8, tablet: 9, desktop: 10),
+                ),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+                ),
+              ),
+              ResponsiveSpacing(mobile: 10, tablet: 12, desktop: 14),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: responsive.bodyFontSize,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              ResponsiveSpacing(mobile: 3, tablet: 4, desktop: 5),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: responsive.bodyFontSize - 2,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ),

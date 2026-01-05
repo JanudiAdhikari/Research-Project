@@ -7,8 +7,10 @@ import '../disease_detection/services/location_service.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../auth/login_page.dart';
+import '../marketplace/marketplace_screen.dart';
 import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
+import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -509,8 +511,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             "Total Crops",
             _totalCrops.toString(),
             Icons.grass_rounded,
-            Colors.green.shade600,
-            Colors.green.shade50,
+            Color(0xFF43A047),
+            Color(0xFFE8F5E9),
           ),
         ),
         ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
@@ -520,8 +522,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             "Active Alerts",
             _activeAlerts.toString(),
             Icons.notification_important_rounded,
-            Colors.orange.shade600,
-            Colors.orange.shade50,
+            Color(0xFF2E7D32),
+            Color(0xFFE8F5E9),
           ),
         ),
         ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
@@ -531,8 +533,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             "Avg Quality",
             "${_avgQuality.toStringAsFixed(1)}%",
             Icons.verified_rounded,
-            Colors.blue.shade600,
-            Colors.blue.shade50,
+            Color(0xFF66BB6A),
+            Color(0xFFE8F5E9),
           ),
         ),
       ],
@@ -685,17 +687,22 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
   List<Widget> _buildMainFeatureCards(BuildContext context, Responsive responsive) {
     return [
-      _featureCard(
+       _featureCard(
         context,
         responsive,
         title: "Yield\nPrediction",
         subtitle: "Forecast harvest",
         icon: Icons.analytics_rounded,
         gradient: LinearGradient(
-          colors: [Colors.green.shade400, Colors.green.shade600],
+          colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
         ),
         onTap: () {
-          // TODO: Navigate to yield prediction
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const HarvestPredictionDashboard(),
+            ),
+          );
         },
       ),
       _featureCard(
@@ -705,7 +712,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         subtitle: "AI diagnosis",
         icon: Icons.biotech_rounded,
         gradient: LinearGradient(
-          colors: [Colors.red.shade400, Colors.red.shade600],
+          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
         ),
         onTap: () {
           Navigator.push(
@@ -721,7 +728,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         subtitle: "ISO standards",
         icon: Icons.verified_rounded,
         gradient: LinearGradient(
-          colors: [Colors.blue.shade400, Colors.blue.shade600],
+          colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
         ),
         onTap: () {
           Navigator.push(
@@ -737,7 +744,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         subtitle: "Price trends",
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
-          colors: [Colors.purple.shade400, Colors.purple.shade600],
+          colors: [Color(0xFF388E3C), Color(0xFF2E7D32)],
         ),
         onTap: () {
           Navigator.push(
@@ -766,8 +773,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   responsive,
                   "AI Assistant",
                   Icons.smart_toy_rounded,
-                  Colors.teal.shade400,
-                  Colors.teal.shade50,
+                  Color(0xFF43A047),
+                  Color(0xFFE8F5E9),
                       () {
                     Navigator.push(
                       context,
@@ -783,10 +790,13 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   responsive,
                   "Marketplace",
                   Icons.store_rounded,
-                  Colors.orange.shade400,
-                  Colors.orange.shade50,
-                      () {
-                    // TODO: Navigate to marketplace
+                  Color(0xFF2E7D32),
+                  Color(0xFFE8F5E9),
+                   () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MarketplaceScreen()),
+                    );
                   },
                 ),
               ),

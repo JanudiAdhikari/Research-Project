@@ -9,7 +9,7 @@ class ImageCaptureGuideScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: Color(0xFF2E7D32),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -26,7 +26,6 @@ class ImageCaptureGuideScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 20),
               // Header
               Text(
                 "Choose Your Learning Style",
@@ -44,7 +43,7 @@ class ImageCaptureGuideScreen extends StatelessWidget {
                 child: _InstructionCard(
                   icon: Icons.menu_book_rounded,
                   gradient: LinearGradient(
-                    colors: [Colors.teal.shade400, Colors.teal.shade600],
+                    colors: [Colors.blue.shade400, Colors.blue.shade600],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -73,7 +72,7 @@ class ImageCaptureGuideScreen extends StatelessWidget {
                 child: _InstructionCard(
                   icon: Icons.play_circle_filled_rounded,
                   gradient: LinearGradient(
-                    colors: [Colors.orange.shade400, Colors.orange.shade600],
+                    colors: [Colors.red.shade400, Colors.red.shade600],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -362,7 +361,7 @@ class _TextInstructionsScreenState extends State<TextInstructionsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: Color(0xFF2E7D32),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -397,7 +396,7 @@ class _TextInstructionsScreenState extends State<TextInstructionsScreen> {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: Colors.teal,
+                        color: Color(0xFF2E7D32),
                       ),
                     ),
                   ],
@@ -408,7 +407,7 @@ class _TextInstructionsScreenState extends State<TextInstructionsScreen> {
                   child: LinearProgressIndicator(
                     value: (_currentPage + 1) / _steps.length,
                     backgroundColor: Colors.grey[200],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.teal),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
                     minHeight: 8,
                   ),
                 ),
@@ -608,7 +607,7 @@ class _TextInstructionsScreenState extends State<TextInstructionsScreen> {
                       },
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Colors.teal),
+                        side: const BorderSide(color: Color(0xFF2E7D32)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -618,7 +617,7 @@ class _TextInstructionsScreenState extends State<TextInstructionsScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.teal,
+                          color: Color(0xFF2E7D32),
                         ),
                       ),
                     ),
@@ -638,13 +637,13 @@ class _TextInstructionsScreenState extends State<TextInstructionsScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text("Great! You're ready to capture images."),
-                            backgroundColor: Colors.teal,
+                            backgroundColor: Color(0xFF2E7D32),
                           ),
                         );
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
+                      backgroundColor: Color(0xFF2E7D32),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -678,7 +677,7 @@ class VideoInstructionsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.teal,
+        backgroundColor: Color(0xFF2E7D32),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -817,7 +816,7 @@ class VideoInstructionsScreen extends StatelessWidget {
                     time: "3:50",
                     title: "Review & Upload Tips",
                     icon: Icons.cloud_upload_rounded,
-                    color: Colors.teal,
+                    color: Color(0xFF2E7D32),
                   ),
 
                   const SizedBox(height: 24),

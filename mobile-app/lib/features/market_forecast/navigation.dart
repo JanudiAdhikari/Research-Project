@@ -100,7 +100,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                   subtitle: "View weekly predictions",
                   icon: Icons.trending_up_rounded,
                   gradient: LinearGradient(
-                    colors: [Colors.green.shade400, Colors.green.shade600],
+                    colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
                   ),
                   onTap: () {
                     Navigator.push(
@@ -121,7 +121,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                   subtitle: "Analyze trends",
                   icon: Icons.assessment_rounded,
                   gradient: LinearGradient(
-                    colors: [Colors.blue.shade400, Colors.blue.shade600],
+                    colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
                   ),
                   onTap: () {
                     Navigator.push(
@@ -142,7 +142,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                   subtitle: "Track global exports",
                   icon: Icons.public_rounded,
                   gradient: LinearGradient(
-                    colors: [Colors.orange.shade400, Colors.orange.shade600],
+                    colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
                   ),
                   onTap: () {
                     Navigator.push(

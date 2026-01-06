@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/prediction_result_screen.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class NewPredictionScreen extends StatefulWidget {
   const NewPredictionScreen({super.key});
@@ -12,7 +14,9 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
   final _formKey = GlobalKey<FormState>();
 
   double soilMoisture = 40;
-  double rainfall = 20;
+ double temperature = 28;
+ File? selectedImage;
+final ImagePicker _picker = ImagePicker();
   String plantAge = "6–8 months";
   bool useIoT = false;
 
@@ -33,15 +37,45 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             _stepHeader(
-              icon: Icons.eco_rounded,
-              title: "Step 1: Plant Information",
-              subtitle: "Basic crop maturity details",
-              color: Colors.green,
-            ),
-            const SizedBox(height: 12),
-            _dropdownField(),
+  icon: Icons.camera_alt_rounded,
+  title: "Step 1: Upload Plant Image",
+  subtitle: "Capture or select pepper plant image",
+  color: Colors.green,
+),
 
-            const SizedBox(height: 24),
+const SizedBox(height: 12),
+
+GestureDetector(
+  onTap: _pickImage,
+  child: Container(
+    height: 180,
+    width: double.infinity,
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: Colors.grey.shade400),
+      image: selectedImage != null
+          ? DecorationImage(
+              image: FileImage(selectedImage!),
+              fit: BoxFit.cover,
+            )
+          : null,
+    ),
+    child: selectedImage == null
+        ? const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.upload_rounded, size: 40, color: Colors.grey),
+                SizedBox(height: 8),
+                Text("Tap to upload image",
+                    style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          )
+        : null,
+  ),
+),
 
             _stepHeader(
               icon: Icons.sensors_rounded,
@@ -67,25 +101,26 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
             ),
 
             const SizedBox(height: 24),
+_stepHeader(
+  icon: Icons.thermostat_rounded,
+  title: "Step 3: Temperature",
+  subtitle: "Environmental temperature in °C",
+  color: Colors.orange,
+),
 
-            _stepHeader(
-              icon: Icons.cloud_rounded,
-              title: "Step 3: Weather Factors",
-              subtitle: "Environmental influence",
-              color: Colors.orange,
-            ),
+const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
+_sliderField(
+  label: "Temperature (°C)",
+  value: temperature,
+  max: 50,
+  onChanged: (v) => setState(() => temperature = v),
+),
 
-            _sliderField(
-              label: "Expected Rainfall (mm)",
-              value: rainfall,
-              max: 100,
-              onChanged: (v) => setState(() => rainfall = v),
-            ),
-            _infoText(
-              "Rainfall affects flowering, fruit set, and disease risk.",
-            ),
+_infoText(
+  "Temperature affects growth rate and fruit development.",
+),
+
 
             const SizedBox(height: 28),
 
@@ -106,17 +141,27 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => PredictionResultScreen(
-                        predictedYield: 850,
-                        soilMoisture: soilMoisture,
-                      ),
-                    ),
-                  );
-                },
+               onPressed: () {
+  if (selectedImage == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Please upload a plant image")),
+    );
+    return;
+  }
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => PredictionResultScreen(
+        predictedYield: 0, // placeholder until backend is connected
+        soilMoisture: soilMoisture,
+        temperature: temperature,
+        imageFile: selectedImage!,
+      ),
+    ),
+  );
+},
+
               ),
             ),
           ],
@@ -253,4 +298,16 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
       ),
     );
   }
+  Future<void> _pickImage() async {
+  final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+  if (image != null) {
+    setState(() {
+      selectedImage = File(image.path);
+    });
+  }
 }
+}
+
+
+

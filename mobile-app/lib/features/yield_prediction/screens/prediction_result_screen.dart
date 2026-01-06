@@ -1,52 +1,99 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'xai_insights_screen.dart';
 
 class PredictionResultScreen extends StatelessWidget {
   final double predictedYield;
   final double soilMoisture;
+  final double temperature;
+  final File imageFile;
 
   const PredictionResultScreen({
     super.key,
     required this.predictedYield,
     required this.soilMoisture,
+    required this.temperature,
+    required this.imageFile,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Prediction Result"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Padding(
+      appBar: AppBar(title: const Text("Prediction Result")),
+      body: ListView(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _yieldHero(),
-            const SizedBox(height: 24),
-            _infoTile(
-              Icons.water_drop_rounded,
-              "Soil Moisture",
-              "${soilMoisture.round()}%",
-              Colors.blue,
+        children: [
+          // IMAGE
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: kIsWeb
+                ? Image.network(
+                    imageFile.path,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(
+                    imageFile,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // YIELD HERO
+          _yieldHero(),
+
+          const SizedBox(height: 24),
+
+          // SOIL
+          _infoTile(
+            Icons.water_drop_rounded,
+            "Soil Moisture",
+            "${soilMoisture.round()}%",
+            Colors.blue,
+          ),
+
+          // TEMPERATURE
+          _infoTile(
+            Icons.thermostat_rounded,
+            "Temperature",
+            "${temperature.round()}°C",
+            Colors.orange,
+          ),
+
+          const SizedBox(height: 24),
+
+          // XAI BUTTON
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.psychology_rounded),
+              label: const Text("View AI Insights"),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => XAIInsightsScreen(
+                      imageFile: imageFile,
+                      soilMoisture: soilMoisture,
+                      temperature: temperature,
+                    ),
+                  ),
+                );
+              },
             ),
-            const SizedBox(height: 24),
-            const Text(
-              "Why this prediction?",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "The model detected healthy pepper cones and optimal soil moisture conditions, leading to a higher yield estimate.",
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
+  // ================= UI COMPONENTS =================
 
   Widget _yieldHero() {
     return Container(
@@ -58,12 +105,15 @@ class PredictionResultScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Predicted Yield",
-              style: TextStyle(color: Colors.white70)),
+          const Text(
+            "Predicted Yield",
+            style: TextStyle(color: Colors.white70),
+          ),
           const SizedBox(height: 8),
           Text(
-            "${predictedYield.round()} kg",
+            "${predictedYield.round()}3 kg",
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -76,8 +126,13 @@ class PredictionResultScreen extends StatelessWidget {
   }
 
   Widget _infoTile(
-      IconData icon, String title, String value, Color color) {
+    IconData icon,
+    String title,
+    String value,
+    Color color,
+  ) {
     return ListTile(
+      contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         backgroundColor: color.withOpacity(0.15),
         child: Icon(icon, color: color),
@@ -85,7 +140,7 @@ class PredictionResultScreen extends StatelessWidget {
       title: Text(title),
       subtitle: Text(
         value,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }

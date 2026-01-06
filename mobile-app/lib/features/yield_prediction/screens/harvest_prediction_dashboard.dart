@@ -208,10 +208,10 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
       spacing: 12,
       runSpacing: 12,
       children: [
-        _summaryCard("Predictions", "18", Icons.analytics_rounded, Colors.blue),
-        _summaryCard("Avg Yield", "820 kg", Icons.trending_up_rounded, Colors.green),
-        _summaryCard("Best Yield", "940 kg", Icons.star_rounded, Colors.amber),
-        _summaryCard("Last Run", "Jan 14", Icons.schedule_rounded, Colors.purple),
+        _summaryCard("Predictions", "5", Icons.analytics_rounded, Colors.blue),
+        _summaryCard("Avg Yield", "35 kg", Icons.trending_up_rounded, Colors.green),
+        _summaryCard("Best Yield", "41 kg", Icons.star_rounded, Colors.amber),
+        _summaryCard("Last Run", "Jan 6th", Icons.schedule_rounded, Colors.purple),
       ],
     );
   }

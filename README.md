@@ -1,4 +1,4 @@
-# ML Based Integrated Solution for Smart Pepper in Sri Lanka
+# ML Based Integrated Solution for Smart Pepper Farming in Sri Lanka
 
 This project is the Final Year Research Project conducted at the Sri Lanka Institute of Information Technology (SLIIT). The study proposes an integrated smart agriculture system for the Sri Lankan pepper industry. It addresses key challenges faced by small-scale farmers such as unfair pricing, poor quality grading, late disease detection, and uncertain yields.
 

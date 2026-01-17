@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:CeylonPepper/features/market_forecast/navigation.dart';
-import '../../widgets/bottom_navigation.dart';
 import '../disease_detection/screens/home_screen.dart';
 import '../disease_detection/services/weather_service.dart';
 import '../disease_detection/services/location_service.dart';
@@ -111,10 +110,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
 
       final weatherData = await _weatherService
           .getWeatherData(lat, lon)
-          .timeout(
-        const Duration(seconds: 15),
-        onTimeout: () => null,
-      );
+          .timeout(const Duration(seconds: 15), onTimeout: () => null);
 
       if (weatherData != null && mounted) {
         final parsedData = _weatherService.parseWeatherData(weatherData);
@@ -124,7 +120,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                 ? '${parsedData['location']} (Default)'
                 : parsedData['location'] ?? 'Unknown';
             _temperature = '${parsedData['temperature']}°C';
-            _weatherCondition = parsedData['condition']?.toLowerCase() ?? 'clear';
+            _weatherCondition =
+                parsedData['condition']?.toLowerCase() ?? 'clear';
             _isLoadingWeather = false;
           });
           return;
@@ -150,7 +147,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    final primary = const Color(0xFF2E7D32);
+    final primary = const Color.fromARGB(255, 62, 186, 77);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -229,14 +226,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigation(
-        currentIndex: 0,
-        onTabSelected: (index) {
-          if (index != 0) {
-            // Handle navigation
-          }
-        },
       ),
     );
   }
@@ -322,12 +311,20 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                     ],
                   ),
                   child: CircleAvatar(
-                    radius: responsive.value(mobile: 22, tablet: 24, desktop: 28),
+                    radius: responsive.value(
+                      mobile: 22,
+                      tablet: 24,
+                      desktop: 28,
+                    ),
                     backgroundColor: primary.withOpacity(0.1),
                     child: Icon(
                       Icons.person_rounded,
                       color: primary,
-                      size: responsive.value(mobile: 24, tablet: 26, desktop: 30),
+                      size: responsive.value(
+                        mobile: 24,
+                        tablet: 26,
+                        desktop: 30,
+                      ),
                     ),
                   ),
                 ),
@@ -338,7 +335,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(builder: (_) => const LoginPage()),
-                          (route) => false,
+                      (route) => false,
                     );
                   }
                 },
@@ -412,13 +409,19 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                     color: Colors.white.withOpacity(0.95),
                     size: responsive.smallIconSize,
                   ),
-                  ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
+                  ResponsiveSpacing.horizontal(
+                    mobile: 10,
+                    tablet: 12,
+                    desktop: 14,
+                  ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isLoadingWeather ? 'Fetching location...' : _locationName,
+                          _isLoadingWeather
+                              ? 'Fetching location...'
+                              : _locationName,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.95),
                             fontSize: responsive.bodyFontSize,
@@ -485,7 +488,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   IconData _getWeatherIcon() {
     if (_weatherCondition.contains('rain')) return Icons.water_drop_rounded;
     if (_weatherCondition.contains('cloud')) return Icons.cloud_rounded;
-    if (_weatherCondition.contains('sun') || _weatherCondition.contains('clear')) {
+    if (_weatherCondition.contains('sun') ||
+        _weatherCondition.contains('clear')) {
       return Icons.wb_sunny_rounded;
     }
     return Icons.cloud_outlined;
@@ -510,9 +514,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             responsive,
             "Total Crops",
             _totalCrops.toString(),
-            Icons.grass_rounded,
-            Color(0xFF43A047),
-            Color(0xFFE8F5E9),
+            iconPath: "assets/images/icons/crops.png",
           ),
         ),
         ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
@@ -521,9 +523,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             responsive,
             "Active Alerts",
             _activeAlerts.toString(),
-            Icons.notification_important_rounded,
-            Color(0xFF2E7D32),
-            Color(0xFFE8F5E9),
+            iconPath: "assets/images/icons/notification.png",
           ),
         ),
         ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
@@ -532,9 +532,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             responsive,
             "Avg Quality",
             "${_avgQuality.toStringAsFixed(1)}%",
-            Icons.verified_rounded,
-            Color(0xFF66BB6A),
-            Color(0xFFE8F5E9),
+            iconPath: "assets/images/icons/quality.png",
           ),
         ),
       ],
@@ -542,13 +540,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _buildStatCard(
-      Responsive responsive,
-      String label,
-      String value,
-      IconData icon,
-      Color iconColor,
-      Color bgColor,
-      ) {
+  Responsive responsive,
+  String label,
+  String value, {
+  required String iconPath,
+})
+ {
     return Container(
       padding: responsive.padding(
         mobile: const EdgeInsets.all(16),
@@ -575,10 +572,15 @@ class _FarmerDashboardState extends State<FarmerDashboard>
               responsive.value(mobile: 8, tablet: 10, desktop: 12),
             ),
             decoration: BoxDecoration(
-              color: bgColor,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: responsive.mediumIconSize),
+            child: Image.asset(
+  iconPath,
+  width: 48,
+  height: 48,
+  fit: BoxFit.contain,
+),
+
           ),
           ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
           Text(
@@ -593,7 +595,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           Text(
             label,
             style: TextStyle(
-              fontSize: responsive.fontSize(mobile: 12, tablet: 13, desktop: 14),
+              fontSize: responsive.fontSize(
+                mobile: 12,
+                tablet: 13,
+                desktop: 14,
+              ),
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
@@ -607,12 +613,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _buildSectionTitle(
-      Responsive responsive,
-      Color primary,
-      String title,
-      IconData icon, {
-        Color? iconColor,
-      }) {
+    Responsive responsive,
+    Color primary,
+    String title,
+    IconData icon, {
+    Color? iconColor,
+  }) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
       child: Row(
@@ -647,10 +653,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _buildMainFeatureGrid(
-      BuildContext context,
-      Responsive responsive,
-      Color primary,
-      ) {
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
       child: ResponsiveBuilder(
@@ -685,16 +691,22 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     );
   }
 
-  List<Widget> _buildMainFeatureCards(BuildContext context, Responsive responsive) {
+  List<Widget> _buildMainFeatureCards(
+    BuildContext context,
+    Responsive responsive,
+  ) {
     return [
-       _featureCard(
+      _featureCard(
         context,
         responsive,
         title: "Yield\nPrediction",
         subtitle: "Forecast harvest",
-        icon: Icons.analytics_rounded,
+        iconPath: "assets/images/icons/analysis.png",
         gradient: LinearGradient(
-          colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
+          colors: [
+            Color.fromARGB(255, 248, 250, 248),
+            Color.fromARGB(255, 239, 242, 239),
+          ],
         ),
         onTap: () {
           Navigator.push(
@@ -710,9 +722,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         responsive,
         title: "Disease\nDetection",
         subtitle: "AI diagnosis",
-        icon: Icons.biotech_rounded,
+        iconPath: "assets/images/icons/test.png",
         gradient: LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+          colors: [
+            Color.fromARGB(255, 248, 250, 248),
+            Color.fromARGB(255, 239, 242, 239),
+          ],
         ),
         onTap: () {
           Navigator.push(
@@ -726,9 +741,13 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         responsive,
         title: "Quality\nGrading",
         subtitle: "ISO standards",
-        icon: Icons.verified_rounded,
+        iconPath: "assets/images/icons/check.png",
+
         gradient: LinearGradient(
-          colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
+          colors: [
+            Color.fromARGB(255, 248, 250, 248),
+            Color.fromARGB(255, 239, 242, 239),
+          ],
         ),
         onTap: () {
           Navigator.push(
@@ -742,9 +761,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         responsive,
         title: "Market\nForecast",
         subtitle: "Price trends",
-        icon: Icons.trending_up_rounded,
+        iconPath: "assets/images/icons/trend.png",
         gradient: LinearGradient(
-          colors: [Color(0xFF388E3C), Color(0xFF2E7D32)],
+          colors: [
+            Color.fromARGB(255, 248, 250, 248),
+            Color.fromARGB(255, 239, 242, 239),
+          ],
         ),
         onTap: () {
           Navigator.push(
@@ -757,10 +779,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _buildAdditionalFeatures(
-      BuildContext context,
-      Responsive responsive,
-      Color primary,
-      ) {
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
       child: Column(
@@ -775,7 +797,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   Icons.smart_toy_rounded,
                   Color(0xFF43A047),
                   Color(0xFFE8F5E9),
-                      () {
+                  () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const ChatbotScreen()),
@@ -792,7 +814,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   Icons.store_rounded,
                   Color(0xFF2E7D32),
                   Color(0xFFE8F5E9),
-                   () {
+                  () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => MarketplaceScreen()),
@@ -808,14 +830,14 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _secondaryFeatureCard(
-      BuildContext context,
-      Responsive responsive,
-      String title,
-      IconData icon,
-      Color iconColor,
-      Color bgColor,
-      VoidCallback onTap,
-      ) {
+    BuildContext context,
+    Responsive responsive,
+    String title,
+    IconData icon,
+    Color iconColor,
+    Color bgColor,
+    VoidCallback onTap,
+  ) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -914,14 +936,14 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _featureCard(
-      BuildContext context,
-      Responsive responsive, {
-        required String title,
-        required String subtitle,
-        required IconData icon,
-        required Gradient gradient,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context,
+    Responsive responsive, {
+    required String title,
+    required String subtitle,
+    required String iconPath,
+    required Gradient gradient,
+    required VoidCallback onTap,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -945,15 +967,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           ),
           child: Stack(
             children: [
-              Positioned(
-                right: -15,
-                bottom: -15,
-                child: Icon(
-                  icon,
-                  size: responsive.value(mobile: 80, tablet: 90, desktop: 100),
-                  color: Colors.white.withOpacity(0.12),
-                ),
-              ),
               Padding(
                 padding: responsive.padding(
                   mobile: const EdgeInsets.all(18),
@@ -973,10 +986,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         color: Colors.white.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
-                        icon,
-                        size: responsive.value(mobile: 28, tablet: 32, desktop: 36),
-                        color: Colors.white,
+                      child: Image.asset(
+                        iconPath,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const Spacer(),
@@ -985,7 +999,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       style: TextStyle(
                         fontSize: responsive.titleFontSize,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: Colors.black,
                         height: 1.2,
                       ),
                     ),
@@ -999,15 +1013,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                           desktop: 14,
                         ),
                         fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.black,
                       ),
                     ),
                     ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.white.withOpacity(0.9),
-                      size: responsive.smallIconSize,
-                    ),
+                    Icon(Icons.arrow_forward_rounded, size: 36),
                   ],
                 ),
               ),
@@ -1066,12 +1076,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _tipCard(
-      String text,
-      IconData icon,
-      Color bgColor,
-      Color iconColor,
-      Responsive responsive,
-      ) {
+    String text,
+    IconData icon,
+    Color bgColor,
+    Color iconColor,
+    Responsive responsive,
+  ) {
     return Container(
       margin: EdgeInsets.only(
         right: responsive.value(mobile: 14, tablet: 16, desktop: 18),

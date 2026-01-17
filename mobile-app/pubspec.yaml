@@ -70,7 +70,7 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/images/logos/logo.png
-    - assets/images/icons/google.png
+    - assets/images/icons/
     - assets/images/onboarding/onboard1.png
     - assets/images/onboarding/onboard2.png
     - assets/images/onboarding/onboard3.png

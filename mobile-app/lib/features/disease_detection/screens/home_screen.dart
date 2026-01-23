@@ -6,6 +6,8 @@ import 'posts_view_screen.dart';
 import 'complaint_screen.dart';
 import 'complaint_list_screen.dart';
 import 'analyze_plants_screen.dart';
+import '../../../utils/localization.dart';
+import '../../../utils/language_prefs.dart';
 
 class HomeScreen extends StatefulWidget {
   final User? user;
@@ -21,6 +23,8 @@ class _HomeScreenState extends State<HomeScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  String _currentLanguage = 'en';
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +39,15 @@ class _HomeScreenState extends State<HomeScreen>
     );
     // Start the animation
     _animationController.forward();
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+        });
+      }
+    });
   }
 
   @override
@@ -52,9 +65,9 @@ class _HomeScreenState extends State<HomeScreen>
     if (image != null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Photo captured!'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(_translate('photo_captured')),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -141,35 +154,48 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "Hello, ${_getUserDisplayName()} 👋",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        "Disease Detection",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      if (_getUserEmail().isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          _getUserEmail(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _translate('hello_user').replaceAll('{name}', _getUserDisplayName()),
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  _translate('disease_detection_title'),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                if (_getUserEmail().isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _getUserEmail(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -189,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen>
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  "Explore Features",
+                  _translate('explore_features'),
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -207,8 +233,8 @@ class _HomeScreenState extends State<HomeScreen>
                   children: [
                     // View Posts
                     _buildNavigationCard(
-                      title: "View Posts",
-                      subtitle: "Create and view social posts",
+                      title: _translate('view_posts'),
+                      subtitle: _translate('view_posts_subtitle'),
                       icon: Icons.dynamic_feed_rounded,
                       gradient: const LinearGradient(
                         colors: [Color(0xFF42A5F5), Color(0xFF2196F3)],
@@ -220,8 +246,8 @@ class _HomeScreenState extends State<HomeScreen>
 
                     // Make a Complaint
                     _buildNavigationCard(
-                      title: "Make a Complaint",
-                      subtitle: "Submit your complaints or issues",
+                      title: _translate('make_complaint'),
+                      subtitle: _translate('make_complaint_subtitle'),
                       icon: Icons.report_problem_rounded,
                       gradient: const LinearGradient(
                         colors: [Color(0xFFFFB74D), Color(0xFFFF9800)],
@@ -233,8 +259,8 @@ class _HomeScreenState extends State<HomeScreen>
 
                     // Manage Complaints
                     _buildNavigationCard(
-                      title: "Manage Complaints",
-                      subtitle: "View and manage all complaints",
+                      title: _translate('manage_complaints'),
+                      subtitle: _translate('manage_complaints_subtitle'),
                       icon: Icons.admin_panel_settings_rounded,
                       gradient: const LinearGradient(
                         colors: [Color(0xFFBA68C8), Color(0xFF9C27B0)],
@@ -246,8 +272,8 @@ class _HomeScreenState extends State<HomeScreen>
 
                     // Analyze Plants
                     _buildNavigationCard(
-                      title: "Analyze Plants",
-                      subtitle: "Detect plant diseases with AI",
+                      title: _translate('analyze_plants'),
+                      subtitle: _translate('analyze_plants_subtitle'),
                       icon: Icons.eco_rounded,
                       gradient: const LinearGradient(
                         colors: [Color(0xFF26A69A), Color(0xFF009688)],
@@ -259,8 +285,8 @@ class _HomeScreenState extends State<HomeScreen>
 
                     // Open Camera
                     _buildNavigationCard(
-                      title: "Disease Detection Camera",
-                      subtitle: "Scan disease photos using camera",
+                      title: _translate('detection_camera'),
+                      subtitle: _translate('detection_camera_subtitle'),
                       icon: Icons.camera_alt_rounded,
                       gradient: const LinearGradient(
                         colors: [Color(0xFF66BB6A), Color(0xFF4CAF50)],
@@ -319,9 +345,9 @@ class _HomeScreenState extends State<HomeScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Smart Farming Tools',
-                  style: TextStyle(
+                Text(
+                  _translate('smart_farming_tools'),
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: Colors.black87,
@@ -330,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Access AI-powered disease detection, community posts, and complaint management all in one place.',
+                  _translate('disease_description'),
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.black87,
@@ -446,5 +472,9 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
+  }
+
+  String _translate(String key) {
+    return AppLocalizations.translate(_currentLanguage, key);
   }
 }

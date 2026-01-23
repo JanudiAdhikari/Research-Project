@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
+import '../../utils/localization.dart';
+import '../../utils/language_prefs.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -13,6 +15,7 @@ class _AdminDashboardState extends State<AdminDashboard>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  String _currentLanguage = 'en';
 
   @override
   void initState() {
@@ -35,12 +38,32 @@ class _AdminDashboardState extends State<AdminDashboard>
     );
 
     _animationController.forward();
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  void _switchLanguage(String languageCode) {
+    setState(() {
+      _currentLanguage = languageCode;
+    });
+    LanguagePrefs.setLanguage(languageCode);
+  }
+
+  String _translate(String key) {
+    return AppLocalizations.translate(_currentLanguage, key);
   }
 
   @override
@@ -58,6 +81,39 @@ class _AdminDashboardState extends State<AdminDashboard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Language Switch Button
+                Padding(
+                  padding: EdgeInsets.all(responsive.pagePadding),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: primary),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            _languageButton('EN', 'en', responsive),
+                            Container(
+                              width: 1,
+                              height: 24,
+                              color: primary,
+                            ),
+                            _languageButton('සි', 'si', responsive),
+                            Container(
+                              width: 1,
+                              height: 24,
+                              color: primary,
+                            ),
+                            _languageButton('தமிழ்', 'ta', responsive),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 // Header
                 Container(
                   padding: responsive.padding(
@@ -90,7 +146,6 @@ class _AdminDashboardState extends State<AdminDashboard>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Greeting and profile
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -98,7 +153,7 @@ class _AdminDashboardState extends State<AdminDashboard>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Hello Admin 👋",
+                                _translate('hello_admin'),
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
                                   fontSize: responsive.bodyFontSize,
@@ -107,7 +162,7 @@ class _AdminDashboardState extends State<AdminDashboard>
                               ),
                               ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
                               Text(
-                                "System Control Panel",
+                                _translate('system_control_panel'),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: responsive.fontSize(
@@ -153,7 +208,6 @@ class _AdminDashboardState extends State<AdminDashboard>
                           ),
                         ],
                       ),
-
                       ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
                       _systemStatusCard(responsive),
                     ],
@@ -183,7 +237,7 @@ class _AdminDashboardState extends State<AdminDashboard>
                         desktop: 16,
                       ),
                       Text(
-                        "Management Tools",
+                        _translate('management_tools'),
                         style: TextStyle(
                           fontSize: responsive.headingFontSize,
                           fontWeight: FontWeight.w700,
@@ -243,7 +297,7 @@ class _AdminDashboardState extends State<AdminDashboard>
                     horizontal: responsive.pagePadding,
                   ),
                   child: Text(
-                    "System Notices",
+                    _translate('system_notices'),
                     style: TextStyle(
                       fontSize: responsive.headingFontSize,
                       fontWeight: FontWeight.w700,
@@ -256,19 +310,19 @@ class _AdminDashboardState extends State<AdminDashboard>
 
                 _noticeCard(
                   responsive,
-                  title: "3 pending product verification requests",
+                  title: _translate('pending_verification'),
                   icon: Icons.pending_actions_rounded,
                   color: Colors.deepOrange,
                 ),
                 _noticeCard(
                   responsive,
-                  title: "Server running smoothly",
+                  title: _translate('server_running'),
                   icon: Icons.check_circle_rounded,
                   color: Colors.green,
                 ),
                 _noticeCard(
                   responsive,
-                  title: "New user registrations this week: 42",
+                  title: _translate('new_registrations'),
                   icon: Icons.person_add_rounded,
                   color: Colors.blue,
                 ),
@@ -276,6 +330,26 @@ class _AdminDashboardState extends State<AdminDashboard>
                 ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _languageButton(String label, String languageCode, Responsive responsive) {
+    final isSelected = _currentLanguage == languageCode;
+    final primary = const Color(0xFF2E7D32);
+
+    return GestureDetector(
+      onTap: () => _switchLanguage(languageCode),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        color: isSelected ? primary : Colors.transparent,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : primary,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -307,7 +381,7 @@ class _AdminDashboardState extends State<AdminDashboard>
           ),
           ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
           Text(
-            "System Status: Active",
+            _translate('system_status'),
             style: TextStyle(
               color: Colors.white,
               fontSize: responsive.titleFontSize,
@@ -329,7 +403,7 @@ class _AdminDashboardState extends State<AdminDashboard>
     return [
       _featureCard(
         responsive,
-        title: "Users\nManagement",
+        title: _translate('users_management'),
         icon: Icons.group_rounded,
         gradient: LinearGradient(
           colors: [
@@ -341,7 +415,7 @@ class _AdminDashboardState extends State<AdminDashboard>
       ),
       _featureCard(
         responsive,
-        title: "View\nReports",
+        title: _translate('view_reports'),
         icon: Icons.insert_chart_rounded,
         gradient: LinearGradient(
           colors: [
@@ -353,7 +427,7 @@ class _AdminDashboardState extends State<AdminDashboard>
       ),
       _featureCard(
         responsive,
-        title: "System\nAnalytics",
+        title: _translate('system_analytics'),
         icon: Icons.analytics_rounded,
         gradient: LinearGradient(
           colors: [
@@ -365,7 +439,7 @@ class _AdminDashboardState extends State<AdminDashboard>
       ),
       _featureCard(
         responsive,
-        title: "Verify\nProducts",
+        title: _translate('verify_products'),
         icon: Icons.verified_rounded,
         gradient: LinearGradient(
           colors: [
@@ -377,7 +451,7 @@ class _AdminDashboardState extends State<AdminDashboard>
       ),
       _featureCard(
         responsive,
-        title: "Market\nControl",
+        title: _translate('market_control'),
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
           colors: [
@@ -389,7 +463,7 @@ class _AdminDashboardState extends State<AdminDashboard>
       ),
       _featureCard(
         responsive,
-        title: "Blockchain\nLogs",
+        title: _translate('blockchain_logs'),
         icon: Icons.link_rounded,
         gradient: LinearGradient(
           colors: [

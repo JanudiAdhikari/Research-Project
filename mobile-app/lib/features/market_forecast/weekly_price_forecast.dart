@@ -596,7 +596,12 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisSpacing: 6,
                       mainAxisSpacing: 6,
-                      childAspectRatio: 0.78,
+                      // Increase aspect ratio (width/height) to reduce card height
+                      childAspectRatio: responsive.value(
+                        mobile: 1.4,
+                        tablet: 1.6,
+                        desktop: 1.8,
+                      ),
                       children: [
                         _buildEnhancedWeatherCard(
                           icon: Icons.opacity,
@@ -783,7 +788,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
       ),
       child: Container(
         padding: EdgeInsets.all(
-          responsive.value(mobile: 14, tablet: 16, desktop: 18),
+          responsive.value(mobile: 10, tablet: 12, desktop: 14),
         ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -796,12 +801,12 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
           ),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Icon Badge
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(10),
@@ -809,10 +814,10 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
               child: Icon(
                 icon,
                 color: iconColor,
-                size: responsive.value(mobile: 24, tablet: 28, desktop: 32),
+                size: responsive.value(mobile: 20, tablet: 24, desktop: 28),
               ),
             ),
-
+            const SizedBox(height: 6),
             // Value and Unit
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -824,9 +829,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                         text: value,
                         style: TextStyle(
                           fontSize: responsive.fontSize(
-                            mobile: 24,
-                            tablet: 28,
-                            desktop: 32,
+                            mobile: 20,
+                            tablet: 24,
+                            desktop: 28,
                           ),
                           fontWeight: FontWeight.w700,
                           color: iconColor,
@@ -843,23 +848,27 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                     ],
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: responsive.bodyFontSize - 1,
+                    fontSize: responsive.bodyFontSize - 2,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: responsive.bodyFontSize - 2,
+                    fontSize: responsive.bodyFontSize - 3,
                     color: Colors.grey.shade500,
                     fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

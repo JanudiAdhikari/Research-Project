@@ -4,6 +4,7 @@ import '../../../widgets/bottom_navigation.dart';
 import 'weekly_price_forecast.dart';
 import 'export_price_trends.dart';
 import 'export_details_by_country.dart';
+import 'actual_price_data.dart';
 
 class PriceNavigation extends StatefulWidget {
   const PriceNavigation({Key? key}) : super(key: key);
@@ -149,6 +150,27 @@ class _PriceNavigationState extends State<PriceNavigation>
                       context,
                       MaterialPageRoute(
                         builder: (context) => const ExportDetailsByCountry(),
+                      ),
+                    );
+                  },
+                ),
+
+                SizedBox(height: responsive.mediumSpacing),
+
+                // Fourth Navigation Card: Actual Price Data
+                _buildNavigationCard(
+                  responsive,
+                  title: "Actual Market Prices",
+                  subtitle: "Enter price details of your pepper batch",
+                  icon: Icons.receipt_long_rounded,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ActualPriceData(),
                       ),
                     );
                   },

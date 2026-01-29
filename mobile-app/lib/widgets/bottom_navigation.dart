@@ -35,11 +35,10 @@ class BottomNavigation extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.dashboard_rounded, "Dashboard", primaryColor),
-              _buildNavItem(1, Icons.agriculture_rounded, "My Farm", primaryColor),
-              _buildNavItem(2, Icons.verified_rounded, "Quality", primaryColor),
-              _buildNavItem(3, Icons.store_rounded, "Market", primaryColor),
-              _buildNavItem(4, Icons.person_rounded, "Profile", primaryColor),
+              _buildNavItem(0, Icons.home, "Home", primaryColor),
+              _buildNavItem(1, Icons.store_rounded, "Market", primaryColor),
+              _buildNavItem(2, Icons.agriculture_rounded, "My Farm", primaryColor),
+              _buildNavItem(3, Icons.person_rounded, "Profile", primaryColor),
             ],
           ),
         ),

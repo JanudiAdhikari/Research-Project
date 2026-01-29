@@ -18,6 +18,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  String _userName = "Exporter";
   final AuthService _authService = AuthService();
 
   // Mock data for dashboard statistics
@@ -27,6 +28,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
 
   @override
   void initState() {
+    _loadUserName();
     super.initState();
 
     _animationController = AnimationController(
@@ -70,6 +72,28 @@ class _ExporterDashboardState extends State<ExporterDashboard>
       });
     }
   }
+  Future<void> _loadUserName() async {
+  try {
+    final user = await _authService.getCurrentUser();
+    if (user != null) {
+      final first = (user['firstName'] ?? user['first_name'] ?? user['name'] ?? '').toString();
+      final last = (user['lastName'] ?? user['last_name'] ?? '').toString();
+      final name = (first + (last.isNotEmpty ? ' $last' : '')).trim();
+      if (mounted && name.isNotEmpty) {
+        setState(() => _userName = name);
+        return;
+      }
+    }
+    // fallback to Firebase displayName
+    final fb = _authService.currentUser;
+    if (fb != null && fb.displayName != null && fb.displayName!.isNotEmpty) {
+      if (mounted) setState(() => _userName = fb.displayName!);
+    }
+  } catch (e) {
+    // keep fallback name
+    print("Failed to load user name: $e");
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +206,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Hello, Exporter 👋",
+                      "Hello, $_userName 👋",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.95),
                         fontSize: responsive.bodyFontSize,

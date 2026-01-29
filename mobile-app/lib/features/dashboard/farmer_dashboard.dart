@@ -13,6 +13,7 @@ import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
 import 'package:flutter/services.dart';
+import '../../services/auth_service.dart';
 
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
@@ -42,6 +43,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   String _temperature = '--°C';
   String _weatherCondition = 'clear';
   String _currentLanguage = 'en';
+  String _userName = "Farmer";
 
   // Mock data for dashboard statistics
   int _totalCrops = 0;
@@ -67,6 +69,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         );
 
     _animationController.forward();
+
+    _loadUserName();
 
     // Load saved language preference
     LanguagePrefs.getLanguage().then((lang) {
@@ -105,6 +109,39 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   String _translate(String key) {
     return AppLocalizations.translate(_currentLanguage, key);
   }
+
+  String _titleCase(String s) {
+  final parts = s.trim().split(RegExp(r'\s+'));
+  return parts.map((p) {
+    if (p.isEmpty) return '';
+    final lower = p.toLowerCase();
+    return lower.length == 1 ? lower.toUpperCase() : '${lower[0].toUpperCase()}${lower.substring(1)}';
+  }).where((p) => p.isNotEmpty).join(' ');
+}
+
+Future<void> _loadUserName() async {
+  try {
+    final user = await _authService.getCurrentUser();
+    if (user != null) {
+      final firstRaw = (user['firstName'] ?? user['first_name'] ?? user['name'] ?? '').toString();
+      final lastRaw = (user['lastName'] ?? user['last_name'] ?? '').toString();
+      final first = _titleCase(firstRaw);
+      final last = _titleCase(lastRaw);
+      final name = (first + (last.isNotEmpty ? ' $last' : '')).trim();
+      if (mounted && name.isNotEmpty) {
+        setState(() => _userName = name);
+        return;
+      }
+    }
+
+    final fb = _authService.currentUser;
+    if (fb != null && fb.displayName != null && fb.displayName!.trim().isNotEmpty) {
+      if (mounted) setState(() => _userName = _titleCase(fb.displayName!));
+    }
+  } catch (e) {
+    print("Failed to load user name: $e");
+  }
+}
 
   Future<void> _loadDashboardStats() async {
     // Simulate loading dashboard statistics
@@ -325,7 +362,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _translate('hello_farmer'),
+                      "Hello, $_userName 👋",
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.95),
                         fontSize: responsive.bodyFontSize,
@@ -354,7 +391,9 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   // Language Switcher
                   Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: colorWithOpacity(Colors.white, 0.3)),
+                      border: Border.all(
+                        color: colorWithOpacity(Colors.white, 0.3),
+                      ),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
@@ -449,7 +488,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                           children: [
                             Icon(Icons.logout, color: Colors.red, size: 20),
                             SizedBox(width: 12),
-                            Text(_translate('logout'), style: TextStyle(color: Colors.red)),
+                            Text(
+                              _translate('logout'),
+                              style: TextStyle(color: Colors.red),
+                            ),
                           ],
                         ),
                       ),
@@ -579,14 +621,21 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     return Icons.cloud_outlined;
   }
 
-  Widget _languageButton(String label, String languageCode, Responsive responsive, Color primary) {
+  Widget _languageButton(
+    String label,
+    String languageCode,
+    Responsive responsive,
+    Color primary,
+  ) {
     final isSelected = _currentLanguage == languageCode;
 
     return GestureDetector(
       onTap: () => _switchLanguage(languageCode),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        color: isSelected ? Colors.white.withValues(alpha: 0.25) : Colors.transparent,
+        color: isSelected
+            ? Colors.white.withValues(alpha: 0.25)
+            : Colors.transparent,
         child: Text(
           label,
           style: TextStyle(
@@ -644,12 +693,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Widget _buildStatCard(
-  Responsive responsive,
-  String label,
-  String value, {
-  required String iconPath,
-})
- {
+    Responsive responsive,
+    String label,
+    String value, {
+    required String iconPath,
+  }) {
     return Container(
       padding: responsive.padding(
         mobile: const EdgeInsets.all(16),
@@ -675,9 +723,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             padding: EdgeInsets.all(
               responsive.value(mobile: 8, tablet: 10, desktop: 12),
             ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
             child: Image.asset(
               iconPath,
               width: 48,
@@ -685,7 +731,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 debugPrint('Failed to load asset: $iconPath — $error');
-                return Icon(Icons.broken_image, size: 48, color: Colors.grey[400]);
+                return Icon(
+                  Icons.broken_image,
+                  size: 48,
+                  color: Colors.grey[400],
+                );
               },
             ),
           ),
@@ -1101,13 +1151,19 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       debugPrint('Failed to load asset: $iconPath — $error');
                       return Icon(
                         Icons.broken_image,
-                        size: responsive.value(mobile: 32, tablet: 36, desktop: 40),
+                        size: responsive.value(
+                          mobile: 32,
+                          tablet: 36,
+                          desktop: 40,
+                        ),
                         color: Colors.grey[300],
                       );
                     },
                   ),
                 ),
-                SizedBox(height: responsive.value(mobile: 6, tablet: 8, desktop: 10)),
+                SizedBox(
+                  height: responsive.value(mobile: 6, tablet: 8, desktop: 10),
+                ),
                 Text(
                   title,
                   style: TextStyle(
@@ -1119,7 +1175,9 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: responsive.value(mobile: 2, tablet: 3, desktop: 4)),
+                SizedBox(
+                  height: responsive.value(mobile: 2, tablet: 3, desktop: 4),
+                ),
                 Flexible(
                   child: Text(
                     subtitle,

@@ -24,7 +24,7 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
     'Japan',
     'UK',
     'USA',
-    'Belgium',
+    'Canada',
   ];
   // Year options (2020–2025)
   final List<String> years = ['2020', '2021', '2022', '2023', '2024', '2025'];
@@ -94,8 +94,8 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
       '2024': {'volume': 1750, 'price': 3950, 'trend': 'up'},
       '2025': {'volume': 2000, 'price': 4100, 'trend': 'up'},
     },
-    'Belgium': {
-      'flag': '🇧🇪',
+    'Canada': {
+      'flag': '🇨🇦',
       '2020': {'volume': 400, 'price': 3200, 'trend': 'down'},
       '2021': {'volume': 440, 'price': 3280, 'trend': 'up'},
       '2022': {'volume': 490, 'price': 3330, 'trend': 'up'},

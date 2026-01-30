@@ -142,23 +142,21 @@ class AuthService {
   // GOOGLE LOGIN
   Future<Map<String, dynamic>?> signInWithGoogle() async {
     try {
-      final googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile'],
-      );
+      final googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) return null;
 
       final GoogleSignInAuthentication googleAuth =
-      await googleUser.authentication;
+          await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
         accessToken: googleAuth.accessToken,
       );
 
-      final UserCredential result =
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final UserCredential result = await FirebaseAuth.instance
+          .signInWithCredential(credential);
 
       final user = result.user;
       if (user == null) return null;
@@ -212,6 +210,35 @@ class AuthService {
 
   // CURRENT FIREBASE USER
   User? get currentUser => _auth.currentUser;
+
+  // UPDATE CURRENT USER (profile fields)
+  Future<Map<String, dynamic>?> updateCurrentUser(
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      String? token = await storage.read(key: "token");
+      if (token == null) return null;
+
+      final response = await http.put(
+        Uri.parse("${ApiConfig.baseUrl}/api/users/me"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+
+      print('Update user failed: ${response.statusCode} ${response.body}');
+      return null;
+    } catch (e) {
+      print('Update user error: $e');
+      return null;
+    }
+  }
 }
 
 

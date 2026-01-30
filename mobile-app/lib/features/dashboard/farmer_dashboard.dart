@@ -325,7 +325,7 @@ Future<void> _loadUserName() async {
   Widget _buildHeader(Responsive responsive, Color primary) {
     return Container(
       padding: responsive.padding(
-        mobile: const EdgeInsets.fromLTRB(24, 20, 24, 30),
+        mobile: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         tablet: const EdgeInsets.fromLTRB(32, 24, 32, 36),
         desktop: const EdgeInsets.fromLTRB(40, 28, 40, 42),
       ),
@@ -337,10 +337,10 @@ Future<void> _loadUserName() async {
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(
-            responsive.value(mobile: 32, tablet: 36, desktop: 40),
+            responsive.value(mobile: 28, tablet: 36, desktop: 40),
           ),
           bottomRight: Radius.circular(
-            responsive.value(mobile: 32, tablet: 36, desktop: 40),
+            responsive.value(mobile: 28, tablet: 36, desktop: 40),
           ),
         ),
         boxShadow: [
@@ -365,7 +365,11 @@ Future<void> _loadUserName() async {
                       "Hello, $_userName 👋",
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.95),
-                        fontSize: responsive.bodyFontSize,
+                        fontSize: responsive.fontSize(
+                          mobile: 13,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -375,7 +379,7 @@ Future<void> _loadUserName() async {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: responsive.fontSize(
-                          mobile: 24,
+                          mobile: 22,
                           tablet: 26,
                           desktop: 30,
                         ),
@@ -387,6 +391,7 @@ Future<void> _loadUserName() async {
                 ),
               ),
               Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   // Language Switcher
                   Container(
@@ -397,24 +402,33 @@ Future<void> _loadUserName() async {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         _languageButton('EN', 'en', responsive, primary),
                         Container(
                           width: 1,
-                          height: 24,
+                          height: responsive.value(
+                            mobile: 20,
+                            tablet: 22,
+                            desktop: 24,
+                          ),
                           color: Colors.white.withValues(alpha: 0.3),
                         ),
                         _languageButton('සි', 'si', responsive, primary),
                         Container(
                           width: 1,
-                          height: 24,
+                          height: responsive.value(
+                            mobile: 20,
+                            tablet: 22,
+                            desktop: 24,
+                          ),
                           color: Colors.white.withValues(alpha: 0.3),
                         ),
                         _languageButton('தமிழ்', 'ta', responsive, primary),
                       ],
                     ),
                   ),
-                  ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+                  ResponsiveSpacing(mobile: 10, tablet: 12, desktop: 14),
                   PopupMenuButton<String>(
                     icon: Container(
                       padding: EdgeInsets.all(
@@ -433,18 +447,18 @@ Future<void> _loadUserName() async {
                       ),
                       child: CircleAvatar(
                         radius: responsive.value(
-                          mobile: 22,
-                          tablet: 24,
-                          desktop: 28,
+                          mobile: 18,
+                          tablet: 22,
+                          desktop: 26,
                         ),
                         backgroundColor: colorWithOpacity(primary, 0.1),
                         child: Icon(
                           Icons.person_rounded,
                           color: primary,
                           size: responsive.value(
-                            mobile: 24,
-                            tablet: 26,
-                            desktop: 30,
+                            mobile: 20,
+                            tablet: 24,
+                            desktop: 28,
                           ),
                         ),
                       ),
@@ -501,20 +515,20 @@ Future<void> _loadUserName() async {
               ),
             ],
           ),
-          ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
+          ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
           // Weather Widget
           GestureDetector(
             onTap: _fetchWeatherData,
             child: Container(
               padding: responsive.padding(
-                mobile: const EdgeInsets.all(16),
+                mobile: const EdgeInsets.all(14),
                 tablet: const EdgeInsets.all(18),
                 desktop: const EdgeInsets.all(20),
               ),
               decoration: BoxDecoration(
                 color: colorWithOpacity(Colors.white, 0.15),
                 borderRadius: BorderRadius.circular(
-                  responsive.value(mobile: 16, tablet: 18, desktop: 20),
+                  responsive.value(mobile: 14, tablet: 18, desktop: 20),
                 ),
                 border: Border.all(
                   color: colorWithOpacity(Colors.white, 0.25),
@@ -533,12 +547,16 @@ Future<void> _loadUserName() async {
                   Icon(
                     Icons.location_on_rounded,
                     color: Colors.white.withValues(alpha: 0.95),
-                    size: responsive.smallIconSize,
+                    size: responsive.value(
+                      mobile: 18,
+                      tablet: 20,
+                      desktop: 22,
+                    ),
                   ),
                   ResponsiveSpacing.horizontal(
-                    mobile: 10,
-                    tablet: 12,
-                    desktop: 14,
+                    mobile: 8,
+                    tablet: 10,
+                    desktop: 12,
                   ),
                   Expanded(
                     child: Column(
@@ -550,7 +568,11 @@ Future<void> _loadUserName() async {
                               : _locationName,
                           style: TextStyle(
                             color: colorWithOpacity(Colors.white, 0.95),
-                            fontSize: responsive.bodyFontSize,
+                            fontSize: responsive.fontSize(
+                              mobile: 13,
+                              tablet: 14,
+                              desktop: 15,
+                            ),
                             fontWeight: FontWeight.w600,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -561,9 +583,9 @@ Future<void> _loadUserName() async {
                             style: TextStyle(
                               color: colorWithOpacity(Colors.white, 0.7),
                               fontSize: responsive.fontSize(
-                                mobile: 12,
-                                tablet: 13,
-                                desktop: 14,
+                                mobile: 11,
+                                tablet: 12,
+                                desktop: 13,
                               ),
                             ),
                           ),
@@ -572,8 +594,16 @@ Future<void> _loadUserName() async {
                   ),
                   if (_isLoadingWeather)
                     SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: responsive.value(
+                        mobile: 18,
+                        tablet: 20,
+                        desktop: 22,
+                      ),
+                      height: responsive.value(
+                        mobile: 18,
+                        tablet: 20,
+                        desktop: 22,
+                      ),
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -585,18 +615,26 @@ Future<void> _loadUserName() async {
                         Icon(
                           _getWeatherIcon(),
                           color: Colors.white,
-                          size: responsive.mediumIconSize,
+                          size: responsive.value(
+                            mobile: 22,
+                            tablet: 24,
+                            desktop: 26,
+                          ),
                         ),
                         ResponsiveSpacing.horizontal(
-                          mobile: 8,
-                          tablet: 10,
-                          desktop: 12,
+                          mobile: 6,
+                          tablet: 8,
+                          desktop: 10,
                         ),
                         Text(
                           _temperature,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: responsive.titleFontSize,
+                            fontSize: responsive.fontSize(
+                              mobile: 16,
+                              tablet: 17,
+                              desktop: 18,
+                            ),
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -632,7 +670,11 @@ Future<void> _loadUserName() async {
     return GestureDetector(
       onTap: () => _switchLanguage(languageCode),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: responsive.padding(
+          mobile: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          tablet: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          desktop: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        ),
         color: isSelected
             ? Colors.white.withValues(alpha: 0.25)
             : Colors.transparent,
@@ -641,7 +683,7 @@ Future<void> _loadUserName() async {
           style: TextStyle(
             color: Colors.white,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: responsive.fontSize(mobile: 12, tablet: 13, desktop: 14),
+            fontSize: responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
           ),
         ),
       ),
@@ -650,7 +692,13 @@ Future<void> _loadUserName() async {
 
   Widget _buildQuickStats(Responsive responsive, Color primary) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      padding: EdgeInsets.symmetric(
+        horizontal: responsive.value(
+          mobile: 16,
+          tablet: 24,
+          desktop: 32,
+        ),
+      ),
       child: ResponsiveBuilder(
         mobile: _buildStatsRow(responsive, primary),
         tablet: _buildStatsRow(responsive, primary),
@@ -670,7 +718,7 @@ Future<void> _loadUserName() async {
             iconPath: "assets/images/icons/crops.png",
           ),
         ),
-        ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
+        ResponsiveSpacing.horizontal(mobile: 10, tablet: 14, desktop: 18),
         Expanded(
           child: _buildStatCard(
             responsive,
@@ -679,7 +727,7 @@ Future<void> _loadUserName() async {
             iconPath: "assets/images/icons/notification.png",
           ),
         ),
-        ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
+        ResponsiveSpacing.horizontal(mobile: 10, tablet: 14, desktop: 18),
         Expanded(
           child: _buildStatCard(
             responsive,
@@ -700,14 +748,14 @@ Future<void> _loadUserName() async {
   }) {
     return Container(
       padding: responsive.padding(
-        mobile: const EdgeInsets.all(16),
+        mobile: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         tablet: const EdgeInsets.all(18),
         desktop: const EdgeInsets.all(20),
       ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(
-          responsive.value(mobile: 16, tablet: 18, desktop: 20),
+          responsive.value(mobile: 14, tablet: 18, desktop: 20),
         ),
         boxShadow: [
           BoxShadow(
@@ -718,44 +766,49 @@ Future<void> _loadUserName() async {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: EdgeInsets.all(
-              responsive.value(mobile: 8, tablet: 10, desktop: 12),
+              responsive.value(mobile: 6, tablet: 8, desktop: 10),
             ),
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
             child: Image.asset(
               iconPath,
-              width: 48,
-              height: 48,
+              width: responsive.value(mobile: 38, tablet: 44, desktop: 48),
+              height: responsive.value(mobile: 38, tablet: 44, desktop: 48),
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
                 debugPrint('Failed to load asset: $iconPath — $error');
                 return Icon(
                   Icons.broken_image,
-                  size: 48,
+                  size: responsive.value(mobile: 38, tablet: 44, desktop: 48),
                   color: Colors.grey[400],
                 );
               },
             ),
           ),
-          ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
+          ResponsiveSpacing(mobile: 6, tablet: 8, desktop: 10),
           Text(
             value,
             style: TextStyle(
-              fontSize: responsive.titleFontSize,
+              fontSize: responsive.fontSize(
+                mobile: 16,
+                tablet: 17,
+                desktop: 18,
+              ),
               fontWeight: FontWeight.w700,
               color: Colors.grey[800],
             ),
           ),
-          ResponsiveSpacing(mobile: 2, tablet: 4, desktop: 4),
+          ResponsiveSpacing(mobile: 2, tablet: 3, desktop: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: responsive.fontSize(
-                mobile: 12,
-                tablet: 13,
-                desktop: 14,
+                mobile: 11,
+                tablet: 12,
+                desktop: 13,
               ),
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
@@ -777,23 +830,33 @@ Future<void> _loadUserName() async {
     Color? iconColor,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      padding: EdgeInsets.symmetric(
+        horizontal: responsive.value(
+          mobile: 16,
+          tablet: 24,
+          desktop: 32,
+        ),
+      ),
       child: Row(
         children: [
           Container(
             width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
-            height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+            height: responsive.value(mobile: 20, tablet: 22, desktop: 24),
             decoration: BoxDecoration(
               color: primary,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
+          ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
           Expanded(
             child: Text(
               title,
               style: TextStyle(
-                fontSize: responsive.headingFontSize,
+                fontSize: responsive.fontSize(
+                  mobile: 17,
+                  tablet: 20,
+                  desktop: 22,
+                ),
                 fontWeight: FontWeight.w700,
                 color: Colors.black87,
               ),
@@ -802,7 +865,11 @@ Future<void> _loadUserName() async {
           Icon(
             icon,
             color: iconColor ?? primary,
-            size: responsive.mediumIconSize,
+            size: responsive.value(
+              mobile: 22,
+              tablet: 24,
+              desktop: 26,
+            ),
           ),
         ],
       ),
@@ -815,14 +882,20 @@ Future<void> _loadUserName() async {
     Color primary,
   ) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      padding: EdgeInsets.symmetric(
+        horizontal: responsive.value(
+          mobile: 16,
+          tablet: 24,
+          desktop: 32,
+        ),
+      ),
       child: ResponsiveBuilder(
         mobile: GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: 1.15,
+          crossAxisSpacing: responsive.value(mobile: 12, tablet: 16, desktop: 20),
+          mainAxisSpacing: responsive.value(mobile: 12, tablet: 16, desktop: 20),
+          childAspectRatio: responsive.value(mobile: 1.05, tablet: 1.1, desktop: 1.15),
           physics: const NeverScrollableScrollPhysics(),
           children: _buildMainFeatureCards(context, responsive),
         ),
@@ -941,12 +1014,19 @@ Future<void> _loadUserName() async {
     Color primary,
   ) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+      padding: EdgeInsets.symmetric(
+        horizontal: responsive.value(
+          mobile: 16,
+          tablet: 24,
+          desktop: 32,
+        ),
+      ),
       child: Column(
         children: [
           Row(
             children: [
-              Expanded(
+              Flexible(
+                flex: 1,
                 child: _secondaryFeatureCard(
                   context,
                   responsive,
@@ -962,8 +1042,9 @@ Future<void> _loadUserName() async {
                   },
                 ),
               ),
-              ResponsiveSpacing.horizontal(mobile: 14, tablet: 18, desktop: 22),
-              Expanded(
+              ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
+              Flexible(
+                flex: 1,
                 child: _secondaryFeatureCard(
                   context,
                   responsive,
@@ -1000,18 +1081,18 @@ Future<void> _loadUserName() async {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(
-          responsive.value(mobile: 16, tablet: 18, desktop: 20),
+          responsive.value(mobile: 14, tablet: 18, desktop: 20),
         ),
         child: Container(
           padding: responsive.padding(
-            mobile: const EdgeInsets.all(20),
-            tablet: const EdgeInsets.all(22),
+            mobile: const EdgeInsets.all(14),
+            tablet: const EdgeInsets.all(20),
             desktop: const EdgeInsets.all(24),
           ),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(
-              responsive.value(mobile: 16, tablet: 18, desktop: 20),
+              responsive.value(mobile: 14, tablet: 18, desktop: 20),
             ),
             border: Border.all(color: bgColor, width: 2),
             boxShadow: [
@@ -1026,7 +1107,7 @@ Future<void> _loadUserName() async {
             children: [
               Container(
                 padding: EdgeInsets.all(
-                  responsive.value(mobile: 12, tablet: 14, desktop: 16),
+                  responsive.value(mobile: 10, tablet: 12, desktop: 14),
                 ),
                 decoration: BoxDecoration(
                   color: bgColor,
@@ -1035,35 +1116,50 @@ Future<void> _loadUserName() async {
                 child: Icon(
                   icon,
                   color: iconColor,
-                  size: responsive.mediumIconSize,
+                  size: responsive.value(
+                    mobile: 22,
+                    tablet: 24,
+                    desktop: 26,
+                  ),
                 ),
               ),
-              ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
+              ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: responsive.bodyFontSize,
+                        fontSize: responsive.fontSize(
+                          mobile: 13,
+                          tablet: 14,
+                          desktop: 15,
+                        ),
                         fontWeight: FontWeight.w700,
                         color: Colors.grey[800],
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     ResponsiveSpacing(mobile: 2, tablet: 3, desktop: 4),
                     Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          _translate('explore'),
-                          style: TextStyle(
-                            fontSize: responsive.fontSize(
-                              mobile: 12,
-                              tablet: 13,
-                              desktop: 14,
+                        Flexible(
+                          child: Text(
+                            _translate('explore'),
+                            style: TextStyle(
+                              fontSize: responsive.fontSize(
+                                mobile: 11,
+                                tablet: 12,
+                                desktop: 13,
+                              ),
+                              color: iconColor,
+                              fontWeight: FontWeight.w600,
                             ),
-                            color: iconColor,
-                            fontWeight: FontWeight.w600,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         ResponsiveSpacing.horizontal(
@@ -1075,9 +1171,9 @@ Future<void> _loadUserName() async {
                           Icons.arrow_forward_rounded,
                           color: iconColor,
                           size: responsive.value(
-                            mobile: 14,
-                            tablet: 15,
-                            desktop: 16,
+                            mobile: 13,
+                            tablet: 14,
+                            desktop: 15,
                           ),
                         ),
                       ],
@@ -1106,13 +1202,13 @@ Future<void> _loadUserName() async {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(
-          responsive.value(mobile: 20, tablet: 22, desktop: 24),
+          responsive.value(mobile: 16, tablet: 20, desktop: 24),
         ),
         child: Container(
           decoration: BoxDecoration(
             gradient: gradient,
             borderRadius: BorderRadius.circular(
-              responsive.value(mobile: 20, tablet: 22, desktop: 24),
+              responsive.value(mobile: 16, tablet: 20, desktop: 24),
             ),
             boxShadow: [
               BoxShadow(
@@ -1130,76 +1226,82 @@ Future<void> _loadUserName() async {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: responsive.padding(
-                    mobile: const EdgeInsets.all(8),
-                    tablet: const EdgeInsets.all(10),
-                    desktop: const EdgeInsets.all(12),
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorWithOpacity(Colors.white, 0.25),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Image.asset(
-                    iconPath,
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      debugPrint('Failed to load asset: $iconPath — $error');
-                      return Icon(
-                        Icons.broken_image,
-                        size: responsive.value(
-                          mobile: 32,
-                          tablet: 36,
-                          desktop: 40,
-                        ),
-                        color: Colors.grey[300],
-                      );
-                    },
-                  ),
-                ),
-                SizedBox(
-                  height: responsive.value(mobile: 6, tablet: 8, desktop: 10),
-                ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: responsive.titleFontSize,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                    height: 1.1,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(
-                  height: responsive.value(mobile: 2, tablet: 3, desktop: 4),
-                ),
-                Flexible(
-                  child: Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: responsive.fontSize(
-                        mobile: 11,
-                        tablet: 12,
-                        desktop: 13,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: responsive.padding(
+                        mobile: const EdgeInsets.all(8),
+                        tablet: const EdgeInsets.all(10),
+                        desktop: const EdgeInsets.all(12),
                       ),
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                      decoration: BoxDecoration(
+                        color: colorWithOpacity(Colors.white, 0.25),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Image.asset(
+                        iconPath,
+                        width: responsive.value(mobile: 32, tablet: 42, desktop: 48),
+                        height: responsive.value(mobile: 32, tablet: 42, desktop: 48),
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) {
+                          debugPrint('Failed to load asset: $iconPath — $error');
+                          return Icon(
+                            Icons.broken_image,
+                            size: responsive.value(
+                              mobile: 28,
+                              tablet: 36,
+                              desktop: 40,
+                            ),
+                            color: Colors.grey[300],
+                          );
+                        },
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    SizedBox(
+                      height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                    ),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(
+                          mobile: 13,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(
+                      height: responsive.value(mobile: 3, tablet: 4, desktop: 5),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: responsive.fontSize(
+                          mobile: 10,
+                          tablet: 11,
+                          desktop: 12,
+                        ),
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const Spacer(),
                 Align(
                   alignment: Alignment.bottomRight,
                   child: Icon(
                     Icons.arrow_forward_rounded,
-                    size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                    size: responsive.value(mobile: 16, tablet: 18, desktop: 20),
                     color: Colors.grey[600],
                   ),
                 ),
@@ -1213,10 +1315,16 @@ Future<void> _loadUserName() async {
 
   Widget _buildTipsSection(Responsive responsive) {
     return SizedBox(
-      height: responsive.value(mobile: 145, tablet: 165, desktop: 185),
+      height: responsive.value(mobile: 135, tablet: 155, desktop: 175),
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+        padding: EdgeInsets.symmetric(
+          horizontal: responsive.value(
+            mobile: 16,
+            tablet: 24,
+            desktop: 32,
+          ),
+        ),
         children: [
           _tipCard(
             _translate('monitor_soil_moisture'),
@@ -1267,18 +1375,18 @@ Future<void> _loadUserName() async {
   ) {
     return Container(
       margin: EdgeInsets.only(
-        right: responsive.value(mobile: 14, tablet: 16, desktop: 18),
+        right: responsive.value(mobile: 12, tablet: 14, desktop: 16),
       ),
       padding: responsive.padding(
-        mobile: const EdgeInsets.all(18),
-        tablet: const EdgeInsets.all(20),
-        desktop: const EdgeInsets.all(24),
+        mobile: const EdgeInsets.all(14),
+        tablet: const EdgeInsets.all(18),
+        desktop: const EdgeInsets.all(22),
       ),
-      width: responsive.value(mobile: 210, tablet: 230, desktop: 250),
+      width: responsive.value(mobile: 190, tablet: 220, desktop: 240),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(
-          responsive.value(mobile: 18, tablet: 20, desktop: 22),
+          responsive.value(mobile: 16, tablet: 18, desktop: 20),
         ),
         border: Border.all(color: colorWithOpacity(iconColor, 0.2), width: 1.5),
         boxShadow: [
@@ -1294,9 +1402,9 @@ Future<void> _loadUserName() async {
         children: [
           Container(
             padding: responsive.padding(
-              mobile: const EdgeInsets.all(10),
-              tablet: const EdgeInsets.all(11),
-              desktop: const EdgeInsets.all(12),
+              mobile: const EdgeInsets.all(9),
+              tablet: const EdgeInsets.all(10),
+              desktop: const EdgeInsets.all(11),
             ),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -1312,15 +1420,23 @@ Future<void> _loadUserName() async {
             child: Icon(
               icon,
               color: iconColor,
-              size: responsive.mediumIconSize,
+              size: responsive.value(
+                mobile: 22,
+                tablet: 24,
+                desktop: 26,
+              ),
             ),
           ),
-          ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+          ResponsiveSpacing(mobile: 10, tablet: 12, desktop: 14),
           Text(
             text,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: responsive.bodyFontSize,
+              fontSize: responsive.fontSize(
+                mobile: 13,
+                tablet: 14,
+                desktop: 15,
+              ),
               color: Colors.grey[800],
               height: 1.35,
             ),

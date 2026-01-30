@@ -18,9 +18,8 @@ class _NavigationWrapperState extends State<NavigationWrapper> {
 
   final List<Widget> _pages = const [
     FarmerDashboard(),
+     MarketScreen(),
     MyFarmScreen(),
-    QualityScreen(),
-    MarketScreen(),
     ProfileScreen(),
   ];
 

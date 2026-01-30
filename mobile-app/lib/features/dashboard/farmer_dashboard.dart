@@ -147,7 +147,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    final primary = const Color.fromARGB(255, 62, 186, 77);
+    final primary = const Color(0xFF2E7D32);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],

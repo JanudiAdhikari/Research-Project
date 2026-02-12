@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.flutter_app_two"
-        minSdk = flutter.minSdkVersion
+        minSdk = 26  // Updated from flutter.minSdkVersion to support tflite_flutter
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

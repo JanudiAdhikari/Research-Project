@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import '../services/camera_service.dart';
+import 'disease_result_screen.dart';
 
 class CameraScreen extends StatefulWidget {
   final Function(File)? onImageCaptured;
@@ -60,15 +61,30 @@ class _CameraScreenState extends State<CameraScreen> {
       await _initializeControllerFuture;
 
       final image = await _controller.takePicture();
-
-      if (widget.onImageCaptured != null) {
-        widget.onImageCaptured!(File(image.path));
-      }
+      final imageFile = File(image.path);
 
       if (!mounted) return;
 
-      Navigator.pop(context, File(image.path));
+      // Navigate to disease result screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DiseaseResultScreen(imageFile: imageFile),
+        ),
+      );
+
+      if (widget.onImageCaptured != null) {
+        widget.onImageCaptured!(imageFile);
+      }
     } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error taking picture: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       print("Error taking picture: $e");
     }
   }

@@ -6,12 +6,16 @@ import tensorflow as tf
 from PIL import Image
 import io
 import json
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 # Load the CNN model
-MODEL_PATH = './ml/pepper_disease_classifier_final.keras'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "ml", "pepper_disease_classifier_final.keras")
+
+
 model = tf.keras.models.load_model(MODEL_PATH)
 
 # Disease class mappings - CORRECTED BASED ON USER TESTING

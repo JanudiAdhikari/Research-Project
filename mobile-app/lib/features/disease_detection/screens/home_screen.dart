@@ -117,13 +117,10 @@ class _HomeScreenState extends State<HomeScreen>
       backgroundColor: Colors.grey[50],
       body: FadeTransition(
         opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ---------------- HEADER ----------------
-              Container(
+        child: Column(
+          children: [
+            // ---------------- FIXED HEADER ----------------
+            Container(
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(
                   0,
@@ -201,36 +198,32 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              const SizedBox(height: 24),
-
-              // Description card
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildDescriptionCard(),
-              ),
-
-              const SizedBox(height: 28),
-
-              // Section title
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  _translate('explore_features'),
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey[800],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // ---------------- FEATURES LIST ----------------
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+            // ----------- SCROLLABLE CONTENT -----------
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Description card
+                    _buildDescriptionCard(),
+
+                    const SizedBox(height: 28),
+
+                    // Section title
+                    Text(
+                      _translate('explore_features'),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Features List
                     // View Posts
                     _buildNavigationCard(
                       title: _translate('view_posts'),
@@ -298,8 +291,8 @@ class _HomeScreenState extends State<HomeScreen>
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

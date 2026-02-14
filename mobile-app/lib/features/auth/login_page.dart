@@ -7,6 +7,7 @@ import '../dashboard/exporter_dashboard.dart';
 import '../dashboard/farmer_dashboard.dart';
 import 'forgot_password_page.dart';
 import 'signup_page.dart';
+import '../../widgets/navigation_wrapper.dart';
 
 class LoginPage extends StatefulWidget {
   final String? successMessage;
@@ -139,9 +140,9 @@ class _LoginPageState extends State<LoginPage>
 
         if (role == "farmer") {
           Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const FarmerDashboard()),
-          );
+  context,
+  MaterialPageRoute(builder: (_) => const NavigationWrapper()),
+);
         } else if (role == "exporter") {
           Navigator.pushReplacement(
             context,

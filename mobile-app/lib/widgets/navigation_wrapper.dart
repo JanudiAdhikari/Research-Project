@@ -1,128 +1,104 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'bottom_navigation.dart';
+import '../features/dashboard/farmer_dashboard.dart';
+import '../features/dashboard/exporter_dashboard.dart';
+import '../features/auth/login_page.dart';
+import 'my_farm_screen.dart';
+import 'quality_screen.dart';
+import 'market_screen.dart';
+import 'profile_screen.dart';
 
 class NavigationWrapper extends StatefulWidget {
-  final Widget child;
-  final int initialIndex;
-  final bool showBottomNavigation;
-  final List<Widget> Function(int)? tabScreens;
-
-  const NavigationWrapper({
-    Key? key,
-    required this.child,
-    this.initialIndex = 0,
-    this.showBottomNavigation = true,
-    this.tabScreens,
-  }) : super(key: key);
+  const NavigationWrapper({Key? key}) : super(key: key);
 
   @override
   State<NavigationWrapper> createState() => _NavigationWrapperState();
 }
 
 class _NavigationWrapperState extends State<NavigationWrapper> {
-  late int _currentIndex;
+  int _currentIndex = 0;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final storage = const FlutterSecureStorage();
+  late Future<Map<String, dynamic>> _userAuthData;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
+    _userAuthData = _checkUserLoginAndRole();
+  }
+
+  Future<Map<String, dynamic>> _checkUserLoginAndRole() async {
+    try {
+      String? token = await storage.read(key: "token");
+      String? role = await storage.read(key: "role");
+      User? currentUser = _auth.currentUser;
+
+      bool isLoggedIn = token != null && currentUser != null;
+
+      return {
+        'isLoggedIn': isLoggedIn,
+        'role': role ?? 'farmer', // Default to farmer if no role found
+      };
+    } catch (e) {
+      print("Auth check error: $e");
+      return {'isLoggedIn': false, 'role': 'farmer'};
+    }
+  }
+
+  List<Widget> _getPagesByRole(String role) {
+    if (role == 'exporter') {
+      // Exporter pages
+      return const [ExporterDashboard(), MarketScreen(), ProfileScreen()];
+    } else {
+      // Farmer pages (default)
+      return const [
+        FarmerDashboard(),
+        MarketScreen(),
+        MyFarmScreen(),
+        ProfileScreen(),
+      ];
+    }
   }
 
   void _onTabSelected(int index) {
     setState(() {
       _currentIndex = index;
     });
-
-    // If tabScreens are provided, handle navigation differently
-    if (widget.tabScreens != null) {
-      // You might want to use Navigator to push screens
-      // or manage with a PageController for tab navigation
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: widget.child,
-      bottomNavigationBar: widget.showBottomNavigation
-          ? BottomNavigation(
-              currentIndex: _currentIndex,
-              onTabSelected: _onTabSelected,
-            )
-          : null,
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _userAuthData,
+      builder: (context, snapshot) {
+        // While checking auth state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // If not logged in, show login page
+        if (snapshot.data?['isLoggedIn'] == false) {
+          return const LoginPage();
+        }
+
+        // Get user role
+        String userRole = snapshot.data?['role'] ?? 'farmer';
+        final pages = _getPagesByRole(userRole);
+
+        // If logged in, show dashboard with navigation
+        return Scaffold(
+          body: IndexedStack(index: _currentIndex, children: pages),
+          bottomNavigationBar: BottomNavigation(
+            currentIndex: _currentIndex,
+            onTabSelected: _onTabSelected,
+            userRole: userRole,
+          ),
+        );
+      },
     );
   }
 }
-
-//v2
-// import 'package:flutter/material.dart';
-// import 'bottom_navigation.dart';
-//
-// class NavigationWrapper extends StatefulWidget {
-//   final List<Widget> screens;
-//   final int initialIndex;
-//   final bool showBottomNavigation;
-//
-//   const NavigationWrapper({
-//     Key? key,
-//     required this.screens,
-//     this.initialIndex = 0,
-//     this.showBottomNavigation = true,
-//   }) : super(key: key);
-//
-//   @override
-//   State<NavigationWrapper> createState() => _NavigationWrapperState();
-// }
-//
-// class _NavigationWrapperState extends State<NavigationWrapper> {
-//   late int _currentIndex;
-//   late PageController _pageController;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _currentIndex = widget.initialIndex;
-//     _pageController = PageController(initialPage: widget.initialIndex);
-//   }
-//
-//   @override
-//   void dispose() {
-//     _pageController.dispose();
-//     super.dispose();
-//   }
-//
-//   void _onTabSelected(int index) {
-//     setState(() {
-//       _currentIndex = index;
-//     });
-//     _pageController.animateToPage(
-//       index,
-//       duration: const Duration(milliseconds: 300),
-//       curve: Curves.easeInOut,
-//     );
-//   }
-//
-//   void _onPageChanged(int index) {
-//     setState(() {
-//       _currentIndex = index;
-//     });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: PageView(
-//         controller: _pageController,
-//         onPageChanged: _onPageChanged,
-//         physics: const NeverScrollableScrollPhysics(), // Disable swipe navigation
-//         children: widget.screens,
-//       ),
-//       bottomNavigationBar: widget.showBottomNavigation
-//           ? BottomNavigation(
-//         currentIndex: _currentIndex,
-//         onTabSelected: _onTabSelected,
-//       )
-//           : null,
-//     );
-//   }
-// }

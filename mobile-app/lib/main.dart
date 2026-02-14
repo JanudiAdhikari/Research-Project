@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'dart:io';
 import 'firebase_options.dart';
-import 'screens/login_screen.dart';
 import 'features/auth/login_page.dart';
-import 'screens/signup_screen.dart';
 import 'features/auth/signup_page.dart';
 import 'features/disease_detection/screens/image_picker_screen.dart';
 import 'features/auth/splash_screen.dart';
+import 'widgets/navigation_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +34,7 @@ class MyApp extends StatelessWidget {
       title: 'CeylonPepper',
       theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Poppins'),
       // home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
-      home: error != null ? ErrorScreen(error: error!) : const SplashScreen(),
+      home: const NavigationWrapper(),
       navigatorObservers: [FirebaseErrorObserver()],
     );
   }

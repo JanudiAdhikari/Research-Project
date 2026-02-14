@@ -6,7 +6,9 @@ const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/user.routes");
-
+const farmRoutes = require("./routes/farm.routes");
+const marketRoutes = require("./routes/market.routes");
+const exportDetailsByCountryRoutes = require("./routes/market_forecast/export_details_by_country.routes");
 connectDB();
 require("./config/firebaseAdmin");
 
@@ -20,7 +22,13 @@ const limiter = rateLimit({ windowMs: 1 * 60 * 1000, max: 100 }); // simple rate
 app.use(limiter);
 
 app.use("/api/users", userRoutes);
+app.use("/api/farm", farmRoutes);
+app.use("/api/market", marketRoutes);
+
+// Routes for Market Forecast
+app.use( "/api/market-forecast/export-details-by-country",exportDetailsByCountryRoutes);
 
 // app.listen(process.env.PORT || 5000, () => console.log("Server started"));
-app.listen(process.env.PORT || 5000, '0.0.0.0', () => console.log("Server started"));
-
+app.listen(process.env.PORT || 5000, "0.0.0.0", () =>
+  console.log("Server started"),
+);

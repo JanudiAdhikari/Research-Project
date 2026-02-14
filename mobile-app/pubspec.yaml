@@ -48,6 +48,8 @@ dependencies:
   flutter_secure_storage: ^9.2.4
   google_sign_in: ^6.2.1
   mobile_scanner: ^4.0.0
+  tflite_flutter: ^0.10.0
+  image: ^4.1.0
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -70,12 +72,22 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/images/logos/logo.png
+    - assets/images/icons/analysis.png
+    - assets/images/icons/check.png
+    - assets/images/icons/crops.png
     - assets/images/icons/google.png
+    - assets/images/icons/notification.png
+    - assets/images/icons/quality.png
+    - assets/images/icons/test.png
+    - assets/images/icons/trend.png
     - assets/images/onboarding/onboard1.png
     - assets/images/onboarding/onboard2.png
     - assets/images/onboarding/onboard3.png
     - assets/images/onboarding/onboard4.png
     - assets/images/market_forecast/
+    - assets/images/disease_detection/
+    - assets/images/quality_grading/
+    - assets/images/yield_prediction/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'disease_result_screen.dart';
 
 class ImagePickerScreen extends StatefulWidget {
   const ImagePickerScreen({Key? key}) : super(key: key);
@@ -38,10 +39,17 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
     );
 
     if (image != null) {
-      setState(() {
-        _selectedImage = File(image.path);
-      });
-      Navigator.pop(context, _selectedImage);
+      final imageFile = File(image.path);
+
+      if (!mounted) return;
+
+      // Navigate to disease result screen for analysis
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DiseaseResultScreen(imageFile: imageFile),
+        ),
+      );
     }
   }
 

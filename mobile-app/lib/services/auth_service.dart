@@ -9,15 +9,94 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final storage = const FlutterSecureStorage();
 
-  // SIGN UP
+  String? validateEmail(String email) {
+    final cleanEmail = email.trim();
+
+    if (cleanEmail.isEmpty) {
+      return "Email is required";
+    }
+
+    return null;
+  }
+
+  String? validatePassword(String password) {
+    if (password.isEmpty) {
+      return "Password is required";
+    }
+
+    if (password.length < 8) {
+      return "Password must be at least 8 characters";
+    }
+
+    if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      return "Password must contain at least one uppercase letter";
+    }
+
+    if (!RegExp(r'[a-z]').hasMatch(password)) {
+      return "Password must contain at least one lowercase letter";
+    }
+
+    if (!RegExp(r'[0-9]').hasMatch(password)) {
+      return "Password must contain at least one number";
+    }
+
+    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
+      return "Password must contain at least one special character (!@#\$%^&*...)";
+    }
+
+    return null;
+  }
+
+  String? validateContactNumber(String contact) {
+    final cleanContact = contact.replaceAll(RegExp(r'\s+'), '');
+
+    if (cleanContact.isEmpty) {
+      return "Contact number is required";
+    }
+
+    if (!RegExp(r'^\+?[0-9]{10,15}$').hasMatch(cleanContact)) {
+      return "Contact number must be 10 digits";
+    }
+
+    if (cleanContact.startsWith('0')) {
+      if (cleanContact.length < 10) {
+        return "Contact number is too short";
+      }
+    }
+
+    return null;
+  }
+
   Future<Map<String, dynamic>?> signUp({
     required String email,
     required String password,
     required String firstName,
     required String lastName,
     required String contact,
+    required String role,
   }) async {
     try {
+      // Validate email
+      String? emailError = validateEmail(email);
+      if (emailError != null) {
+        print("Email validation error: $emailError");
+        return {"error": emailError};
+      }
+
+      // Validate password
+      String? passwordError = validatePassword(password);
+      if (passwordError != null) {
+        print("Password validation error: $passwordError");
+        return {"error": passwordError};
+      }
+
+      // Validate contact number
+      String? contactError = validateContactNumber(contact);
+      if (contactError != null) {
+        print("Contact validation error: $contactError");
+        return {"error": contactError};
+      }
+
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -42,6 +121,7 @@ class AuthService {
           "firstName": firstName,
           "lastName": lastName,
           "contact": contact,
+          "role": role,
         }),
       );
 
@@ -51,6 +131,7 @@ class AuthService {
         // save token locally
         await storage.write(key: "token", value: token);
         await storage.write(key: "uid", value: user.uid);
+        await storage.write(key: "role", value: role);
 
         return data;
       }
@@ -190,6 +271,7 @@ class AuthService {
           "firstName": user.displayName?.split(" ").first,
           "lastName": user.displayName?.split(" ").last,
           "contact": "",
+          "role": "farmer", // Default role for Google signup
         }),
       );
 

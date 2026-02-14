@@ -24,6 +24,14 @@ class _SignupPageState extends State<SignupPage>
   bool _obscurePassword = true;
   bool _obscureRePassword = true;
 
+  String _selectedRole = '';
+
+  // Error messages
+  String? _emailError;
+  String? _passwordError;
+  String? _contactError;
+  String? _passwordMatchError;
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -31,6 +39,47 @@ class _SignupPageState extends State<SignupPage>
   @override
   void initState() {
     super.initState();
+
+    // Add real-time validation listeners
+    _emailController.addListener(() {
+      setState(() {
+        _emailError = _authService.validateEmail(_emailController.text);
+      });
+    });
+
+    _passwordController.addListener(() {
+      setState(() {
+        _passwordError = _authService.validatePassword(
+          _passwordController.text,
+        );
+        // Check password match
+        if (_rePasswordController.text.isNotEmpty) {
+          _passwordMatchError =
+              _passwordController.text != _rePasswordController.text
+              ? "Passwords do not match"
+              : null;
+        }
+      });
+    });
+
+    _rePasswordController.addListener(() {
+      setState(() {
+        if (_rePasswordController.text.isNotEmpty) {
+          _passwordMatchError =
+              _passwordController.text != _rePasswordController.text
+              ? "Passwords do not match"
+              : null;
+        }
+      });
+    });
+
+    _contactController.addListener(() {
+      setState(() {
+        _contactError = _authService.validateContactNumber(
+          _contactController.text,
+        );
+      });
+    });
 
     // Initialize animations
     _animationController = AnimationController(
@@ -81,6 +130,56 @@ class _SignupPageState extends State<SignupPage>
       return;
     }
 
+    // Validation checks
+    if (_emailError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_emailError!),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_passwordError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_passwordError!),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_contactError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_contactError!),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedRole.isEmpty) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("Please select a role"), backgroundColor: Colors.red.shade400),
+  );
+  return;
+}
+
     // Password match validation
     if (_passwordController.text != _rePasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,6 +206,7 @@ class _SignupPageState extends State<SignupPage>
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         contact: _contactController.text.trim(),
+        role: _selectedRole,
       );
 
       setState(() {
@@ -114,6 +214,21 @@ class _SignupPageState extends State<SignupPage>
       });
 
       if (user != null) {
+        // Check for validation errors from service
+        if (user.containsKey('error')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(user['error'] ?? "Sign-up failed"),
+              backgroundColor: Colors.red.shade400,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          return;
+        }
+
         // Navigate to login screen with success message
         Navigator.pushReplacement(
           context,
@@ -175,9 +290,7 @@ class _SignupPageState extends State<SignupPage>
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: responsive.maxContentWidth,
-              ),
+              constraints: BoxConstraints(maxWidth: responsive.maxContentWidth),
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                   horizontal: responsive.pagePadding,
@@ -190,7 +303,7 @@ class _SignupPageState extends State<SignupPage>
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         ResponsiveSpacing(mobile: 40, tablet: 48),
-        
+
                         // Back button
                         Align(
                           alignment: Alignment.topLeft,
@@ -207,12 +320,14 @@ class _SignupPageState extends State<SignupPage>
                             ),
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 10, tablet: 16),
-        
+
                         // Logo with background
                         Container(
-                          padding: EdgeInsets.all(responsive.spacing(mobile: 16, tablet: 20)),
+                          padding: EdgeInsets.all(
+                            responsive.spacing(mobile: 16, tablet: 20),
+                          ),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: lightGreen,
@@ -237,9 +352,9 @@ class _SignupPageState extends State<SignupPage>
                             ),
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 24, tablet: 32),
-        
+
                         // Title
                         ResponsiveText(
                           "Create Your",
@@ -249,9 +364,9 @@ class _SignupPageState extends State<SignupPage>
                           fontWeight: FontWeight.w300,
                           color: Colors.black87,
                         ),
-        
+
                         const SizedBox(height: 4),
-        
+
                         // Sign Up with gradient
                         ShaderMask(
                           shaderCallback: (bounds) => LinearGradient(
@@ -266,9 +381,14 @@ class _SignupPageState extends State<SignupPage>
                             color: Colors.white,
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 32, tablet: 40),
-        
+
+                        // Role Selection
+                        _buildRoleSelection(responsive, primary),
+
+                        ResponsiveSpacing(mobile: 32, tablet: 40),
+
                         // First name
                         _buildInputField(
                           responsive: responsive,
@@ -278,9 +398,9 @@ class _SignupPageState extends State<SignupPage>
                           icon: Icons.person_outline,
                           primary: primary,
                         ),
-        
+
                         ResponsiveSpacing(mobile: 16, tablet: 20),
-        
+
                         // Last name
                         _buildInputField(
                           responsive: responsive,
@@ -290,9 +410,9 @@ class _SignupPageState extends State<SignupPage>
                           icon: Icons.person_outline,
                           primary: primary,
                         ),
-        
+
                         ResponsiveSpacing(mobile: 16, tablet: 20),
-        
+
                         // Email
                         _buildInputField(
                           responsive: responsive,
@@ -302,10 +422,11 @@ class _SignupPageState extends State<SignupPage>
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                           primary: primary,
+                          errorText: _emailError,
                         ),
-        
+
                         ResponsiveSpacing(mobile: 16, tablet: 20),
-        
+
                         // Contact
                         _buildInputField(
                           responsive: responsive,
@@ -315,10 +436,11 @@ class _SignupPageState extends State<SignupPage>
                           icon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
                           primary: primary,
+                          errorText: _contactError,
                         ),
-        
+
                         ResponsiveSpacing(mobile: 16, tablet: 20),
-        
+
                         // Password
                         _buildInputField(
                           responsive: responsive,
@@ -328,6 +450,7 @@ class _SignupPageState extends State<SignupPage>
                           icon: Icons.lock_outline,
                           obscureText: _obscurePassword,
                           primary: primary,
+                          errorText: _passwordError,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -343,9 +466,9 @@ class _SignupPageState extends State<SignupPage>
                             },
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 16, tablet: 20),
-        
+
                         // Re-enter password
                         _buildInputField(
                           responsive: responsive,
@@ -355,6 +478,7 @@ class _SignupPageState extends State<SignupPage>
                           icon: Icons.lock_outline,
                           obscureText: _obscureRePassword,
                           primary: primary,
+                          errorText: _passwordMatchError,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureRePassword
@@ -370,9 +494,9 @@ class _SignupPageState extends State<SignupPage>
                             },
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 32, tablet: 40),
-        
+
                         // Sign Up Button with shadow
                         Container(
                           width: double.infinity,
@@ -400,44 +524,49 @@ class _SignupPageState extends State<SignupPage>
                             ),
                             child: _isLoading
                                 ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
                                 : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Create Account",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: responsive.titleFontSize + 1,
-                                    letterSpacing: 0.5,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Create Account",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize:
+                                              responsive.titleFontSize + 1,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: responsive.smallIconSize,
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: responsive.smallIconSize,
-                                ),
-                              ],
-                            ),
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 24, tablet: 28),
-        
+
                         // Divider with "OR"
                         Row(
                           children: [
-                            Expanded(child: Divider(color: Colors.grey.shade300)),
+                            Expanded(
+                              child: Divider(color: Colors.grey.shade300),
+                            ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: Text(
                                 "OR",
                                 style: TextStyle(
@@ -447,12 +576,14 @@ class _SignupPageState extends State<SignupPage>
                                 ),
                               ),
                             ),
-                            Expanded(child: Divider(color: Colors.grey.shade300)),
+                            Expanded(
+                              child: Divider(color: Colors.grey.shade300),
+                            ),
                           ],
                         ),
-        
+
                         ResponsiveSpacing(mobile: 24, tablet: 28),
-        
+
                         // Google sign up button
                         Container(
                           width: double.infinity,
@@ -468,11 +599,14 @@ class _SignupPageState extends State<SignupPage>
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () async {
-                                final user = await _authService.signInWithGoogle();
+                                final user = await _authService
+                                    .signInWithGoogle();
 
                                 if (user == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text("Google signup failed")),
+                                    SnackBar(
+                                      content: Text("Google signup failed"),
+                                    ),
                                   );
                                   return;
                                 }
@@ -481,7 +615,8 @@ class _SignupPageState extends State<SignupPage>
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => const LoginPage(
-                                      successMessage: "Signup successful! Continue with Google",
+                                      successMessage:
+                                          "Signup successful! Continue with Google",
                                     ),
                                   ),
                                 );
@@ -508,9 +643,9 @@ class _SignupPageState extends State<SignupPage>
                             ),
                           ),
                         ),
-        
+
                         ResponsiveSpacing(mobile: 24, tablet: 32),
-        
+
                         // Login link
                         Wrap(
                           alignment: WrapAlignment.center,
@@ -537,7 +672,7 @@ class _SignupPageState extends State<SignupPage>
                             ),
                           ],
                         ),
-        
+
                         ResponsiveSpacing(mobile: 40, tablet: 48),
                       ],
                     ),
@@ -561,7 +696,10 @@ class _SignupPageState extends State<SignupPage>
     TextInputType? keyboardType,
     bool obscureText = false,
     Widget? suffixIcon,
+    String? errorText,
   }) {
+    final hasError = errorText != null && errorText.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -578,9 +716,7 @@ class _SignupPageState extends State<SignupPage>
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
-          style: TextStyle(
-            fontSize: responsive.bodyFontSize + 1,
-          ),
+          style: TextStyle(fontSize: responsive.bodyFontSize + 1),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
@@ -588,10 +724,10 @@ class _SignupPageState extends State<SignupPage>
               fontSize: responsive.bodyFontSize + 1,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: hasError ? Colors.red.shade50 : Colors.grey[50],
             prefixIcon: Icon(
               icon,
-              color: Colors.grey[600],
+              color: hasError ? Colors.red : Colors.grey[600],
               size: responsive.mediumIconSize,
             ),
             suffixIcon: suffixIcon,
@@ -601,12 +737,181 @@ class _SignupPageState extends State<SignupPage>
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
+              borderSide: BorderSide(
+                color: hasError ? Colors.red.shade300 : Colors.grey.shade300,
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: primary, width: 2),
+              borderSide: BorderSide(
+                color: hasError ? Colors.red : primary,
+                width: 2,
+              ),
             ),
+            errorText: hasError ? errorText : null,
+            errorStyle: TextStyle(
+              color: Colors.red.shade700,
+              fontSize: responsive.bodyFontSize - 2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleSelection(Responsive responsive, Color primary) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Select Your Role",
+          style: TextStyle(
+            color: Colors.grey[700],
+            fontSize: responsive.bodyFontSize,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300, width: 1.5),
+          ),
+          child: Row(
+            children: [
+              // Farmer Option
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedRole = 'farmer';
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(responsive.mediumSpacing),
+                    decoration: BoxDecoration(
+                      color: _selectedRole == 'farmer'
+                          ? primary.withOpacity(0.15)
+                          : Colors.transparent,
+                      border: Border(
+                        right: BorderSide(
+                          color: Colors.grey.shade300,
+                          width: 1,
+                        ),
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(11),
+                        bottomLeft: Radius.circular(11),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.agriculture_rounded,
+                          color: _selectedRole == 'farmer'
+                              ? primary
+                              : Colors.grey[600],
+                          size: responsive.largeIconSize,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Farmer",
+                          style: TextStyle(
+                            color: _selectedRole == 'farmer'
+                                ? primary
+                                : Colors.grey[700],
+                            fontWeight: _selectedRole == 'farmer'
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            fontSize: responsive.bodyFontSize,
+                          ),
+                        ),
+                        if (_selectedRole == 'farmer')
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: responsive.smallIconSize,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Exporter Option
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedRole = 'exporter';
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(responsive.mediumSpacing),
+                    decoration: BoxDecoration(
+                      color: _selectedRole == 'exporter'
+                          ? primary.withOpacity(0.15)
+                          : Colors.transparent,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(11),
+                        bottomRight: Radius.circular(11),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.local_shipping_rounded,
+                          color: _selectedRole == 'exporter'
+                              ? primary
+                              : Colors.grey[600],
+                          size: responsive.largeIconSize,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Exporter",
+                          style: TextStyle(
+                            color: _selectedRole == 'exporter'
+                                ? primary
+                                : Colors.grey[700],
+                            fontWeight: _selectedRole == 'exporter'
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            fontSize: responsive.bodyFontSize,
+                          ),
+                        ),
+                        if (_selectedRole == 'exporter')
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: responsive.smallIconSize,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

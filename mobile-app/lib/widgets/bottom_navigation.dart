@@ -3,16 +3,32 @@ import 'package:flutter/material.dart';
 class BottomNavigation extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTabSelected;
+  final String userRole;
 
   const BottomNavigation({
     Key? key,
     required this.currentIndex,
     required this.onTabSelected,
+    this.userRole = 'farmer',
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color(0xFF2E7D32);
+
+    // Different navigation items for different roles
+    final List<Map<String, dynamic>> navItems = userRole == 'exporter'
+        ? [
+            {'index': 0, 'icon': Icons.home, 'label': 'Home'},
+            {'index': 1, 'icon': Icons.store_rounded, 'label': 'Market'},
+            {'index': 2, 'icon': Icons.person_rounded, 'label': 'Profile'},
+          ]
+        : [
+            {'index': 0, 'icon': Icons.home, 'label': 'Home'},
+            {'index': 1, 'icon': Icons.store_rounded, 'label': 'Market'},
+            {'index': 2, 'icon': Icons.agriculture_rounded, 'label': 'My Farm'},
+            {'index': 3, 'icon': Icons.person_rounded, 'label': 'Profile'},
+          ];
 
     return Container(
       decoration: BoxDecoration(
@@ -34,19 +50,28 @@ class BottomNavigation extends StatelessWidget {
           height: 70,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home, "Home", primaryColor),
-              _buildNavItem(1, Icons.store_rounded, "Market", primaryColor),
-              _buildNavItem(2, Icons.agriculture_rounded, "My Farm", primaryColor),
-              _buildNavItem(3, Icons.person_rounded, "Profile", primaryColor),
-            ],
+            children: navItems
+                .map(
+                  (item) => _buildNavItem(
+                    item['index'],
+                    item['icon'],
+                    item['label'],
+                    primaryColor,
+                  ),
+                )
+                .toList(),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label, Color primaryColor) {
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    String label,
+    Color primaryColor,
+  ) {
     final bool isActive = currentIndex == index;
 
     return GestureDetector(
@@ -60,11 +85,7 @@ class BottomNavigation extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isActive ? primaryColor : Colors.grey,
-              size: 26,
-            ),
+            Icon(icon, color: isActive ? primaryColor : Colors.grey, size: 26),
             const SizedBox(height: 4),
             Text(
               label,

@@ -12,7 +12,7 @@ const registerUser = async (req, res) => {
       firstName,
       lastName,
       contact,
-      role: "farmer",
+      role: "exporter" || "farmer",
     });
     res.status(201).json({ message: "User created", user });
   } catch (err) {

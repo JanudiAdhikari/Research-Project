@@ -344,9 +344,9 @@ class _PriceNavigationState extends State<PriceNavigation>
                           title,
                           style: TextStyle(
                             fontSize: responsive.value(
-                              mobile: 20,
-                              tablet: 22,
-                              desktop: 24,
+                              mobile: 18,
+                              tablet: 20,
+                              desktop: 22,
                             ),
                             fontWeight: FontWeight.w800,
                             color: Colors.white,

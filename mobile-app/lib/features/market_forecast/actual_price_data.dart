@@ -51,8 +51,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
 
   bool _isSubmitting = false;
   bool showErrors = false;
+  final String _requiredSuffix = 'is required';
+  final Color _errorColor = Colors.red.shade400;
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
+
+  String _requiredMessageFor(String label) => '$label $_requiredSuffix';
 
   @override
   void dispose() {
@@ -266,7 +270,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             hint: 'Enter price per kg',
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter the price';
+                return _requiredMessageFor('Price per kg (LKR)');
               }
               if (double.tryParse(value) == null) {
                 return 'Please enter a valid number';
@@ -286,7 +290,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             hint: 'Enter quantity in kg',
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter the quantity';
+                return _requiredMessageFor('Quantity (kg)');
               }
               if (int.tryParse(value) == null) {
                 return 'Please enter a valid number';
@@ -297,7 +301,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           SizedBox(height: responsive.mediumSpacing),
 
           // District Dropdown
-          _buildCustomDropdownField('District', _selectedDistrict, _districts),
+          _buildCustomDropdownField(
+            responsive,
+            title: 'District',
+            value: _selectedDistrict,
+            items: _districts,
+          ),
           SizedBox(height: responsive.mediumSpacing),
 
           // Notes Input (Optional)
@@ -412,6 +421,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
+          autovalidateMode: showErrors
+              ? AutovalidateMode.onUserInteraction
+              : AutovalidateMode.disabled,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
@@ -434,12 +446,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.red.shade400),
+              borderSide: BorderSide(color: _errorColor),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.red.shade400, width: 2),
+              borderSide: BorderSide(color: _errorColor, width: 2),
             ),
+            errorStyle: TextStyle(color: _errorColor, fontSize: 12),
             contentPadding: EdgeInsets.symmetric(
               horizontal: responsive.smallSpacing + 8,
               vertical: responsive.smallSpacing + 8,
@@ -465,6 +478,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     required void Function(String?) onChanged,
   }) {
     final key = GlobalKey();
+    final double horizontalPadding = responsive.smallSpacing + 8;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,13 +498,16 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             key: key,
             onTap: () => _toggleDropdown(key, items, value, onChanged),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 14,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: (showErrors && value == null)
-                      ? Colors.red
+                      ? _errorColor
                       : Colors.grey.shade300,
                 ),
                 boxShadow: [
@@ -523,10 +540,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         ),
         if (showErrors && value == null)
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: EdgeInsets.only(top: 6, left: horizontalPadding),
             child: Text(
-              "$label is required",
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              _requiredMessageFor(label),
+              style: TextStyle(color: _errorColor, fontSize: 12),
             ),
           ),
       ],
@@ -534,11 +551,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   }
 
   Widget _buildCustomDropdownField(
-    String title,
-    String? value,
-    List<String> items,
-  ) {
+    Responsive responsive, {
+    required String title,
+    required String? value,
+    required List<String> items,
+  }) {
     final key = GlobalKey();
+    final double horizontalPadding = responsive.smallSpacing + 8;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,13 +581,16 @@ class _ActualPriceDataState extends State<ActualPriceData> {
               });
             }),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 14,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: (showErrors && value == null)
-                      ? Colors.red
+                      ? _errorColor
                       : Colors.grey.shade300,
                 ),
                 boxShadow: [
@@ -601,10 +623,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         ),
         if (showErrors && value == null)
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: EdgeInsets.only(top: 6, left: horizontalPadding),
             child: Text(
-              "$title is required",
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              _requiredMessageFor(title),
+              style: TextStyle(color: _errorColor, fontSize: 12),
             ),
           ),
       ],
@@ -717,17 +739,17 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   }
 
   void _handleSubmit() async {
-    // Check if all required fields are filled
-    if (_selectedVariety == null ||
-        _selectedGrade == null ||
-        _selectedDistrict == null) {
-      setState(() {
-        showErrors = true;
-      });
-      return;
-    }
+    setState(() {
+      showErrors = true;
+    });
 
-    if (_formKey.currentState!.validate()) {
+    final isFormValid = _formKey.currentState?.validate() ?? false;
+    final hasDropdowns =
+        _selectedVariety != null &&
+        _selectedGrade != null &&
+        _selectedDistrict != null;
+
+    if (isFormValid && hasDropdowns) {
       setState(() {
         _isSubmitting = true;
       });

@@ -6,6 +6,45 @@ import '../auth_service.dart';
 class ActualPriceDataService {
   final AuthService _auth = AuthService();
 
+  // Fetch records
+  Future<List<Map<String, dynamic>>> fetchActualPriceData({
+    String? pepperType,
+    String? grade,
+    String? district,
+    int? limit,
+  }) async {
+    final token = await _auth.storage.read(key: 'token');
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (token != null) headers['Authorization'] = 'Bearer $token';
+
+    final queryParams = <String, String>{};
+    if (pepperType != null) queryParams['pepperType'] = pepperType;
+    if (grade != null) queryParams['grade'] = grade;
+    if (district != null) queryParams['district'] = district;
+    if (limit != null) queryParams['limit'] = limit.toString();
+
+    final uri = Uri.parse(
+      '${ApiConfig.baseUrl}/api/market-forecast/actual-price-data',
+    ).replace(queryParameters: queryParams);
+
+    final res = await http
+        .get(uri, headers: headers)
+        .timeout(const Duration(seconds: 15));
+
+    if (res.statusCode == 200) {
+      final body = jsonDecode(res.body);
+      if (body is List) {
+        return body
+            .whereType<Map<String, dynamic>>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+      }
+    }
+
+    throw Exception('Failed to fetch records: ${res.statusCode} ${res.body}');
+  }
+
+  // Create a new record
   Future<Map<String, dynamic>> createActualPriceData(
     Map<String, dynamic> body,
   ) async {

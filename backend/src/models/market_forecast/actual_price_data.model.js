@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const actualPriceDataSchema = new mongoose.Schema(
   {
+    userId: { type: String, required: true, index: true },
     saleDate: { type: Date, required: true, index: true },
     pepperType: { type: String, required: true, index: true },
     grade: { type: String, required: true, index: true },

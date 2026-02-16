@@ -4,7 +4,11 @@ const ActualPriceData = require("../../models/market_forecast/actual_price_data.
 const getActualPriceData = async (req, res) => {
   try {
     const { pepperType, grade, district, limit } = req.query;
-    const filter = {};
+    const filter = { userId: req.user?.uid };
+
+    if (!filter.userId) {
+      return res.status(401).json({ message: "No user id" });
+    }
 
     if (pepperType) filter.pepperType = pepperType;
     if (grade) filter.grade = grade;
@@ -30,6 +34,10 @@ const getActualPriceData = async (req, res) => {
 // Create a new record
 const createActualPriceData = async (req, res) => {
   try {
+    if (!req.user?.uid) {
+      return res.status(401).json({ message: "No user id" });
+    }
+
     const {
       saleDate,
       pepperType,
@@ -56,6 +64,7 @@ const createActualPriceData = async (req, res) => {
     }
 
     const record = new ActualPriceData({
+      userId: req.user?.uid,
       saleDate: parsedDate,
       pepperType,
       grade,

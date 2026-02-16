@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/responsive.dart';
 import 'past_price_reports.dart';
+import '../../services/market_forecast/actual_price_data_service.dart';
 
 class ActualPriceData extends StatefulWidget {
   const ActualPriceData({super.key});
@@ -12,6 +13,8 @@ class ActualPriceData extends StatefulWidget {
 
 class _ActualPriceDataState extends State<ActualPriceData> {
   final _formKey = GlobalKey<FormState>();
+  final ActualPriceDataService _actualPriceDataService =
+      ActualPriceDataService();
 
   // Form controllers
   final TextEditingController _priceController = TextEditingController();
@@ -728,16 +731,21 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       setState(() {
         _isSubmitting = true;
       });
+      final notes = _notesController.text.trim();
+      final payload = <String, dynamic>{
+        'saleDate': _selectedDate.toIso8601String(),
+        'pepperType': _selectedVariety,
+        'grade': _selectedGrade,
+        'district': _selectedDistrict,
+        'pricePerKg': double.parse(_priceController.text.trim()),
+        'quantity': int.parse(_quantityController.text.trim()),
+        if (notes.isNotEmpty) 'notes': notes,
+      };
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      try {
+        await _actualPriceDataService.createActualPriceData(payload);
+        if (!mounted) return;
 
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      // Show success dialog
-      if (mounted) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -753,26 +761,49 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  'Success!',
+                  'Success',
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
-            content: const Text(
-              'Your price data has been submitted successfully and will be reviewed by our team.',
-            ),
+            content: const Text('Record created successfully.'),
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Go back to navigation
+                  Navigator.pop(context);
+                  _resetForm();
                 },
                 child: const Text('OK'),
               ),
             ],
           ),
         );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Create failed: $e')));
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
       }
     }
+  }
+
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    _priceController.clear();
+    _quantityController.clear();
+    _notesController.clear();
+    setState(() {
+      _selectedVariety = null;
+      _selectedGrade = null;
+      _selectedDistrict = null;
+      _selectedDate = DateTime.now();
+      showErrors = false;
+    });
   }
 }

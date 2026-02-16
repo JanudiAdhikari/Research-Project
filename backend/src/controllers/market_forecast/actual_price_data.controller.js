@@ -1,5 +1,32 @@
 const ActualPriceData = require("../../models/market_forecast/actual_price_data.model");
 
+// Get all records
+const getActualPriceData = async (req, res) => {
+  try {
+    const { pepperType, grade, district, limit } = req.query;
+    const filter = {};
+
+    if (pepperType) filter.pepperType = pepperType;
+    if (grade) filter.grade = grade;
+    if (district) filter.district = district;
+
+    const query = ActualPriceData.find(filter).sort({ saleDate: -1 }).lean();
+
+    if (limit) {
+      const parsedLimit = parseInt(limit, 10);
+      if (parsedLimit > 0) query.limit(parsedLimit);
+    }
+
+    const records = await query.exec();
+    return res.json(records);
+  } catch (err) {
+    console.error("getActualPriceData error:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
+  }
+};
+
 // Create a new record
 const createActualPriceData = async (req, res) => {
   try {
@@ -48,4 +75,4 @@ const createActualPriceData = async (req, res) => {
   }
 };
 
-module.exports = { createActualPriceData };
+module.exports = { getActualPriceData, createActualPriceData };

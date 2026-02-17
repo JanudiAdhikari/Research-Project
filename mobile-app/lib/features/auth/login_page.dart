@@ -93,7 +93,6 @@ class _LoginPageState extends State<LoginPage>
     }
   }
 
-
   void _login() async {
     // Basic validation
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {

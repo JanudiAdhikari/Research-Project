@@ -13,6 +13,8 @@ const registerUser = async (req, res) => {
       lastName,
       contact,
       role: "exporter" || "farmer",
+      // role: role || "farmer",
+      // role: ["farmer", "exporter"].includes(role) ? role : "farmer",
     });
     res.status(201).json({ message: "User created", user });
   } catch (err) {

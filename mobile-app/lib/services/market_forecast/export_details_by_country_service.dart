@@ -3,11 +3,11 @@ import 'package:http/http.dart' as http;
 import '../../config/api.dart';
 
 class ExportDetailsByCountryService {
-  // Fetch all unique countries from the database
+  // Fetch all unique countries 
   Future<List<String>> fetchCountries() async {
     try {
       final uri = Uri.parse(
-        '${ApiConfig.baseUrl}/api/market-forecast/export-details-by-country',
+        '${ApiConfig.baseUrl}/api/market-forecast/export-details-by-country/countries',
       );
       final res = await http
           .get(
@@ -18,15 +18,9 @@ class ExportDetailsByCountryService {
 
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
-        if (body is List) {
-          // Extract unique countries from the response
-          final countries = <String>{};
-          for (var item in body) {
-            if (item is Map<String, dynamic> && item.containsKey('country')) {
-              countries.add(item['country'] as String);
-            }
-          }
-          return countries.toList()..sort();
+        final list = body is List ? body : (body['countries'] ?? body['data']);
+        if (list is List) {
+          return list.map((e) => e.toString()).toList()..sort();
         }
       }
 

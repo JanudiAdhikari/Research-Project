@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
+import '../../services/market_forecast/export_details_by_country_service.dart';
 
 class ExportCountryDetailScreen extends StatefulWidget {
   final String country;
-  final Map<String, dynamic> countryData;
-  final List<String> years;
-  final String initialYear;
+  final int? initialYear;
 
   const ExportCountryDetailScreen({
     super.key,
     required this.country,
-    required this.countryData,
-    required this.years,
-    required this.initialYear,
+    this.initialYear,
   });
 
   @override
@@ -22,26 +19,128 @@ class ExportCountryDetailScreen extends StatefulWidget {
 
 class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
   // Currently selected year for the detail view
-  late String selectedYear;
+  int? selectedYear;
+  List<int> years = [];
+  List<Map<String, dynamic>> yearDetails = [];
+  bool isLoadingYears = true;
+  bool isLoadingDetails = false;
+  String? errorMessage;
+
+  final ExportDetailsByCountryService _service =
+      ExportDetailsByCountryService();
 
   @override
   void initState() {
     super.initState();
-    // Initialize with the year passed from the previous screen
-    selectedYear = widget.initialYear;
+    _loadYearsAndInit(); // Load available years and initial details on screen
+  }
+
+  // Load available years for the country and then load details for the selected year
+  Future<void> _loadYearsAndInit() async {
+    try {
+      if (!mounted) return;
+      setState(() {
+        isLoadingYears = true;
+        errorMessage = null;
+      });
+      // Fetch available years for the selected country
+      final loadedYears = await _service.fetchYearsForCountry(widget.country);
+      if (!mounted) return;
+      setState(() {
+        years = loadedYears;
+        if (years.isNotEmpty) {
+          selectedYear = widget.initialYear ?? years.last;
+        }
+        isLoadingYears = false;
+      });
+
+      if (selectedYear != null) {
+        await _loadDetailsForYear(selectedYear!);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoadingYears = false;
+        errorMessage = e.toString();
+      });
+    }
+  }
+
+  // Load export details for the selected year
+  Future<void> _loadDetailsForYear(int year) async {
+    try {
+      if (!mounted) return;
+      setState(() {
+        isLoadingDetails = true;
+        errorMessage = null;
+      });
+
+      final details = await _service.fetchExportDetails(
+        country: widget.country,
+        year: year,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        yearDetails = details
+            .whereType<Map<String, dynamic>>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList();
+        isLoadingDetails = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoadingDetails = false;
+        errorMessage = e.toString();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
-    // Extract selected year data safely
-    final yearData = widget.countryData[selectedYear] as Map<String, dynamic>;
-    // Total export volume (metric tons) for the selected year
-    final totalVolume = (yearData['volume'] as num?) ?? 0;
-    // Price provided in LKR per kg
-    final lkrPricePerKg = (yearData['price'] as num?) ?? 0;
-    // Convert to USD for display (assumes ~360 LKR/USD)
-    final usdPricePerKg = lkrPricePerKg / 360.0;
+
+    if (isLoadingYears) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: Text(widget.country),
+          backgroundColor: const Color(0xFF2E7D32),
+          elevation: 0,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (errorMessage != null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: Text(widget.country),
+          backgroundColor: const Color(0xFF2E7D32),
+          elevation: 0,
+        ),
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(responsive.mediumSpacing),
+            child: Text('Error loading details: $errorMessage'),
+          ),
+        ),
+      );
+    }
+
+    if (years.isEmpty || selectedYear == null) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: Text(widget.country),
+          backgroundColor: const Color(0xFF2E7D32),
+          elevation: 0,
+        ),
+        body: const Center(child: Text('No data available for this country')),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -51,26 +150,47 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(responsive.mediumSpacing),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Country header card with flag and year info
-            _buildHeaderCard(responsive),
-            SizedBox(height: responsive.mediumSpacing),
-            // Year chips selector
-            _buildYearFilter(responsive),
-            SizedBox(height: responsive.mediumSpacing),
-            // Product breakdown grid (4 boxes, 2 per row)
-            _buildProductBreakdown(totalVolume, usdPricePerKg, responsive),
-            SizedBox(height: responsive.mediumSpacing),
-            // Trend card (up / down / stable)
-            _buildTrendCard(yearData['trend'], responsive),
-          ],
-        ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: EdgeInsets.all(responsive.mediumSpacing),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Country header card with flag and year info
+                _buildHeaderCard(responsive),
+                SizedBox(height: responsive.mediumSpacing),
+                // Year selector
+                _buildYearFilter(responsive),
+                SizedBox(height: responsive.mediumSpacing),
+                // Product breakdown grid 
+                if (!isLoadingDetails)
+                  _buildProductBreakdown(yearDetails, responsive),
+              ],
+            ),
+          ),
+          if (isLoadingDetails)
+            const Positioned.fill(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+        ],
       ),
     );
+  }
+
+  // Get flag emoji for country
+  String _getFlagForCountry(String country) {
+    final flags = {
+      'India': '🇮🇳',
+      'Germany': '🇩🇪',
+      'Spain': '🇪🇸',
+      'UAE': '🇦🇪',
+      'Japan': '🇯🇵',
+      'UK': '🇬🇧',
+      'USA': '🇺🇸',
+      'Canada': '🇨🇦',
+    };
+    return flags[country] ?? '🌍';
   }
 
   // Header card showing flag, country name, and current year
@@ -100,7 +220,7 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
               border: Border.all(color: Colors.grey.shade200),
             ),
             child: Text(
-              widget.countryData['flag'] ?? '🌍',
+              _getFlagForCountry(widget.country),
               style: const TextStyle(fontSize: 42),
             ),
           ),
@@ -136,7 +256,7 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
     );
   }
 
-  // Year selector using ChoiceChips
+  // Year selector
   Widget _buildYearFilter(Responsive responsive) {
     return Container(
       width: double.infinity,
@@ -156,11 +276,11 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
       child: Wrap(
         spacing: responsive.smallSpacing,
         runSpacing: responsive.smallSpacing,
-        children: widget.years
+        children: years
             .map(
               (year) => ChoiceChip(
                 label: Text(
-                  year,
+                  year.toString(),
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize,
                     fontWeight: FontWeight.w700,
@@ -177,6 +297,7 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
                   setState(() {
                     selectedYear = year;
                   });
+                  _loadDetailsForYear(year);
                 },
               ),
             )
@@ -185,62 +306,68 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
     );
   }
 
-  // Build 4 product cards in a 2x2 layout
+  // Build 4 sections of product breakdown
   Widget _buildProductBreakdown(
-    num totalVolume,
-    double usdPricePerKg,
+    List<Map<String, dynamic>> details,
     Responsive responsive,
   ) {
-    // Product mix percentages of total volume
-    final splits = <String, double>{
-      'Ground Pepper': 0.35,
-      'Whole Pepper': 0.32,
-      'Pepper Oil': 0.18,
-      'Pepper Oleoresin': 0.15,
+    const expectedTypes = [
+      'Ground Pepper',
+      'Whole Pepper',
+      'Pepper Oil',
+      'Pepper Oleoresin',
+    ];
+
+    const normalizedToExpected = {
+      'ground pepper': 'Ground Pepper',
+      'whole pepper': 'Whole Pepper',
+      'pepper oil': 'Pepper Oil',
+      'pepper oleoresin': 'Pepper Oleoresin',
     };
 
-    // Friendly background colors per product
-    final colors = {
-      'Ground Pepper': const Color(0xFFBBDEFB),
-      'Whole Pepper': const Color(0xFFA5D6A7),
-      'Pepper Oil': const Color(0xFFFFE082),
-      'Pepper Oleoresin': const Color(0xFFD1C4E9),
-    };
+    final byType = <String, Map<String, dynamic>>{};
+    for (final item in details) {
+      final rawType = (item['pepper_type'] ?? '').toString();
+      final normalizedType = rawType.trim().toLowerCase();
+      final expectedType = normalizedToExpected[normalizedType];
+      if (expectedType != null) {
+        byType[expectedType] = item;
+      }
+    }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final spacing = responsive.smallSpacing;
-        // Two columns layout: width for each item
-        final itemWidth = (constraints.maxWidth - spacing) / 2;
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: splits.entries.map((entry) {
-            final title = entry.key;
-            final pct = entry.value;
-            // Compute per-product volume from total
-            final volumeMt = (totalVolume * pct).round();
-            return SizedBox(
-              width: itemWidth,
-              child: _buildProductCard(
-                title,
-                volumeMt,
-                usdPricePerKg,
-                colors[title] ?? Colors.grey.shade100,
-                responsive,
-              ),
-            );
-          }).toList(),
+    final palette = [
+      const Color(0xFFBBDEFB),
+      const Color(0xFFA5D6A7),
+      const Color(0xFFFFE082),
+      const Color(0xFFD1C4E9),
+    ];
+
+    return Column(
+      children: expectedTypes.asMap().entries.map((entry) {
+        final index = entry.key;
+        final type = entry.value;
+        final item = byType[type];
+        final exportVolume = (item?['export_volume'] as num?) ?? 0;
+        final exportValue = (item?['export_value'] as num?) ?? 0;
+        return Padding(
+          padding: EdgeInsets.only(bottom: responsive.smallSpacing),
+          child: _buildProductCard(
+            type,
+            exportVolume,
+            exportValue,
+            palette[index % palette.length],
+            responsive,
+          ),
         );
-      },
+      }).toList(),
     );
   }
 
-  // Single product card showing volume and price
+  // Single product card showing volume and value
   Widget _buildProductCard(
     String title,
-    int volumeMt,
-    double usdPricePerKg,
+    num volumeMt,
+    num exportValue,
     Color bgColor,
     Responsive responsive,
   ) {
@@ -282,7 +409,7 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
             ),
           ),
           Text(
-            '$volumeMt MT',
+            '${volumeMt.toStringAsFixed(0)} MT',
             style: TextStyle(
               fontSize: responsive.bodyFontSize + 2,
               fontWeight: FontWeight.w800,
@@ -290,9 +417,9 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
             ),
           ),
           SizedBox(height: responsive.smallSpacing),
-          // Export price label/value (USD/kg)
+          // Export value label/value
           Text(
-            'Export Price',
+            'Export Value',
             style: TextStyle(
               fontSize: responsive.smallFontSize + 1,
               color: Colors.black54,
@@ -300,67 +427,12 @@ class _ExportCountryDetailScreenState extends State<ExportCountryDetailScreen> {
             ),
           ),
           Text(
-            '\$${usdPricePerKg.toStringAsFixed(2)} / kg',
+            '\$${exportValue.toStringAsFixed(2)}',
             style: TextStyle(
               fontSize: responsive.bodyFontSize + 1,
               fontWeight: FontWeight.w700,
               color: Colors.black87,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Trend card shows market direction with color and icon
-  Widget _buildTrendCard(String trend, Responsive responsive) {
-    Color trendColor = Colors.grey;
-    IconData trendIcon = Icons.remove_rounded;
-    String trendLabel = 'Stable';
-
-    if (trend == 'up') {
-      trendColor = Colors.green;
-      trendIcon = Icons.trending_up_rounded;
-      trendLabel = 'Growing';
-    } else if (trend == 'down') {
-      trendColor = Colors.red;
-      trendIcon = Icons.trending_down_rounded;
-      trendLabel = 'Declining';
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(responsive.mediumSpacing),
-      decoration: BoxDecoration(
-        color: trendColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: trendColor.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(trendIcon, color: trendColor, size: 24),
-          SizedBox(width: responsive.mediumSpacing),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Market Trend',
-                style: TextStyle(
-                  fontSize: responsive.smallFontSize + 1,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: responsive.smallSpacing / 2),
-              Text(
-                trendLabel,
-                style: TextStyle(
-                  fontSize: responsive.bodyFontSize + 3,
-                  fontWeight: FontWeight.w800,
-                  color: trendColor,
-                ),
-              ),
-            ],
           ),
         ],
       ),

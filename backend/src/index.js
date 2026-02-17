@@ -9,6 +9,8 @@ const userRoutes = require("./routes/user.routes");
 const farmRoutes = require("./routes/farm.routes");
 const marketRoutes = require("./routes/market.routes");
 const exportDetailsByCountryRoutes = require("./routes/market_forecast/export_details_by_country.routes");
+const pastExportPriceRoutes = require("./routes/market_forecast/past_export_price.routes");
+const actualPriceDataRoutes = require("./routes/market_forecast/actual_price_data.routes");
 connectDB();
 require("./config/firebaseAdmin");
 
@@ -26,7 +28,9 @@ app.use("/api/farm", farmRoutes);
 app.use("/api/market", marketRoutes);
 
 // Routes for Market Forecast
-app.use( "/api/market-forecast/export-details-by-country",exportDetailsByCountryRoutes);
+app.use("/api/market-forecast/export-details-by-country", exportDetailsByCountryRoutes);
+app.use("/api/market-forecast/past-export-prices", pastExportPriceRoutes);
+app.use("/api/market-forecast/actual-price-data", actualPriceDataRoutes);
 
 // app.listen(process.env.PORT || 5000, () => console.log("Server started"));
 app.listen(process.env.PORT || 5000, "0.0.0.0", () =>

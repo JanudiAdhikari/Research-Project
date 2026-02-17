@@ -3,6 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../features/certifications/exporter_certifications_dashboard_screen.dart';
+import '../features/certifications/farmer_add_certifications_screen.dart';
+import '../features/certifications/exporter_certifications_screen.dart';
+import '../features/certifications/farmer_certifications_dashboard_screen.dart';
 import '../services/auth_service.dart';
 import '../features/auth/login_page.dart';
 
@@ -106,9 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             child: const Text('Sign Out'),
           ),
         ],
@@ -229,9 +231,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             child: const Text('Save'),
           ),
         ],
@@ -246,58 +246,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _user == null
-              ? Center(
-                  child: Text('No user data', style: theme.textTheme.bodyLarge),
-                )
-              : RefreshIndicator(
-                  onRefresh: _loadUser,
-                  color: Colors.green,
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: Transform.translate(
-                          offset: const Offset(0, -30),
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 10),
-                              _buildAvatarSection(),
-                              const SizedBox(height: 12),
-                              Text(
-                                '${_user!['firstName'] ?? ''} ${_user!['lastName'] ?? ''}'
-                                    .trim(),
-                                style: theme.textTheme.headlineSmall!.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                _user!['email'] ?? '',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                ),
-                                child: Column(
-                                  children: [
-                                    _buildInfoCards(),
-                                    const SizedBox(height: 16),
-                                    _buildActionButtons(),
-                                    const SizedBox(height: 16),
-                                    _buildSettingsSection(),
-                                  ],
-                                ),
-                              ),
-                            ],
+          ? Center(
+              child: Text('No user data', style: theme.textTheme.bodyLarge),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadUser,
+              color: Colors.green,
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Transform.translate(
+                      offset: const Offset(0, -30),
+                      child: Column(
+                        children: [
+                          const SizedBox(height: 10),
+                          _buildAvatarSection(),
+                          const SizedBox(height: 12),
+                          Text(
+                            '${_user!['firstName'] ?? ''} ${_user!['lastName'] ?? ''}'
+                                .trim(),
+                            style: theme.textTheme.headlineSmall!.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _user!['email'] ?? '',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            child: Column(
+                              children: [
+                                _buildInfoCards(),
+                                const SizedBox(height: 16),
+                                _buildActionButtons(),
+                                const SizedBox(height: 16),
+                                _buildSettingsSection(),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
     );
   }
 
@@ -327,33 +327,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
                     )
                   : _user!['imageUrl'] != null &&
-                          _user!['imageUrl'].toString().isNotEmpty
-                      ? ClipOval(
-                          child: Image.network(
-                            _user!['imageUrl'],
-                            width: 112,
-                            height: 112,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, progress) {
-                              if (progress == null) return child;
-                              return const CircularProgressIndicator(
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.green),
-                              );
-                            },
-                          ),
-                        )
-                      : Text(
-                          (_user!['firstName'] ?? 'U')
-                              .toString()
-                              .substring(0, 1)
-                              .toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.green.shade700,
-                          ),
-                        ),
+                        _user!['imageUrl'].toString().isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        _user!['imageUrl'],
+                        width: 112,
+                        height: 112,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.green,
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                  : Text(
+                      (_user!['firstName'] ?? 'U')
+                          .toString()
+                          .substring(0, 1)
+                          .toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.green.shade700,
+                      ),
+                    ),
             ),
           ),
         ),
@@ -450,10 +451,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -519,6 +517,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           _buildSettingsTile(
+            Icons.verified_outlined,
+            'Certifications',
+            'Add or manage your certifications',
+            _openCertifications,
+          ),
+
+          Divider(height: 1, color: Colors.green.shade50),
+
+          _buildSettingsTile(
             Icons.notifications_outlined,
             'Notifications',
             'Manage your notification preferences',
@@ -558,10 +565,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         child: Icon(icon, color: Colors.green.shade700, size: 22),
       ),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(
         subtitle,
         style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
@@ -569,5 +573,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
       onTap: onTap,
     );
+  }
+
+  void _openCertifications() {
+    final role = (_user?['role'] ?? '').toString().toLowerCase();
+
+    Widget screen;
+
+    if (role == 'farmer') {
+      screen = const FarmerCertificationsDashboardScreen();
+    } else if (role == 'exporter') {
+      screen = const ExporterCertificationsDashboardScreen();
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unknown user role')));
+      return;
+    }
+
+    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 }

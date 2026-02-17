@@ -14,4 +14,5 @@ const exportDetailsByCountrySchema = new mongoose.Schema(
 module.exports = mongoose.model(
   "ExportDetailsByCountry",
   exportDetailsByCountrySchema,
+  "country_wise_export_data",
 );

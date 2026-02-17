@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../utils/responsive.dart';
 import 'export_details_by_country.dart';
 import '../../services/auth_service.dart';
+import '../../services/market_forecast/past_export_price_service.dart';
 
 class ExportPriceTrends extends StatefulWidget {
   const ExportPriceTrends({super.key});
@@ -19,10 +20,13 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
   OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
   final AuthService _authService = AuthService();
+  final PastExportPriceService _priceService = PastExportPriceService();
   String? userRole;
   bool isLoading = true;
+  bool isLoadingData = true;
+  String? errorMessage;
 
-  final List<String> years = ['2022', '2023', '2024', '2025'];
+  List<String> years = [];
   final List<String> months = [
     'Jan',
     'Feb',
@@ -37,70 +41,46 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     'Nov',
     'Dec',
   ];
+  final List<String> monthsFull = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
 
-  // Sample data for different years and months
-  final Map<String, List<double>> priceData = {
-    '2023': [
-      1200,
-      1250,
-      1300,
-      1350,
-      1400,
-      1450,
-      1500,
-      1550,
-      1600,
-      1650,
-      1700,
-      1750,
-    ],
-    '2024': [
-      1300,
-      1320,
-      1340,
-      1360,
-      1400,
-      1500,
-      1600,
-      1650,
-      1700,
-      1750,
-      1800,
-      1850,
-    ],
-    '2025': [
-      1500,
-      1450,
-      1400,
-      1500,
-      1700,
-      1900,
-      2100,
-      2200,
-      2300,
-      2400,
-      2500,
-      2600,
-    ],
-  };
+  List<double?> _pricesByMonth = List<double?>.filled(12, null);
+  int? _selectedSpotIndex;
 
+  // Generate chart data based on selected month range
   List<FlSpot> getChartData() {
-    final data = priceData[selectedYear] ?? [];
     List<FlSpot> spots = [];
     for (
       int i = selectedMonthFrom;
-      i <= selectedMonthTo && i < data.length;
+      i <= selectedMonthTo && i < _pricesByMonth.length;
       i++
     ) {
-      spots.add(FlSpot((i - selectedMonthFrom).toDouble(), data[i]));
+      final value = _pricesByMonth[i];
+      if (value != null) {
+        spots.add(FlSpot((i - selectedMonthFrom).toDouble(), value));
+      }
     }
     return spots;
   }
 
+  // Get label for selected month range
   String getDateRangeLabel() {
     return '${months[selectedMonthFrom]} - ${months[selectedMonthTo]}';
   }
 
+  // Calculate peak, lowest, and average prices for the selected range
   Map<String, double> calculateStats() {
     final spots = getChartData();
     if (spots.isEmpty) {
@@ -119,6 +99,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
   void initState() {
     super.initState();
     _loadUserRole();
+    _loadYearsAndData();
   }
 
   Future<void> _loadUserRole() async {
@@ -129,9 +110,95 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     });
   }
 
+  // Load years and price data
+  Future<void> _loadYearsAndData() async {
+    try {
+      if (!mounted) return;
+      setState(() {
+        isLoadingData = true;
+        errorMessage = null;
+      });
+
+      final loadedYears = await _priceService.fetchYears();
+      if (!mounted) return;
+
+      final loadedYearStrings =
+          loadedYears.map((year) => year.toString()).toList()..sort();
+      if (loadedYearStrings.isNotEmpty) {
+        setState(() {
+          years = loadedYearStrings;
+          selectedYear = years.last;
+        });
+        await _loadPriceData();
+      } else {
+        setState(() {
+          years = [];
+          _pricesByMonth = List<double?>.filled(12, null);
+          isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoadingData = false;
+        errorMessage = e.toString();
+      });
+    }
+  }
+
+  // Load price data based on selected filters
+  Future<void> _loadPriceData() async {
+    try {
+      if (!mounted) return;
+      final yearValue = int.tryParse(selectedYear) ?? 0;
+      if (yearValue <= 0) return;
+
+      setState(() {
+        isLoadingData = true;
+        errorMessage = null;
+      });
+
+      final data = await _priceService.fetchPastExportPrices(
+        year: yearValue,
+        monthFrom: monthsFull[selectedMonthFrom],
+        monthTo: monthsFull[selectedMonthTo],
+      );
+
+      if (!mounted) return;
+      final prices = List<double?>.filled(12, null);
+      for (final item in data) {
+        final monthName = item['month']?.toString();
+        if (monthName == null) continue;
+        final monthIndex = monthsFull.indexWhere(
+          (month) => month.toLowerCase() == monthName.toLowerCase(),
+        );
+        if (monthIndex == -1) continue;
+
+        final priceValue =
+            item['export_price_per_kg_lkr'] ?? item['export_price'];
+        if (priceValue is num) {
+          prices[monthIndex] = priceValue.toDouble();
+        }
+      }
+
+      setState(() {
+        _pricesByMonth = prices;
+        _selectedSpotIndex = null;
+        isLoadingData = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoadingData = false;
+        errorMessage = e.toString();
+      });
+    }
+  }
+
+  // Dispose overlay
   @override
   void dispose() {
-    _overlayEntry?.remove();
+    _overlayEntry?.remove(); // Remove any open overlay
     super.dispose();
   }
 
@@ -159,6 +226,18 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
             ],
             _filtersSection(),
             SizedBox(height: responsive.mediumSpacing),
+            if (errorMessage != null)
+              Padding(
+                padding: EdgeInsets.only(bottom: responsive.mediumSpacing),
+                child: Text(
+                  'Failed to load data: $errorMessage',
+                  style: TextStyle(
+                    color: Colors.red.shade700,
+                    fontSize: responsive.smallFontSize + 1,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             _chartCard(),
             SizedBox(height: responsive.mediumSpacing),
             _priceStats(),
@@ -366,6 +445,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
               Expanded(
                 child: _customDropdown('Year', selectedYear, years, (value) {
                   setState(() => selectedYear = value);
+                  _loadPriceData();
                 }),
               ),
               SizedBox(width: responsive.smallSpacing),
@@ -378,6 +458,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                     final index = months.indexOf(value);
                     if (index != -1 && index <= selectedMonthTo) {
                       setState(() => selectedMonthFrom = index);
+                      _loadPriceData();
                     }
                   },
                 ),
@@ -390,6 +471,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                   final index = months.indexOf(value);
                   if (index != -1 && index >= selectedMonthFrom) {
                     setState(() => selectedMonthTo = index);
+                    _loadPriceData();
                   }
                 }),
               ),
@@ -400,6 +482,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     );
   }
 
+  // Custom Dropdown implementation
   Widget _customDropdown(
     String title,
     String value,
@@ -473,6 +556,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     );
   }
 
+  // Toggle dropdown visibility
   void _toggleDropdown(
     GlobalKey key,
     List<String> items,
@@ -576,88 +660,149 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
           SizedBox(height: responsive.mediumSpacing),
           SizedBox(
             height: responsive.value(mobile: 220, tablet: 260, desktop: 300),
-            child: LineChart(
-              LineChartData(
-                minY: 1000,
-                maxY: 3000,
-                gridData: FlGridData(show: true, drawVerticalLine: false),
-                borderData: FlBorderData(show: false),
-                lineTouchData: LineTouchData(
-                  enabled: true,
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (touchedSpot) => Colors.blueAccent,
-                    tooltipRoundedRadius: 8,
-                    getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                      return touchedSpots.map((spot) {
-                        final monthIndex = spot.x.toInt() + selectedMonthFrom;
-                        final monthName = monthIndex < months.length
-                            ? months[monthIndex]
-                            : '';
-                        return LineTooltipItem(
-                          '$monthName\nRs.${spot.y.toInt()}',
-                          const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+            child: isLoadingData
+                ? const Center(child: CircularProgressIndicator())
+                : chartData.isEmpty
+                ? Center(
+                    child: Text(
+                      'No data for the selected range',
+                      style: TextStyle(
+                        fontSize: responsive.bodyFontSize,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  )
+                : Builder(
+                    builder: (context) {
+                      final selectedIndex =
+                          _selectedSpotIndex != null &&
+                              _selectedSpotIndex! < chartData.length
+                          ? _selectedSpotIndex
+                          : null;
+
+                      final lineBarData = LineChartBarData(
+                        spots: chartData,
+                        isCurved: true,
+                        dotData: FlDotData(show: true),
+                        color: Colors.blue,
+                        barWidth: 3,
+                        showingIndicators: selectedIndex != null
+                            ? [selectedIndex]
+                            : const [],
+                      );
+
+                      return LineChart(
+                        LineChartData(
+                          minY: 500,
+                          maxY: 3000,
+                          gridData: FlGridData(
+                            show: true,
+                            drawVerticalLine: false,
                           ),
-                        );
-                      }).toList();
+                          borderData: FlBorderData(show: false),
+                          lineTouchData: LineTouchData(
+                            enabled: true,
+                            handleBuiltInTouches: false,
+                            touchCallback: (event, response) {
+                              if (!event.isInterestedForInteractions) {
+                                return;
+                              }
+
+                              final spots = response?.lineBarSpots;
+                              if (spots == null || spots.isEmpty) {
+                                setState(() {
+                                  _selectedSpotIndex = null;
+                                });
+                                return;
+                              }
+
+                              setState(() {
+                                _selectedSpotIndex = spots.first.spotIndex;
+                              });
+                            },
+                            touchTooltipData: LineTouchTooltipData(
+                              getTooltipColor: (touchedSpot) =>
+                                  Colors.blueAccent,
+                              tooltipRoundedRadius: 8,
+                              getTooltipItems:
+                                  (List<LineBarSpot> touchedSpots) {
+                                    return touchedSpots.map((spot) {
+                                      final monthIndex =
+                                          spot.x.toInt() + selectedMonthFrom;
+                                      final monthName =
+                                          monthIndex < months.length
+                                          ? months[monthIndex]
+                                          : '';
+                                      return LineTooltipItem(
+                                        '$monthName\nRs.${spot.y.toInt()}',
+                                        const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
+                            ),
+                          ),
+                          titlesData: FlTitlesData(
+                            topTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            rightTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                interval: 500,
+                                reservedSize: 50,
+                                getTitlesWidget: (value, meta) {
+                                  return Text(
+                                    'Rs.${value.toInt()}',
+                                    style: TextStyle(
+                                      fontSize: responsive.smallFontSize - 1,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                interval: 1,
+                                getTitlesWidget: (value, meta) {
+                                  final index =
+                                      value.toInt() + selectedMonthFrom;
+                                  if (index < months.length) {
+                                    return Text(
+                                      months[index],
+                                      style: TextStyle(
+                                        fontSize: responsive.smallFontSize,
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            ),
+                          ),
+                          showingTooltipIndicators: selectedIndex != null
+                              ? [
+                                  ShowingTooltipIndicators([
+                                    LineBarSpot(
+                                      lineBarData,
+                                      0,
+                                      chartData[selectedIndex],
+                                    ),
+                                  ]),
+                                ]
+                              : const [],
+                          lineBarsData: [lineBarData],
+                        ),
+                      );
                     },
                   ),
-                  handleBuiltInTouches: true,
-                ),
-                titlesData: FlTitlesData(
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 500,
-                      reservedSize: 50,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          'Rs.${value.toInt()}',
-                          style: TextStyle(
-                            fontSize: responsive.smallFontSize - 1,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt() + selectedMonthFrom;
-                        if (index < months.length) {
-                          return Text(
-                            months[index],
-                            style: TextStyle(
-                              fontSize: responsive.smallFontSize,
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-                  ),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: chartData,
-                    isCurved: true,
-                    dotData: FlDotData(show: true),
-                    color: Colors.blue,
-                    barWidth: 3,
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
@@ -700,6 +845,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     );
   }
 
+  // Stats Card to display peak, lowest, and average prices
   Widget _statCard(String title, String value, IconData icon, Color color) {
     final responsive = context.responsive;
     return Container(
@@ -840,6 +986,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     );
   }
 
+  // Insights section
   Widget _insightTile({
     required IconData icon,
     required Color color,
@@ -895,6 +1042,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     );
   }
 
+  // Card decoration for consistent styling
   BoxDecoration _cardDecoration() {
     final responsive = context.responsive;
     return BoxDecoration(

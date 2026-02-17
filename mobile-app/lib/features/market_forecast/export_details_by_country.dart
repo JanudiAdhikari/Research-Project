@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
 import '../../services/market_forecast/export_details_by_country_service.dart';
-import 'export_country_detail.dart';
 
 class ExportDetailsByCountry extends StatefulWidget {
   const ExportDetailsByCountry({super.key});
@@ -11,15 +10,15 @@ class ExportDetailsByCountry extends StatefulWidget {
 }
 
 class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
-  // Currently selected country (null means showing grid)
   String? selectedCountry;
-  // Default selected year
-  int selectedYear = 2025;
+  // Selected year for details
+  int? selectedYear;
 
   // Dynamic data from backend
   List<String> countries = [];
   List<int> years = [];
   bool isLoading = true;
+  bool isLoadingYears = false;
   String? errorMessage;
 
   final ExportDetailsByCountryService _service =
@@ -31,18 +30,49 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
     _loadCountries();
   }
 
+  // Load list of countries
   Future<void> _loadCountries() async {
     try {
+      if (!mounted) return;
       setState(() => isLoading = true);
       final loadedCountries = await _service.fetchCountries();
+      if (!mounted) return;
       setState(() {
         countries = loadedCountries;
         isLoading = false;
         errorMessage = null;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
+        errorMessage = e.toString();
+      });
+    }
+  }
+
+  // Load available years for selected country
+  Future<void> _loadYearsForCountry(String country) async {
+    try {
+      if (!mounted) return;
+      setState(() {
+        isLoadingYears = true;
+        years = [];
+        selectedYear = null;
+      });
+      final loadedYears = await _service.fetchYearsForCountry(country);
+      if (!mounted) return;
+      setState(() {
+        years = loadedYears;
+        if (years.isNotEmpty) {
+          selectedYear = years.last;
+        }
+        isLoadingYears = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoadingYears = false;
         errorMessage = e.toString();
       });
     }
@@ -100,8 +130,19 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
         title: const Text('Export Details by Country'),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
-        // Hide back arrow while in grid view
-        automaticallyImplyLeading: selectedCountry == null,
+        leading: selectedCountry == null
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                color: Colors.black87,
+                onPressed: () {
+                  setState(() {
+                    selectedCountry = null;
+                    years = [];
+                    selectedYear = null;
+                  });
+                },
+              ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -116,9 +157,19 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
             else
               Column(
                 children: [
-                  _buildYearFilter(responsive),
-                  SizedBox(height: responsive.mediumSpacing),
-                  _buildCountryDetails(responsive),
+                  if (isLoadingYears)
+                    Padding(
+                      padding: EdgeInsets.all(responsive.mediumSpacing),
+                      child: const CircularProgressIndicator(),
+                    )
+                  else
+                    Column(
+                      children: [
+                        _buildYearFilter(responsive),
+                        SizedBox(height: responsive.mediumSpacing),
+                        _buildCountryDetails(responsive),
+                      ],
+                    ),
                 ],
               ),
           ],
@@ -205,20 +256,6 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
       'UK': '🇬🇧',
       'USA': '🇺🇸',
       'Canada': '🇨🇦',
-      'China': '🇨🇳',
-      'France': '🇫🇷',
-      'Netherlands': '🇳🇱',
-      'Italy': '🇮🇹',
-      'Belgium': '🇧🇪',
-      'Poland': '🇵🇱',
-      'Brazil': '🇧🇷',
-      'Mexico': '🇲🇽',
-      'Australia': '🇦🇺',
-      'Thailand': '🇹🇭',
-      'Vietnam': '🇻🇳',
-      'Indonesia': '🇮🇩',
-      'Malaysia': '🇲🇾',
-      'Singapore': '🇸🇬',
     };
     return flags[country] ?? '🌍';
   }
@@ -245,6 +282,7 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
         setState(() {
           selectedCountry = country;
         });
+        _loadYearsForCountry(country);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -282,12 +320,26 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
     );
   }
 
-  // Country details section - fetch from backend
+  // Country details section
   Widget _buildCountryDetails(Responsive responsive) {
     final country = selectedCountry!;
 
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _service.fetchDetailsByCountryAndYear(country, selectedYear),
+    if (selectedYear == null) {
+      return Container(
+        padding: EdgeInsets.all(responsive.mediumSpacing),
+        decoration: BoxDecoration(
+          color: Colors.yellow.shade50,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Text('No data available for this country'),
+      );
+    }
+
+    return FutureBuilder<List<dynamic>>(
+      future: _service.fetchExportDetails(
+        country: country,
+        year: selectedYear!,
+      ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
@@ -310,7 +362,7 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
         }
 
         final data = snapshot.data;
-        if (data == null) {
+        if (data == null || data.isEmpty) {
           return Container(
             padding: EdgeInsets.all(responsive.mediumSpacing),
             decoration: BoxDecoration(
@@ -321,9 +373,37 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
           );
         }
 
-        final exportVolume = data['export_volume'] ?? 0;
-        final exportValue = data['export_value'] ?? 0;
-        final pepperType = data['pepper_type'] ?? 'N/A';
+        const expectedTypes = [
+          'Ground Pepper',
+          'Whole Pepper',
+          'Pepper Oil',
+          'Pepper Oleoresin',
+        ];
+
+        const normalizedToExpected = {
+          'ground pepper': 'Ground Pepper',
+          'whole pepper': 'Whole Pepper',
+          'pepper oil': 'Pepper Oil',
+          'pepper oleoresin': 'Pepper Oleoresin',
+        };
+
+        final byType = <String, Map<String, dynamic>>{};
+        for (final item in data) {
+          if (item is! Map<String, dynamic>) continue;
+          final rawType = (item['pepper_type'] ?? '').toString();
+          final normalizedType = rawType.trim().toLowerCase();
+          final expectedType = normalizedToExpected[normalizedType];
+          if (expectedType != null) {
+            byType[expectedType] = item;
+          }
+        }
+
+        final sectionColors = [
+          const Color(0xFFBBDEFB),
+          const Color(0xFFA5D6A7),
+          const Color(0xFFFFE082),
+          const Color(0xFFD1C4E9),
+        ];
 
         return Column(
           children: [
@@ -376,26 +456,38 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
                     ],
                   ),
                   SizedBox(height: responsive.mediumSpacing),
-                  _buildExportDetailsCard(
-                    'Export Volume',
-                    '$exportVolume MT',
-                    Colors.blue,
-                    responsive,
-                  ),
-                  SizedBox(height: responsive.smallSpacing),
-                  _buildExportDetailsCard(
-                    'Export Value',
-                    '\$$exportValue',
-                    Colors.green,
-                    responsive,
-                  ),
-                  SizedBox(height: responsive.smallSpacing),
-                  _buildExportDetailsCard(
-                    'Pepper Type',
-                    pepperType,
-                    Colors.orange,
-                    responsive,
-                  ),
+                  ...expectedTypes.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final type = entry.value;
+                    final item = byType[type];
+                    final exportVolume = _formatValue(
+                      item?['export_volume'],
+                      suffix: ' MT',
+                      decimals: 0,
+                    );
+                    final exportValue = _formatValue(
+                      item?['export_value'],
+                      prefix: '\$ ',
+                      decimals: 0,
+                    );
+                    final sectionColor =
+                        sectionColors[index % sectionColors.length];
+
+                    return Padding(
+                      padding: EdgeInsets.only(
+                        bottom: index == expectedTypes.length - 1
+                            ? 0
+                            : responsive.smallSpacing,
+                      ),
+                      child: _buildPepperTypeSection(
+                        type,
+                        exportVolume,
+                        exportValue,
+                        sectionColor,
+                        responsive,
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -405,29 +497,111 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
     );
   }
 
-  // Build export details card
-  Widget _buildExportDetailsCard(
-    String label,
-    String value,
-    Color color,
+  String _formatValue(
+    dynamic value, {
+    String prefix = '',
+    String suffix = '',
+    int decimals = 0,
+  }) {
+    if (value == null) return '-';
+
+    if (value is num) {
+      return '$prefix${value.toStringAsFixed(decimals)}$suffix';
+    }
+
+    if (value is String) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty || trimmed == '-') return '-';
+      final parsed = num.tryParse(trimmed);
+      if (parsed != null) {
+        return '$prefix${parsed.toStringAsFixed(decimals)}$suffix';
+      }
+      return '$prefix$trimmed$suffix';
+    }
+
+    return '$prefix${value.toString()}$suffix';
+  }
+
+  // Section for each pepper type with volume and value
+  Widget _buildPepperTypeSection(
+    String pepperType,
+    String exportVolume,
+    String exportValue,
+    Color sectionColor,
     Responsive responsive,
   ) {
+    final icon = _iconForPepperType(pepperType);
+    final title = pepperType.toLowerCase();
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(responsive.smallSpacing + 4),
+      padding: EdgeInsets.all(responsive.mediumSpacing),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: sectionColor.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: sectionColor.withOpacity(0.45)),
+        boxShadow: [
+          BoxShadow(
+            color: sectionColor.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: sectionColor.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: Colors.black87, size: 18),
+              ),
+              SizedBox(width: responsive.smallSpacing),
+              Expanded(
+                child: Text(
+                  'Pepper Type: $title',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize + 1,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: responsive.smallSpacing),
+          _buildDetailRow('Export Volume', exportVolume, responsive),
+          SizedBox(height: responsive.smallSpacing),
+          _buildDetailRow('Export Value', exportValue, responsive),
+        ],
+      ),
+    );
+  }
+
+  // Row for individual details like volume and value
+  Widget _buildDetailRow(String label, String value, Responsive responsive) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: responsive.smallSpacing,
+        vertical: responsive.smallSpacing - 2,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black.withOpacity(0.06)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            label,
+            '$label:',
             style: TextStyle(
               fontSize: responsive.bodyFontSize,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
               color: Colors.black87,
             ),
           ),
@@ -436,12 +610,22 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
             style: TextStyle(
               fontSize: responsive.bodyFontSize,
               fontWeight: FontWeight.w800,
-              color: color,
+              color: Colors.black87,
             ),
           ),
         ],
       ),
     );
+  }
+
+  // Pepper type with icon
+  IconData _iconForPepperType(String pepperType) {
+    final lower = pepperType.toLowerCase();
+    if (lower.contains('ground')) return Icons.grain_rounded;
+    if (lower.contains('whole')) return Icons.circle_rounded;
+    if (lower.contains('oil')) return Icons.opacity_rounded;
+    if (lower.contains('oleoresin')) return Icons.science_rounded;
+    return Icons.local_florist_rounded;
   }
 
   // Year selector with “Back” to return to the grid
@@ -477,6 +661,8 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
                 onTap: () {
                   setState(() {
                     selectedCountry = null;
+                    years = [];
+                    selectedYear = null;
                   });
                 },
                 child: Text(
@@ -491,48 +677,51 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
             ],
           ),
           SizedBox(height: responsive.mediumSpacing),
-          Wrap(
-            spacing: responsive.smallSpacing,
-            runSpacing: responsive.smallSpacing,
-            children: years
-                .map(
-                  (year) => GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedYear = year;
-                      });
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: responsive.mediumSpacing,
-                        vertical: responsive.smallSpacing,
-                      ),
-                      decoration: BoxDecoration(
-                        color: selectedYear == year
-                            ? const Color(0xFF2E7D32)
-                            : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
+          if (years.isEmpty)
+            const Text('No years available')
+          else
+            Wrap(
+              spacing: responsive.smallSpacing,
+              runSpacing: responsive.smallSpacing,
+              children: years
+                  .map(
+                    (year) => GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedYear = year;
+                        });
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: responsive.mediumSpacing,
+                          vertical: responsive.smallSpacing,
+                        ),
+                        decoration: BoxDecoration(
                           color: selectedYear == year
                               ? const Color(0xFF2E7D32)
-                              : Colors.grey.shade300,
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: selectedYear == year
+                                ? const Color(0xFF2E7D32)
+                                : Colors.grey.shade300,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        year.toString(),
-                        style: TextStyle(
-                          fontSize: responsive.bodyFontSize,
-                          fontWeight: FontWeight.w600,
-                          color: selectedYear == year
-                              ? Colors.white
-                              : Colors.black87,
+                        child: Text(
+                          year.toString(),
+                          style: TextStyle(
+                            fontSize: responsive.bodyFontSize,
+                            fontWeight: FontWeight.w600,
+                            color: selectedYear == year
+                                ? Colors.white
+                                : Colors.black87,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                )
-                .toList(),
-          ),
+                  )
+                  .toList(),
+            ),
         ],
       ),
     );

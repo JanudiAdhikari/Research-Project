@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../utils/responsive.dart';
 import 'past_price_reports.dart';
+import '../../services/market_forecast/actual_price_data_service.dart';
 
 class ActualPriceData extends StatefulWidget {
   const ActualPriceData({super.key});
@@ -12,6 +13,8 @@ class ActualPriceData extends StatefulWidget {
 
 class _ActualPriceDataState extends State<ActualPriceData> {
   final _formKey = GlobalKey<FormState>();
+  final ActualPriceDataService _actualPriceDataService =
+      ActualPriceDataService();
 
   // Form controllers
   final TextEditingController _priceController = TextEditingController();
@@ -48,8 +51,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
 
   bool _isSubmitting = false;
   bool showErrors = false;
+  final String _requiredSuffix = 'is required';
+  final Color _errorColor = Colors.red.shade400;
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
+
+  String _requiredMessageFor(String label) => '$label $_requiredSuffix';
 
   @override
   void dispose() {
@@ -263,7 +270,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             hint: 'Enter price per kg',
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter the price';
+                return _requiredMessageFor('Price per kg (LKR)');
               }
               if (double.tryParse(value) == null) {
                 return 'Please enter a valid number';
@@ -283,7 +290,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             hint: 'Enter quantity in kg',
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter the quantity';
+                return _requiredMessageFor('Quantity (kg)');
               }
               if (int.tryParse(value) == null) {
                 return 'Please enter a valid number';
@@ -294,7 +301,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           SizedBox(height: responsive.mediumSpacing),
 
           // District Dropdown
-          _buildCustomDropdownField('District', _selectedDistrict, _districts),
+          _buildCustomDropdownField(
+            responsive,
+            title: 'District',
+            value: _selectedDistrict,
+            items: _districts,
+          ),
           SizedBox(height: responsive.mediumSpacing),
 
           // Notes Input (Optional)
@@ -409,6 +421,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
+          autovalidateMode: showErrors
+              ? AutovalidateMode.onUserInteraction
+              : AutovalidateMode.disabled,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
@@ -431,12 +446,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.red.shade400),
+              borderSide: BorderSide(color: _errorColor),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.red.shade400, width: 2),
+              borderSide: BorderSide(color: _errorColor, width: 2),
             ),
+            errorStyle: TextStyle(color: _errorColor, fontSize: 12),
             contentPadding: EdgeInsets.symmetric(
               horizontal: responsive.smallSpacing + 8,
               vertical: responsive.smallSpacing + 8,
@@ -462,6 +478,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     required void Function(String?) onChanged,
   }) {
     final key = GlobalKey();
+    final double horizontalPadding = responsive.smallSpacing + 8;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -481,13 +498,16 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             key: key,
             onTap: () => _toggleDropdown(key, items, value, onChanged),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 14,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: (showErrors && value == null)
-                      ? Colors.red
+                      ? _errorColor
                       : Colors.grey.shade300,
                 ),
                 boxShadow: [
@@ -520,10 +540,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         ),
         if (showErrors && value == null)
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: EdgeInsets.only(top: 6, left: horizontalPadding),
             child: Text(
-              "$label is required",
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              _requiredMessageFor(label),
+              style: TextStyle(color: _errorColor, fontSize: 12),
             ),
           ),
       ],
@@ -531,11 +551,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   }
 
   Widget _buildCustomDropdownField(
-    String title,
-    String? value,
-    List<String> items,
-  ) {
+    Responsive responsive, {
+    required String title,
+    required String? value,
+    required List<String> items,
+  }) {
     final key = GlobalKey();
+    final double horizontalPadding = responsive.smallSpacing + 8;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -559,13 +581,16 @@ class _ActualPriceDataState extends State<ActualPriceData> {
               });
             }),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 14,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: (showErrors && value == null)
-                      ? Colors.red
+                      ? _errorColor
                       : Colors.grey.shade300,
                 ),
                 boxShadow: [
@@ -598,10 +623,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         ),
         if (showErrors && value == null)
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: EdgeInsets.only(top: 6, left: horizontalPadding),
             child: Text(
-              "$title is required",
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              _requiredMessageFor(title),
+              style: TextStyle(color: _errorColor, fontSize: 12),
             ),
           ),
       ],
@@ -714,30 +739,35 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   }
 
   void _handleSubmit() async {
-    // Check if all required fields are filled
-    if (_selectedVariety == null ||
-        _selectedGrade == null ||
-        _selectedDistrict == null) {
-      setState(() {
-        showErrors = true;
-      });
-      return;
-    }
+    setState(() {
+      showErrors = true;
+    });
 
-    if (_formKey.currentState!.validate()) {
+    final isFormValid = _formKey.currentState?.validate() ?? false;
+    final hasDropdowns =
+        _selectedVariety != null &&
+        _selectedGrade != null &&
+        _selectedDistrict != null;
+
+    if (isFormValid && hasDropdowns) {
       setState(() {
         _isSubmitting = true;
       });
+      final notes = _notesController.text.trim();
+      final payload = <String, dynamic>{
+        'saleDate': _selectedDate.toIso8601String(),
+        'pepperType': _selectedVariety,
+        'grade': _selectedGrade,
+        'district': _selectedDistrict,
+        'pricePerKg': double.parse(_priceController.text.trim()),
+        'quantity': int.parse(_quantityController.text.trim()),
+        if (notes.isNotEmpty) 'notes': notes,
+      };
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 2));
+      try {
+        await _actualPriceDataService.createActualPriceData(payload);
+        if (!mounted) return;
 
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      // Show success dialog
-      if (mounted) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -753,26 +783,49 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  'Success!',
+                  'Success',
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
-            content: const Text(
-              'Your price data has been submitted successfully and will be reviewed by our team.',
-            ),
+            content: const Text('Record created successfully.'),
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Go back to navigation
+                  Navigator.pop(context);
+                  _resetForm();
                 },
                 child: const Text('OK'),
               ),
             ],
           ),
         );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Create failed: $e')));
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
       }
     }
+  }
+
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    _priceController.clear();
+    _quantityController.clear();
+    _notesController.clear();
+    setState(() {
+      _selectedVariety = null;
+      _selectedGrade = null;
+      _selectedDistrict = null;
+      _selectedDate = DateTime.now();
+      showErrors = false;
+    });
   }
 }

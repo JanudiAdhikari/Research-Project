@@ -158,6 +158,10 @@ class AuthService {
       String? token = await user.getIdToken();
       if (token == null) return null;
 
+      print("🔥 FIREBASE TOKEN (LOGIN):");
+      print(token);
+      print("🔥 END TOKEN");
+
       final response = await http.get(
         Uri.parse("${ApiConfig.baseUrl}/api/users/me"),
         headers: {"Authorization": "Bearer $token"},

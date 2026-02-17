@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
+import '../../services/market_forecast/actual_price_data_service.dart';
 
 class PastPriceReportsScreen extends StatefulWidget {
   const PastPriceReportsScreen({super.key});
@@ -9,59 +10,40 @@ class PastPriceReportsScreen extends StatefulWidget {
 }
 
 class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
-  // Mock data for past submitted reports
-  final List<Map<String, dynamic>> pastReports = [
-    {
-      'date': '2026-01-27',
-      'district': 'Colombo',
-      'variety': 'Black Pepper',
-      'grade': 'Grade 1',
-      'price': 3850.00,
-      'quantity': 250,
-      'notes': 'Good quality batch from this season',
-      'submittedAt': '2026-01-27 14:30',
-    },
-    {
-      'date': '2026-01-26',
-      'district': 'Kandy',
-      'variety': 'White Pepper',
-      'grade': 'Grade 2',
-      'price': 4200.00,
-      'quantity': 180,
-      'notes': 'Premium quality',
-      'submittedAt': '2026-01-26 10:15',
-    },
-    {
-      'date': '2026-01-25',
-      'district': 'Galle',
-      'variety': 'Black Pepper',
-      'grade': 'Grade 1',
-      'price': 3800.00,
-      'quantity': 200,
-      'notes': '',
-      'submittedAt': '2026-01-25 16:45',
-    },
-    {
-      'date': '2026-01-23',
-      'district': 'Matara',
-      'variety': 'Black Pepper',
-      'grade': 'Grade 2',
-      'price': 3450.00,
-      'quantity': 320,
-      'notes': 'Local market sale',
-      'submittedAt': '2026-01-23 11:20',
-    },
-    {
-      'date': '2026-01-22',
-      'district': 'Kurunegala',
-      'variety': 'White Pepper',
-      'grade': 'Grade 1',
-      'price': 4150.00,
-      'quantity': 150,
-      'notes': '',
-      'submittedAt': '2026-01-22 09:30',
-    },
-  ];
+  final ActualPriceDataService _service = ActualPriceDataService();
+  List<Map<String, dynamic>> pastReports = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReports();
+  }
+
+  Future<void> _loadReports() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final records = await _service.fetchActualPriceData();
+      if (mounted) {
+        setState(() {
+          pastReports = records;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load reports: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,18 +55,94 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
         title: const Text('Past Price Reports'),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _loadReports,
+          ),
+        ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(responsive.mediumSpacing),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSummaryCard(responsive),
-            SizedBox(height: responsive.largeSpacing),
-            _buildReportsList(responsive),
-          ],
-        ),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? Center(
+              child: Padding(
+                padding: EdgeInsets.all(responsive.mediumSpacing),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline_rounded,
+                      size: 64,
+                      color: Colors.red.shade400,
+                    ),
+                    SizedBox(height: responsive.mediumSpacing),
+                    Text(
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: responsive.bodyFontSize,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    SizedBox(height: responsive.mediumSpacing),
+                    ElevatedButton.icon(
+                      onPressed: _loadReports,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D32),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : pastReports.isEmpty
+          ? Center(
+              child: Padding(
+                padding: EdgeInsets.all(responsive.mediumSpacing),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.inbox_rounded,
+                      size: 64,
+                      color: Colors.grey.shade400,
+                    ),
+                    SizedBox(height: responsive.mediumSpacing),
+                    Text(
+                      'No reports found',
+                      style: TextStyle(
+                        fontSize: responsive.bodyFontSize + 2,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    SizedBox(height: responsive.smallSpacing),
+                    Text(
+                      'Submit your first price report to see it here',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: responsive.bodyFontSize,
+                        color: Colors.black38,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(responsive.mediumSpacing),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSummaryCard(responsive),
+                  SizedBox(height: responsive.largeSpacing),
+                  _buildReportsList(responsive),
+                ],
+              ),
+            ),
     );
   }
 
@@ -92,11 +150,15 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
     final totalReports = pastReports.length;
     final avgPrice = pastReports.isEmpty
         ? 0.0
-        : pastReports.map((r) => r['price'] as double).reduce((a, b) => a + b) /
+        : pastReports
+                  .map((r) => (r['pricePerKg'] as num?)?.toDouble() ?? 0.0)
+                  .reduce((a, b) => a + b) /
               totalReports;
-    final totalQuantity = pastReports
-        .map((r) => r['quantity'] as int)
-        .reduce((a, b) => a + b);
+    final totalQuantity = pastReports.isEmpty
+        ? 0
+        : pastReports
+              .map((r) => (r['quantity'] as num?)?.toInt() ?? 0)
+              .reduce((a, b) => a + b);
 
     return Container(
       width: double.infinity,
@@ -151,7 +213,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Track your historical price submissions',
+                      'Track the historical price submissions',
                       style: TextStyle(
                         fontSize: responsive.bodyFontSize - 1,
                         color: Colors.black87,
@@ -178,7 +240,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                 child: _buildStatItem(
                   responsive,
                   'Avg Price',
-                  'LKR ${avgPrice.toStringAsFixed(0)}',
+                  'Rs. ${avgPrice.toStringAsFixed(0)}',
                   Icons.attach_money_rounded,
                 ),
               ),
@@ -277,7 +339,15 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
   }
 
   Widget _buildReportCard(Responsive responsive, Map<String, dynamic> report) {
-    final priceColor = _getPriceColor(report['price'] as double);
+    final pricePerKg = (report['pricePerKg'] as num?)?.toDouble() ?? 0.0;
+    final priceColor = const Color(0xFF2E7D32);
+    final quantity = (report['quantity'] as num?)?.toInt() ?? 0;
+    final variety = report['pepperType'] as String? ?? 'N/A';
+    final grade = report['grade'] as String? ?? 'N/A';
+    final gradeColor = _gradeColor(grade);
+    final district = report['district'] as String? ?? 'N/A';
+    final notes = report['notes'] as String? ?? '';
+    final saleDate = report['saleDate'] as String? ?? '';
 
     return Container(
       margin: EdgeInsets.only(bottom: responsive.smallSpacing + 4),
@@ -310,7 +380,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _formatDate(report['date'] as String),
+                      _formatDate(saleDate),
                       style: TextStyle(
                         fontSize: responsive.smallFontSize + 1,
                         color: Colors.black54,
@@ -330,7 +400,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                     border: Border.all(color: priceColor.withOpacity(0.3)),
                   ),
                   child: Text(
-                    'LKR ${(report['price'] as double).toStringAsFixed(2)}',
+                    'LKR ${pricePerKg.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: responsive.bodyFontSize,
                       fontWeight: FontWeight.w800,
@@ -348,7 +418,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        report['variety'] as String,
+                        variety,
                         style: TextStyle(
                           fontSize: responsive.bodyFontSize + 2,
                           fontWeight: FontWeight.w800,
@@ -360,26 +430,51 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                         children: [
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: responsive.smallSpacing,
-                              vertical: 2,
+                              horizontal: responsive.smallSpacing + 4,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: Colors.blue.shade200),
-                            ),
-                            child: Text(
-                              report['grade'] as String,
-                              style: TextStyle(
-                                fontSize: responsive.smallFontSize,
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w700,
+                              gradient: LinearGradient(
+                                colors: [
+                                  gradeColor,
+                                  gradeColor.withOpacity(0.85),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: gradeColor.withOpacity(0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star_rounded,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  grade,
+                                  style: TextStyle(
+                                    fontSize: responsive.smallFontSize + 1,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${report['quantity']} kg',
+                            '$quantity kg',
                             style: TextStyle(
                               fontSize: responsive.smallFontSize + 1,
                               color: Colors.black54,
@@ -398,7 +493,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            report['district'] as String,
+                            district,
                             style: TextStyle(
                               fontSize: responsive.smallFontSize,
                               color: Colors.black45,
@@ -406,7 +501,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                           ),
                         ],
                       ),
-                      if ((report['notes'] as String).isNotEmpty) ...[
+                      if (notes.isNotEmpty) ...[
                         SizedBox(height: responsive.smallSpacing),
                         Container(
                           padding: EdgeInsets.all(responsive.smallSpacing),
@@ -426,7 +521,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  report['notes'] as String,
+                                  notes,
                                   style: TextStyle(
                                     fontSize: responsive.smallFontSize,
                                     color: Colors.black54,
@@ -443,57 +538,32 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                 ),
               ],
             ),
-            SizedBox(height: responsive.smallSpacing),
-            Divider(height: 1, color: Colors.grey.shade200),
-            SizedBox(height: responsive.smallSpacing),
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time_rounded,
-                  size: 12,
-                  color: Colors.black38,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Submitted: ${report['submittedAt']}',
-                  style: TextStyle(
-                    fontSize: responsive.smallFontSize - 1,
-                    color: Colors.black38,
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
     );
   }
 
-  Color _getPriceColor(double price) {
-    if (price >= 4000) {
-      return Colors.green.shade700;
-    } else if (price >= 3500) {
-      return Colors.green.shade600;
-    } else if (price >= 3000) {
-      return Colors.orange.shade700;
-    } else {
-      return Colors.red.shade700;
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return 'N/A';
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return dateStr;
     }
   }
 
-  String _formatDate(String dateStr) {
-    final date = DateTime.parse(dateStr);
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'Today';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
+  Color _gradeColor(String grade) {
+    switch (grade) {
+      case 'Grade 1':
+        return const Color(0xFF1B5E20);
+      case 'Grade 2':
+        return const Color(0xFF0277BD);
+      case 'Grade 3':
+        return const Color(0xFFF57C00);
+      default:
+        return const Color(0xFF2E7D32);
     }
   }
 }

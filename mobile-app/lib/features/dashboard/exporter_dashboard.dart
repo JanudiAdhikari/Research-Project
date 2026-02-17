@@ -1,6 +1,7 @@
 import 'package:CeylonPepper/features/market_forecast/export_price_prediction.dart';
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
+import '../../widgets/profile_screen.dart';
 import '../blockchain/dashboard.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_page.dart';
@@ -72,28 +73,31 @@ class _ExporterDashboardState extends State<ExporterDashboard>
       });
     }
   }
+
   Future<void> _loadUserName() async {
-  try {
-    final user = await _authService.getCurrentUser();
-    if (user != null) {
-      final first = (user['firstName'] ?? user['first_name'] ?? user['name'] ?? '').toString();
-      final last = (user['lastName'] ?? user['last_name'] ?? '').toString();
-      final name = (first + (last.isNotEmpty ? ' $last' : '')).trim();
-      if (mounted && name.isNotEmpty) {
-        setState(() => _userName = name);
-        return;
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user != null) {
+        final first =
+            (user['firstName'] ?? user['first_name'] ?? user['name'] ?? '')
+                .toString();
+        final last = (user['lastName'] ?? user['last_name'] ?? '').toString();
+        final name = (first + (last.isNotEmpty ? ' $last' : '')).trim();
+        if (mounted && name.isNotEmpty) {
+          setState(() => _userName = name);
+          return;
+        }
       }
+      // fallback to Firebase displayName
+      final fb = _authService.currentUser;
+      if (fb != null && fb.displayName != null && fb.displayName!.isNotEmpty) {
+        if (mounted) setState(() => _userName = fb.displayName!);
+      }
+    } catch (e) {
+      // keep fallback name
+      print("Failed to load user name: $e");
     }
-    // fallback to Firebase displayName
-    final fb = _authService.currentUser;
-    if (fb != null && fb.displayName != null && fb.displayName!.isNotEmpty) {
-      if (mounted) setState(() => _userName = fb.displayName!);
-    }
-  } catch (e) {
-    // keep fallback name
-    print("Failed to load user name: $e");
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -271,6 +275,14 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                   ),
                 ),
                 onSelected: (value) async {
+                  if (value == 'profile') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    );
+                    return;
+                  }
+
                   if (value == 'logout') {
                     await _authService.logout();
                     if (!mounted) return;

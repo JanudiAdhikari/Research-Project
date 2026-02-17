@@ -34,7 +34,8 @@ class MyApp extends StatelessWidget {
       title: 'CeylonPepper',
       theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Poppins'),
       // home: error != null ? ErrorScreen(error: error!) : const MainScreen(),
-      home: const NavigationWrapper(),
+      // home: const NavigationWrapper(),
+      home: error != null ? ErrorScreen(error: error!) : const SplashScreen(),
       navigatorObservers: [FirebaseErrorObserver()],
     );
   }

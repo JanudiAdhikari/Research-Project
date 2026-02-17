@@ -5,7 +5,7 @@ const getExportDetailsByCountry = async (req, res) => {
   try {
     const { country, pepper_type, year } = req.query;
     const filter = {};
-
+    // Build filter based on query parameters
     if (country) filter.country = country;
     if (pepper_type) filter.pepper_type = pepper_type;
     if (year) filter.year = parseInt(year);
@@ -43,7 +43,21 @@ const getExportDetailsByCountryById = async (req, res) => {
   }
 };
 
+// Get distinct list of countries
+const getExportCountries = async (req, res) => {
+  try {
+    const countries = await ExportDetailsByCountry.distinct("country").exec();
+    return res.json(countries.sort());
+  } catch (err) {
+    console.error("getExportCountries error:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
+  }
+};
+
 module.exports = {
   getExportDetailsByCountry,
   getExportDetailsByCountryById,
+  getExportCountries,
 };

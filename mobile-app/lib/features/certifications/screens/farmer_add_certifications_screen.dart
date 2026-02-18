@@ -1,13 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
-
-import 'farmer_certification_details_screen.dart';
+import '../models/certification_model.dart';
+import '../services/certification_api.dart';
 
 class FarmerAddCertificationScreen extends StatefulWidget {
-  const FarmerAddCertificationScreen({super.key});
+  final CertificationApi api;
+
+  const FarmerAddCertificationScreen({super.key, required this.api});
 
   @override
   State<FarmerAddCertificationScreen> createState() =>
@@ -17,27 +15,19 @@ class FarmerAddCertificationScreen extends StatefulWidget {
 class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Field 1: Certification Type
   static const _certTypeOptions = <String>['SL-GAP', 'Other'];
-  String? _certificationType; // holds selected / custom final value
+  String? _certificationType;
 
-  // Field 3: Issuing Body
   static const _issuingBodyOptions = <String>[
     'Department of Agriculture Sri Lanka',
     'Other'
   ];
-  String? _issuingBody; // holds selected / custom final value
+  String? _issuingBody;
 
-  // Field 2: Certificate Number
   final _certNumberCtrl = TextEditingController();
 
-  // Field 4/5: Dates
   DateTime? _issueDate;
   DateTime? _expiryDate;
-
-  // Field 6: Attachment
-  File? _attachmentFile;
-  String? _attachmentName;
 
   bool _submitting = false;
 
@@ -82,9 +72,7 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
     return (result == null || result.trim().isEmpty) ? null : result.trim();
   }
 
-  Future<void> _pickDate({
-    required bool isIssueDate,
-  }) async {
+  Future<void> _pickDate({required bool isIssueDate}) async {
     final now = DateTime.now();
     final initial = isIssueDate
         ? (_issueDate ?? now)
@@ -111,9 +99,7 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
     setState(() {
       if (isIssueDate) {
         _issueDate = picked;
-
-        // If expiry is set but now before issue date, clear expiry
-        if (_expiryDate != null && _expiryDate!.isBefore(_issueDate!)) {
+        if (_expiryDate != null && !_expiryDate!.isAfter(_issueDate!)) {
           _expiryDate = null;
         }
       } else {
@@ -129,150 +115,58 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
     return '${d.year}-$mm-$dd';
   }
 
-  Future<void> _pickAttachment() async {
-    // Let user choose PDF via FilePicker, or image via ImagePicker
-    final choice = await showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.picture_as_pdf_outlined),
-              title: const Text('Pick PDF'),
-              onTap: () => Navigator.pop(ctx, 'pdf'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.image_outlined),
-              title: const Text('Pick Image'),
-              onTap: () => Navigator.pop(ctx, 'image'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.close),
-              title: const Text('Cancel'),
-              onTap: () => Navigator.pop(ctx, null),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (choice == null) return;
-
-    try {
-      if (choice == 'pdf') {
-        final result = await FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowedExtensions: const ['pdf'],
-        );
-        if (result == null || result.files.single.path == null) return;
-
-        setState(() {
-          _attachmentFile = File(result.files.single.path!);
-          _attachmentName = result.files.single.name;
-        });
-      } else if (choice == 'image') {
-        final picker = ImagePicker();
-        final XFile? img = await picker.pickImage(
-          source: ImageSource.gallery,
-          imageQuality: 85,
-        );
-        if (img == null) return;
-
-        setState(() {
-          _attachmentFile = File(img.path);
-          _attachmentName = img.name;
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Attachment failed: $e'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  void _removeAttachment() {
-    setState(() {
-      _attachmentFile = null;
-      _attachmentName = null;
-    });
-  }
-
   Future<void> _submit() async {
     if (_formKey.currentState?.validate() != true) return;
 
     if (_issueDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select issue date'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _toast('Please select issue date');
       return;
     }
-
     if (_expiryDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select expiry date'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _toast('Please select expiry date');
       return;
     }
-
-    if (_issueDate != null && _expiryDate != null && _expiryDate!.isBefore(_issueDate!)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Expiry date cannot be before issue date'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    if (!_expiryDate!.isAfter(_issueDate!)) {
+      _toast('Expiry date must be after issue date');
       return;
     }
 
     setState(() => _submitting = true);
 
-    // Frontend only: simulate small delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final created = await widget.api.createCertification(
+        certificationType: _certificationType!.trim(),
+        certificateNumber: _certNumberCtrl.text.trim(),
+        issuingBody: _issuingBody!.trim(),
+        issueDate: _issueDate!,
+        expiryDate: _expiryDate!,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    final data = FarmerCertificationModel(
-      certificationType: _certificationType!,
-      certificateNumber: _certNumberCtrl.text.trim(),
-      issuingBody: _issuingBody!,
-      issueDate: _issueDate!,
-      expiryDate: _expiryDate!,
-      attachmentName: _attachmentName,
-      status: 'Pending',
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Submitted successfully'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 
+      // return to dashboard with created item
+      Navigator.pop<CertificationModel>(context, created);
+    } catch (e) {
+      if (!mounted) return;
+      _toast(e.toString());
+      setState(() => _submitting = false);
+    }
+  }
+
+  void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Submitted successfully'),
-        backgroundColor: Colors.green,
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    setState(() => _submitting = false);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FarmerCertificationDetailsScreen(model: data),
       ),
     );
   }
@@ -298,13 +192,14 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Certification Details',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        )),
+                    Text(
+                      'Certification Details',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 14),
 
-                    // 1) Certification Type dropdown
                     DropdownButtonFormField<String>(
                       value: (_certificationType == null ||
                               _certTypeOptions.contains(_certificationType))
@@ -320,7 +215,7 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
                         ),
                         prefixIcon: const Icon(Icons.verified_outlined),
                       ),
-                      validator: (v) {
+                      validator: (_) {
                         if (_certificationType == null ||
                             _certificationType!.trim().isEmpty) {
                           return 'Required';
@@ -335,38 +230,16 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
                             title: 'Other Certification Type',
                             hint: 'Type certification name',
                           );
-                          if (custom == null) {
-                            // if user cancels, keep current
-                            setState(() {});
-                            return;
-                          }
+                          if (custom == null) return;
                           setState(() => _certificationType = custom);
                         } else {
                           setState(() => _certificationType = val);
                         }
                       },
                     ),
-                    if (_certificationType != null &&
-                        !_certTypeOptions.contains(_certificationType))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline, size: 18, color: Colors.grey.shade600),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Selected: $_certificationType',
-                                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
 
                     const SizedBox(height: 14),
 
-                    // 2) Certificate Number
                     TextFormField(
                       controller: _certNumberCtrl,
                       decoration: InputDecoration(
@@ -382,7 +255,6 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
 
                     const SizedBox(height: 14),
 
-                    // 3) Issuing Body dropdown
                     DropdownButtonFormField<String>(
                       value: (_issuingBody == null ||
                               _issuingBodyOptions.contains(_issuingBody))
@@ -398,7 +270,7 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
                         ),
                         prefixIcon: const Icon(Icons.account_balance_outlined),
                       ),
-                      validator: (v) {
+                      validator: (_) {
                         if (_issuingBody == null || _issuingBody!.trim().isEmpty) {
                           return 'Required';
                         }
@@ -412,37 +284,16 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
                             title: 'Other Issuing Body',
                             hint: 'Type issuing organization',
                           );
-                          if (custom == null) {
-                            setState(() {});
-                            return;
-                          }
+                          if (custom == null) return;
                           setState(() => _issuingBody = custom);
                         } else {
                           setState(() => _issuingBody = val);
                         }
                       },
                     ),
-                    if (_issuingBody != null &&
-                        !_issuingBodyOptions.contains(_issuingBody))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline, size: 18, color: Colors.grey.shade600),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Selected: $_issuingBody',
-                                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
 
                     const SizedBox(height: 14),
 
-                    // 4) Issue Date
                     InkWell(
                       onTap: () => _pickDate(isIssueDate: true),
                       borderRadius: BorderRadius.circular(12),
@@ -467,7 +318,6 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
 
                     const SizedBox(height: 14),
 
-                    // 5) Expiry Date
                     InkWell(
                       onTap: () => _pickDate(isIssueDate: false),
                       borderRadius: BorderRadius.circular(12),
@@ -480,7 +330,9 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
                           prefixIcon: const Icon(Icons.event_available_outlined),
                         ),
                         child: Text(
-                          _expiryDate == null ? 'Select date' : _formatDate(_expiryDate),
+                          _expiryDate == null
+                              ? 'Select date'
+                              : _formatDate(_expiryDate),
                           style: TextStyle(
                             color: _expiryDate == null
                                 ? Colors.grey.shade600
@@ -488,71 +340,6 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // 6) Attachment (optional)
-              _sectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Attachment (Optional)',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        )),
-                    const SizedBox(height: 10),
-
-                    if (_attachmentFile == null)
-                      OutlinedButton.icon(
-                        onPressed: _pickAttachment,
-                        icon: const Icon(Icons.upload_file_outlined),
-                        label: const Text('Upload PDF or Image'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.green.shade700,
-                          side: BorderSide(color: Colors.green.shade200, width: 1.5),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      )
-                    else
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green.shade100),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.insert_drive_file_outlined),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _attachmentName ?? 'Attachment selected',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: _removeAttachment,
-                              icon: const Icon(Icons.close),
-                              tooltip: 'Remove',
-                            )
-                          ],
-                        ),
-                      ),
-
-                    const SizedBox(height: 8),
-                    Text(
-                      'You can attach a photo or PDF for manual verification later.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                     ),
                   ],
                 ),
@@ -609,25 +396,4 @@ class _FarmerAddCertificationScreenState extends State<FarmerAddCertificationScr
       child: child,
     );
   }
-}
-
-/// Simple frontend model (for now)
-class FarmerCertificationModel {
-  final String certificationType;
-  final String certificateNumber;
-  final String issuingBody;
-  final DateTime issueDate;
-  final DateTime expiryDate;
-  final String? attachmentName;
-  final String status;
-
-  FarmerCertificationModel({
-    required this.certificationType,
-    required this.certificateNumber,
-    required this.issuingBody,
-    required this.issueDate,
-    required this.expiryDate,
-    required this.attachmentName,
-    required this.status,
-  });
 }

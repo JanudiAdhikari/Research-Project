@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+import '../../../config/api.dart';
+import '../models/certification_model.dart';
+import '../services/certification_api.dart';
 import 'farmer_add_certifications_screen.dart';
 import 'farmer_certification_details_screen.dart';
 
@@ -13,77 +15,27 @@ class FarmerCertificationsDashboardScreen extends StatefulWidget {
 
 class _FarmerCertificationsDashboardScreenState
     extends State<FarmerCertificationsDashboardScreen> {
-  // Wrap model + submittedOn (frontend only)
-  final List<CertificationItem> _items = [
-    CertificationItem(
-      model: FarmerCertificationModel(
-        certificationType: 'SL-GAP',
-        certificateNumber: 'SLGAP-12345',
-        issuingBody: 'Department of Agriculture Sri Lanka',
-        issueDate: DateTime(2025, 1, 10),
-        expiryDate: DateTime(2026, 1, 10),
-        attachmentName: null,
-        status: 'Pending',
-      ),
-      submittedOn: DateTime(2026, 2, 1),
-    ),
-    CertificationItem(
-      model: FarmerCertificationModel(
-        certificationType: 'Organic',
-        certificateNumber: 'ORG-88990',
-        issuingBody: 'Control Union',
-        issueDate: DateTime(2024, 10, 5),
-        expiryDate: DateTime(2025, 10, 5),
-        attachmentName: 'organic_cert.pdf',
-        status: 'Verified',
-      ),
-      submittedOn: DateTime(2025, 11, 2),
-    ),
-  ];
+  final _searchCtrl = TextEditingController();
+  String _statusFilter = 'All'; // All, Pending, Verified, Rejected, Expired
+  String _sortMode = 'Newest'; // Newest, Oldest, Expiry soon
 
-  // Search + filter + sort
-  final TextEditingController _searchCtrl = TextEditingController();
-  String _statusFilter = 'All';
-  String _sortMode = 'Newest';
+  bool _loading = true;
+  String? _error;
+  List<CertificationModel> _items = [];
+
+  late final CertificationApi _api;
+
+  @override
+  void initState() {
+    super.initState();
+    _api = CertificationApi(baseUrl: ApiConfig.baseUrl);
+    _load();
+  }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _openAdd() async {
-    final created = await Navigator.push<FarmerCertificationModel>(
-      context,
-      MaterialPageRoute(builder: (_) => const FarmerAddCertificationScreen()),
-    );
-
-    if (created != null) {
-      setState(() {
-        _items.insert(
-          0,
-          CertificationItem(model: created, submittedOn: DateTime.now()),
-        );
-      });
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Certificate added'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  void _openDetails(CertificationItem item) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FarmerCertificationDetailsScreen(model: item.model),
-      ),
-    );
   }
 
   String _formatDate(DateTime d) {
@@ -92,67 +44,105 @@ class _FarmerCertificationsDashboardScreenState
     return '${d.year}-$mm-$dd';
   }
 
-  bool _isExpired(DateTime expiry) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final exp = DateTime(expiry.year, expiry.month, expiry.day);
-    return exp.isBefore(today);
+  String _mapUiStatusToApiStatus(String ui) {
+    final s = ui.toLowerCase();
+    if (s == 'pending' || s == 'verified' || s == 'rejected') return s;
+    return 'all';
   }
 
-  bool _expiringSoon(DateTime expiry, {int days = 30}) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final exp = DateTime(expiry.year, expiry.month, expiry.day);
-    if (exp.isBefore(today)) return false;
-    return exp.difference(today).inDays <= days;
+  String _mapUiSortToApiSort(String ui) {
+    final s = ui.toLowerCase();
+    if (s.contains('oldest')) return 'oldest';
+    if (s.contains('expiry')) return 'expiry';
+    return 'newest';
   }
 
-  List<CertificationItem> _filteredItems() {
-    final q = _searchCtrl.text.trim().toLowerCase();
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
-    List<CertificationItem> list = List.of(_items);
+    try {
+      final apiStatus = _mapUiStatusToApiStatus(_statusFilter);
+      final sort = _mapUiSortToApiSort(_sortMode);
 
-    // Derive status if expired
-    String effectiveStatus(CertificationItem it) {
-      if (_isExpired(it.model.expiryDate)) return 'Expired';
-      return it.model.status;
+      final list = await _api.getMyCertifications(
+        status: apiStatus == 'all' ? null : apiStatus,
+        q: _searchCtrl.text.trim().isEmpty ? null : _searchCtrl.text.trim(),
+        sort: sort,
+      );
+
+      // Expired filter is UI-only (backend returns isExpired + effectiveStatus)
+      List<CertificationModel> finalList = list;
+      if (_statusFilter.toLowerCase() == 'expired') {
+        finalList = list.where((e) => e.isExpired).toList();
+      }
+
+      // If status filter is All, keep all including expired
+      if (_statusFilter.toLowerCase() == 'all') {
+        finalList = list;
+      }
+
+      // If user selected Pending/Verified/Rejected, backend already filtered.
+      // For safety, remove expired if user selected Pending etc.
+      if ([
+        'pending',
+        'verified',
+        'rejected',
+      ].contains(_statusFilter.toLowerCase())) {
+        finalList = list.where((e) => !e.isExpired).toList();
+      }
+
+      setState(() {
+        _items = finalList;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
+  }
 
-    // Filter by status
-    if (_statusFilter != 'All') {
-      list = list.where((it) {
-        final s = effectiveStatus(it).toLowerCase();
-        return s == _statusFilter.toLowerCase();
-      }).toList();
+  Future<void> _openAdd() async {
+    final created = await Navigator.push<CertificationModel>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FarmerAddCertificationScreen(api: _api),
+      ),
+    );
+
+    if (created != null) {
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Certificate submitted'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
+  }
 
-    // Search
-    if (q.isNotEmpty) {
-      list = list.where((it) {
-        final m = it.model;
-        final blob =
-            '${m.certificationType} ${m.certificateNumber} ${m.issuingBody} ${m.status}'
-                .toLowerCase();
-        return blob.contains(q);
-      }).toList();
+  Future<void> _openDetails(CertificationModel model) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            FarmerCertificationDetailsScreen(certId: model.id, api: _api),
+      ),
+    );
+
+    if (changed == true) {
+      await _load();
     }
-
-    // Sort
-    if (_sortMode == 'Newest') {
-      list.sort((a, b) => b.submittedOn.compareTo(a.submittedOn));
-    } else if (_sortMode == 'Oldest') {
-      list.sort((a, b) => a.submittedOn.compareTo(b.submittedOn));
-    } else if (_sortMode == 'Expiry soon') {
-      list.sort((a, b) => a.model.expiryDate.compareTo(b.model.expiryDate));
-    }
-
-    return list;
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filteredItems();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Certifications'),
@@ -161,9 +151,9 @@ class _FarmerCertificationsDashboardScreenState
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: 'Add New',
-            onPressed: _openAdd,
-            icon: const Icon(Icons.add_circle_outline),
+            tooltip: 'Refresh',
+            onPressed: _load,
+            icon: const Icon(Icons.refresh),
           ),
         ],
       ),
@@ -181,17 +171,20 @@ class _FarmerCertificationsDashboardScreenState
             child: _buildSearchAndFilters(),
           ),
           const SizedBox(height: 10),
-
           Expanded(
-            child: filtered.isEmpty
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                ? _errorState()
+                : _items.isEmpty
                 ? _emptyState()
                 : ListView.separated(
                     padding: const EdgeInsets.all(16),
-                    itemCount: filtered.length,
+                    itemCount: _items.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
-                      final item = filtered[index];
-                      return _certCard(item, () => _openDetails(item));
+                      final c = _items[index];
+                      return _certCard(c, () => _openDetails(c));
                     },
                   ),
           ),
@@ -205,34 +198,18 @@ class _FarmerCertificationsDashboardScreenState
       children: [
         TextField(
           controller: _searchCtrl,
-          onChanged: (_) => setState(() {}),
+          onSubmitted: (_) => _load(),
           decoration: InputDecoration(
             hintText: 'Search by type, number, issuing body...',
             prefixIcon: const Icon(Icons.search),
-            suffixIcon: _searchCtrl.text.isEmpty
-                ? null
-                : IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _searchCtrl.clear();
-                      setState(() {});
-                    },
-                  ),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.tune),
+              onPressed: _load,
+            ),
             filled: true,
             fillColor: Colors.white,
             contentPadding: const EdgeInsets.symmetric(vertical: 14),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.green.shade100, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.green.shade100, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: Colors.green.shade300, width: 1.8),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
         const SizedBox(height: 10),
@@ -240,24 +217,30 @@ class _FarmerCertificationsDashboardScreenState
           children: [
             Expanded(
               child: _dropdownBox(
-                label: 'Status',
                 value: _statusFilter,
-                items: const ['All', 'Pending', 'Verified', 'Rejected', 'Expired'],
+                items: const [
+                  'All',
+                  'Pending',
+                  'Verified',
+                  'Rejected',
+                  'Expired',
+                ],
                 onChanged: (v) {
                   if (v == null) return;
                   setState(() => _statusFilter = v);
+                  _load();
                 },
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _dropdownBox(
-                label: 'Sort',
                 value: _sortMode,
                 items: const ['Newest', 'Oldest', 'Expiry soon'],
                 onChanged: (v) {
                   if (v == null) return;
                   setState(() => _sortMode = v);
+                  _load();
                 },
               ),
             ),
@@ -268,7 +251,6 @@ class _FarmerCertificationsDashboardScreenState
   }
 
   Widget _dropdownBox({
-    required String label,
     required String value,
     required List<String> items,
     required ValueChanged<String?> onChanged,
@@ -284,61 +266,39 @@ class _FarmerCertificationsDashboardScreenState
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: const Icon(Icons.expand_more),
           items: items
               .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),
           onChanged: onChanged,
-          hint: Text(label),
         ),
       ),
     );
   }
 
-  Widget _emptyState() {
-    // Empty can be because of filters or no items
-    final hasAny = _items.isNotEmpty;
-
+  Widget _errorState() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.verified_outlined, size: 60, color: Colors.grey.shade400),
+            Icon(Icons.error_outline, size: 60, color: Colors.red.shade300),
             const SizedBox(height: 10),
             Text(
-              hasAny ? 'No results found' : 'No certifications added yet',
+              'Failed to load',
               style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w800,
+                color: Colors.grey.shade800,
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              hasAny
-                  ? 'Try changing your search or filters.'
-                  : 'Tap "Add New" to submit your first certificate.',
-              style: TextStyle(color: Colors.grey.shade600),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 14),
+            Text(_error!, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: hasAny
-                  ? () {
-                      _searchCtrl.clear();
-                      setState(() {
-                        _statusFilter = 'All';
-                        _sortMode = 'Newest';
-                      });
-                    }
-                  : _openAdd,
-              icon: Icon(hasAny ? Icons.refresh : Icons.add),
-              label: Text(hasAny ? 'Reset Filters' : 'Add New Certificate'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             ),
           ],
         ),
@@ -346,13 +306,42 @@ class _FarmerCertificationsDashboardScreenState
     );
   }
 
-  Widget _certCard(CertificationItem item, VoidCallback onTap) {
-    final c = item.model;
+  Widget _emptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.verified_outlined,
+              size: 60,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'No certifications found',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: _openAdd,
+              icon: const Icon(Icons.add),
+              label: const Text('Add New Certificate'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    final expired = _isExpired(c.expiryDate);
-    final soon = _expiringSoon(c.expiryDate);
-
-    final effectiveStatus = expired ? 'Expired' : c.status;
+  Widget _certCard(CertificationModel c, VoidCallback onTap) {
+    final displayStatus =
+        c.effectiveStatus; // expired OR pending/verified/rejected
 
     return InkWell(
       onTap: onTap,
@@ -380,7 +369,10 @@ class _FarmerCertificationsDashboardScreenState
                 color: Colors.green.shade50,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.verified_outlined, color: Colors.green.shade700),
+              child: Icon(
+                Icons.verified_outlined,
+                color: Colors.green.shade700,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -395,7 +387,7 @@ class _FarmerCertificationsDashboardScreenState
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
-                      _statusChip(effectiveStatus),
+                      _statusChip(displayStatus),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -417,16 +409,19 @@ class _FarmerCertificationsDashboardScreenState
                     children: [
                       _metaChip(
                         Icons.schedule_outlined,
-                        'Submitted: ${_formatDate(item.submittedOn)}',
+                        'Submitted: ${_formatDate(c.createdAt)}',
                       ),
                       _metaChip(
                         Icons.event_available_outlined,
                         'Expiry: ${_formatDate(c.expiryDate)}',
                       ),
-                      if (!expired && soon)
-                        _metaChip(Icons.warning_amber_outlined, 'Expiring soon'),
-                      if (c.attachmentName != null && c.attachmentName!.isNotEmpty)
-                        _metaChip(Icons.attach_file_outlined, 'Attachment'),
+                      if (c.rejectionReason != null &&
+                          c.rejectionReason!.isNotEmpty &&
+                          c.status == "rejected")
+                        _metaChip(
+                          Icons.info_outline,
+                          'Reason: ${c.rejectionReason}',
+                        ),
                     ],
                   ),
                 ],
@@ -491,20 +486,9 @@ class _FarmerCertificationsDashboardScreenState
         border: Border.all(color: fg.withOpacity(0.3)),
       ),
       child: Text(
-        status,
+        status[0].toUpperCase() + status.substring(1),
         style: TextStyle(fontWeight: FontWeight.w800, color: fg, fontSize: 12),
       ),
     );
   }
-}
-
-/// Frontend wrapper: adds submittedOn without changing your model yet
-class CertificationItem {
-  final FarmerCertificationModel model;
-  final DateTime submittedOn;
-
-  CertificationItem({
-    required this.model,
-    required this.submittedOn,
-  });
 }

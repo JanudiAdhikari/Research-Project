@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
 import '../../services/market_forecast/actual_price_data_service.dart';
+import 'actual_price_data.dart';
 
 class PastPriceReportsScreen extends StatefulWidget {
   const PastPriceReportsScreen({super.key});
@@ -42,6 +43,65 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _deleteReport(String id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Report'),
+        content: const Text('Are you sure you want to delete this report?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        await _service.deleteActualPriceData(id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Report deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _loadReports();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete report: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _navigateToUpdateReport(Map<String, dynamic> report) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ActualPriceData(reportData: report),
+      ),
+    );
+
+    // Reload reports if update was successful
+    if (result == true && mounted) {
+      _loadReports();
     }
   }
 
@@ -534,6 +594,54 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                         ),
                       ],
                     ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: responsive.smallSpacing + 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () => _navigateToUpdateReport(report),
+                  icon: const Icon(Icons.edit_rounded, size: 16),
+                  label: const Text('Update'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2E7D32),
+                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    final id =
+                        report['_id'] as String? ??
+                        report['id'] as String? ??
+                        '';
+                    if (id.isNotEmpty) {
+                      _deleteReport(id);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Cannot delete: Report ID not found'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.delete_rounded, size: 16),
+                  label: const Text('Delete'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                   ),
                 ),
               ],

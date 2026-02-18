@@ -5,7 +5,9 @@ import 'past_price_reports.dart';
 import '../../services/market_forecast/actual_price_data_service.dart';
 
 class ActualPriceData extends StatefulWidget {
-  const ActualPriceData({super.key});
+  final Map<String, dynamic>? reportData;
+
+  const ActualPriceData({super.key, this.reportData});
 
   @override
   State<ActualPriceData> createState() => _ActualPriceDataState();
@@ -20,6 +22,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+
+  // Edit mode
+  String? _reportId;
+  bool get _isEditMode => _reportId != null;
 
   // Dropdown values
   String? _selectedVariety;
@@ -59,6 +65,34 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   String _requiredMessageFor(String label) => '$label $_requiredSuffix';
 
   @override
+  void initState() {
+    super.initState();
+    _loadReportData();
+  }
+
+  void _loadReportData() {
+    if (widget.reportData != null) {
+      final report = widget.reportData!;
+      _reportId = report['_id'] as String? ?? report['id'] as String?;
+      _priceController.text = (report['pricePerKg'] as num?)?.toString() ?? '';
+      _quantityController.text = (report['quantity'] as num?)?.toString() ?? '';
+      _notesController.text = report['notes'] as String? ?? '';
+      _selectedVariety = report['pepperType'] as String?;
+      _selectedGrade = report['grade'] as String?;
+      _selectedDistrict = report['district'] as String?;
+
+      final saleDateStr = report['saleDate'] as String?;
+      if (saleDateStr != null && saleDateStr.isNotEmpty) {
+        try {
+          _selectedDate = DateTime.parse(saleDateStr);
+        } catch (e) {
+          _selectedDate = DateTime.now();
+        }
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _overlayEntry?.remove();
     _priceController.dispose();
@@ -74,7 +108,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Actual Price Details'),
+        title: Text(
+          _isEditMode ? 'Update Price Details' : 'Actual Price Details',
+        ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
       ),
@@ -725,7 +761,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Submit Price Data',
+                    _isEditMode ? 'Update Price Data' : 'Submit Price Data',
                     style: TextStyle(
                       fontSize: responsive.bodyFontSize + 1,
                       fontWeight: FontWeight.w700,
@@ -765,7 +801,14 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       };
 
       try {
-        await _actualPriceDataService.createActualPriceData(payload);
+        if (_isEditMode && _reportId != null) {
+          await _actualPriceDataService.updateActualPriceData(
+            _reportId!,
+            payload,
+          );
+        } else {
+          await _actualPriceDataService.createActualPriceData(payload);
+        }
         if (!mounted) return;
 
         showDialog(
@@ -782,18 +825,23 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                   size: 28,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Success',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
+                Text('Success', style: TextStyle(fontWeight: FontWeight.w700)),
               ],
             ),
-            content: const Text('Record created successfully.'),
+            content: Text(
+              _isEditMode
+                  ? 'Record updated successfully.'
+                  : 'Record created successfully.',
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  _resetForm();
+                  if (_isEditMode) {
+                    Navigator.pop(context, true); // Return to previous screen
+                  } else {
+                    _resetForm();
+                  }
                 },
                 child: const Text('OK'),
               ),
@@ -802,9 +850,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         );
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Create failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isEditMode ? 'Update failed: $e' : 'Create failed: $e',
+            ),
+          ),
+        );
       } finally {
         if (mounted) {
           setState(() {

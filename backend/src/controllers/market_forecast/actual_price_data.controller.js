@@ -84,4 +84,111 @@ const createActualPriceData = async (req, res) => {
   }
 };
 
-module.exports = { getActualPriceData, createActualPriceData };
+// Update an existing record
+const updateActualPriceData = async (req, res) => {
+  try {
+    if (!req.user?.uid) {
+      return res.status(401).json({ message: "No user id" });
+    }
+
+    const { id } = req.params;
+    const {
+      saleDate,
+      pepperType,
+      grade,
+      district,
+      pricePerKg,
+      quantity,
+      notes,
+    } = req.body;
+
+    // Find the record and verify ownership
+    const record = await ActualPriceData.findById(id);
+    if (!record) {
+      return res.status(404).json({ message: "Record not found" });
+    }
+
+    if (record.userId !== req.user?.uid) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this record" });
+    }
+
+    // Validate and update fields
+    if (saleDate) {
+      const parsedDate = new Date(saleDate);
+      if (Number.isNaN(parsedDate.getTime())) {
+        return res.status(400).json({ message: "Invalid saleDate" });
+      }
+      record.saleDate = parsedDate;
+    }
+
+    if (pepperType) record.pepperType = pepperType;
+    if (grade) record.grade = grade;
+    if (district) record.district = district;
+
+    if (pricePerKg !== undefined) {
+      const parsedPrice = Number(pricePerKg);
+      if (!Number.isFinite(parsedPrice)) {
+        return res.status(400).json({ message: "Invalid price" });
+      }
+      record.pricePerKg = parsedPrice;
+    }
+
+    if (quantity !== undefined) {
+      const parsedQuantity = Number(quantity);
+      if (!Number.isFinite(parsedQuantity)) {
+        return res.status(400).json({ message: "Invalid quantity" });
+      }
+      record.quantity = parsedQuantity;
+    }
+
+    if (notes !== undefined) record.notes = notes;
+
+    await record.save();
+    return res.json(record);
+  } catch (err) {
+    console.error("updateActualPriceData error:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
+  }
+};
+
+// Delete a record
+const deleteActualPriceData = async (req, res) => {
+  try {
+    if (!req.user?.uid) {
+      return res.status(401).json({ message: "No user id" });
+    }
+
+    const { id } = req.params;
+
+    // Find the record and verify ownership
+    const record = await ActualPriceData.findById(id);
+    if (!record) {
+      return res.status(404).json({ message: "Record not found" });
+    }
+
+    if (record.userId !== req.user?.uid) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this record" });
+    }
+
+    await ActualPriceData.findByIdAndDelete(id);
+    return res.json({ message: "Record deleted successfully" });
+  } catch (err) {
+    console.error("deleteActualPriceData error:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
+  }
+};
+
+module.exports = {
+  getActualPriceData,
+  createActualPriceData,
+  updateActualPriceData,
+  deleteActualPriceData,
+};

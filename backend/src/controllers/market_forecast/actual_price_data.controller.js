@@ -100,6 +100,7 @@ const updateActualPriceData = async (req, res) => {
       pricePerKg,
       quantity,
       notes,
+      marketplaceProductId,
     } = req.body;
 
     // Find the record and verify ownership
@@ -144,6 +145,10 @@ const updateActualPriceData = async (req, res) => {
     }
 
     if (notes !== undefined) record.notes = notes;
+
+    if (marketplaceProductId !== undefined) {
+      record.marketplaceProductId = marketplaceProductId;
+    }
 
     await record.save();
     return res.json(record);

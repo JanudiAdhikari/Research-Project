@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../utils/responsive.dart';
-import '../../../widgets/bottom_navigation.dart';
+import '../../../utils/responsive.dart';
+import '../../../../widgets/bottom_navigation.dart';
 import 'weekly_price_forecast.dart';
 import 'export_price_trends.dart';
 import 'export_details_by_country.dart';
@@ -157,10 +157,10 @@ class _PriceNavigationState extends State<PriceNavigation>
 
                 SizedBox(height: responsive.mediumSpacing),
 
-                // Fourth Navigation Card: Actual Price Data
+                // Fourth Navigation Card: Real Price Data
                 _buildNavigationCard(
                   responsive,
-                  title: "Actual Market Prices",
+                  title: "Real Market Prices",
                   subtitle: "Enter price details of your pepper batch",
                   icon: Icons.receipt_long_rounded,
                   gradient: LinearGradient(

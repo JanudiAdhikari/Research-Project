@@ -1,4 +1,4 @@
-import 'package:CeylonPepper/features/market_forecast/export_price_prediction.dart';
+import 'package:CeylonPepper/features/market_forecast/screens/export_price_prediction.dart';
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/profile_screen.dart';

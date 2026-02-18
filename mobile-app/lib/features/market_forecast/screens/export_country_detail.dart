@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../utils/responsive.dart';
-import '../../services/market_forecast/export_details_by_country_service.dart';
+import '../../../utils/responsive.dart';
+import '../../../services/market_forecast/export_details_by_country_service.dart';
 
 class ExportCountryDetailScreen extends StatefulWidget {
   final String country;

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
+import '../../widgets/navigation_wrapper.dart';
 import '../auth/login_page.dart';
 import '../dashboard/admin_dashboard.dart';
 import '../dashboard/exporter_dashboard.dart';
@@ -18,7 +19,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-
   late AnimationController _scaleController;
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -104,16 +104,25 @@ class _SplashScreenState extends State<SplashScreen>
         return;
       }
 
-      String role = userData["role"];
+      // String role = userData["role"];
 
-      if (role == "farmer") {
-        _go(const FarmerDashboard());
-      } else if (role == "exporter") {
-        _go(const ExporterDashboard());
-      } else if (role == "admin") {
+      // if (role == "farmer") {
+      //   _go(const FarmerDashboard());
+      // } else if (role == "exporter") {
+      //   _go(const ExporterDashboard());
+      // } else if (role == "admin") {
+      //   _go(const AdminDashboard());
+      // } else {
+      //   _go(const LoginPage());
+      // }
+
+      final String role = (userData["role"] ?? "").toString();
+
+      if (role == "admin") {
         _go(const AdminDashboard());
       } else {
-        _go(const LoginPage());
+        // farmer or exporter (and any unknown non-admin role)
+        _go(const NavigationWrapper());
       }
     });
   }
@@ -148,8 +157,16 @@ class _SplashScreenState extends State<SplashScreen>
     final logoSize = responsive.value(mobile: 100, tablet: 120, desktop: 140);
     final logoPadding = responsive.value(mobile: 16, tablet: 20, desktop: 24);
     final titleFontSize = responsive.value(mobile: 36, tablet: 42, desktop: 48);
-    final subtitleFontSize = responsive.value(mobile: 14, tablet: 16, desktop: 18);
-    final verticalSpacing = responsive.value(mobile: 40, tablet: 50, desktop: 60);
+    final subtitleFontSize = responsive.value(
+      mobile: 14,
+      tablet: 16,
+      desktop: 18,
+    );
+    final verticalSpacing = responsive.value(
+      mobile: 40,
+      tablet: 50,
+      desktop: 60,
+    );
     final loadingSize = responsive.value(mobile: 40, tablet: 45, desktop: 50);
     final particleCount = responsive.isDesktop ? 30 : 20;
     final particleSize = responsive.value(mobile: 4, tablet: 5, desktop: 6);
@@ -218,15 +235,29 @@ class _SplashScreenState extends State<SplashScreen>
                             scale: _scaleAnimation,
                             child: Container(
                               padding: EdgeInsets.all(
-                                responsive.value(mobile: 20, tablet: 24, desktop: 28),
+                                responsive.value(
+                                  mobile: 20,
+                                  tablet: 24,
+                                  desktop: 28,
+                                ),
                               ),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF4CAF50).withOpacity(0.3),
-                                    blurRadius: responsive.value(mobile: 50, tablet: 60, desktop: 70),
-                                    spreadRadius: responsive.value(mobile: 20, tablet: 25, desktop: 30),
+                                    color: const Color(
+                                      0xFF4CAF50,
+                                    ).withOpacity(0.3),
+                                    blurRadius: responsive.value(
+                                      mobile: 50,
+                                      tablet: 60,
+                                      desktop: 70,
+                                    ),
+                                    spreadRadius: responsive.value(
+                                      mobile: 20,
+                                      tablet: 25,
+                                      desktop: 30,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -236,8 +267,14 @@ class _SplashScreenState extends State<SplashScreen>
                                   color: const Color(0xFFE8F5E9),
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: const Color(0xFF4CAF50).withOpacity(0.3),
-                                    width: responsive.value(mobile: 2, tablet: 2.5, desktop: 3),
+                                    color: const Color(
+                                      0xFF4CAF50,
+                                    ).withOpacity(0.3),
+                                    width: responsive.value(
+                                      mobile: 2,
+                                      tablet: 2.5,
+                                      desktop: 3,
+                                    ),
                                   ),
                                 ),
                                 child: ClipOval(
@@ -293,7 +330,9 @@ class _SplashScreenState extends State<SplashScreen>
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontSize: subtitleFontSize,
-                                        color: const Color(0xFF4CAF50).withOpacity(0.7),
+                                        color: const Color(
+                                          0xFF4CAF50,
+                                        ).withOpacity(0.7),
                                         letterSpacing: 1.5,
                                         fontWeight: FontWeight.w400,
                                       ),
@@ -304,7 +343,13 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                           ),
 
-                          SizedBox(height: responsive.value(mobile: 60, tablet: 70, desktop: 80)),
+                          SizedBox(
+                            height: responsive.value(
+                              mobile: 60,
+                              tablet: 70,
+                              desktop: 80,
+                            ),
+                          ),
 
                           // Loading indicator
                           FadeTransition(
@@ -313,7 +358,11 @@ class _SplashScreenState extends State<SplashScreen>
                               width: loadingSize,
                               height: loadingSize,
                               child: CircularProgressIndicator(
-                                strokeWidth: responsive.value(mobile: 3, tablet: 3.5, desktop: 4),
+                                strokeWidth: responsive.value(
+                                  mobile: 3,
+                                  tablet: 3.5,
+                                  desktop: 4,
+                                ),
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   const Color(0xFF4CAF50).withOpacity(0.6),
                                 ),

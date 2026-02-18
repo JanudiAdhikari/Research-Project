@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../utils/responsive.dart';
+import '../../../utils/responsive.dart';
 import 'past_price_reports.dart';
-import '../../services/market_forecast/actual_price_data_service.dart';
+import '../../../services/market_forecast/actual_price_data_service.dart';
+import '../../../services/market_service.dart';
+import '../../../models/market_product.dart';
+import '../widgets/description_info_card.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/date_picker_field.dart';
+import '../widgets/marketplace_prompt_dialog.dart';
 
 class ActualPriceData extends StatefulWidget {
   final Map<String, dynamic>? reportData;
@@ -17,6 +23,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   final _formKey = GlobalKey<FormState>();
   final ActualPriceDataService _actualPriceDataService =
       ActualPriceDataService();
+  final MarketService _marketService = MarketService();
 
   // Form controllers
   final TextEditingController _priceController = TextEditingController();
@@ -25,7 +32,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
 
   // Edit mode
   String? _reportId;
+  String?
+  _newlyCreatedReportId; // Store ID of newly created report for marketplace linking
   bool get _isEditMode => _reportId != null;
+
+  // Store submitted data for marketplace addition
+  Map<String, dynamic>? _lastSubmittedData;
 
   // Dropdown values
   String? _selectedVariety;
@@ -70,6 +82,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     _loadReportData();
   }
 
+  // Load existing report data into form fields if in edit mode
   void _loadReportData() {
     if (widget.reportData != null) {
       final report = widget.reportData!;
@@ -109,7 +122,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          _isEditMode ? 'Update Price Details' : 'Actual Price Details',
+          _isEditMode ? 'Update Price Details' : 'Real Price Details',
         ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
@@ -121,7 +134,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildDescriptionCard(responsive),
+              const DescriptionInfoCard(
+                title: 'Market Price Details',
+                description:
+                    'Enter the actual price details of your pepper batch',
+                icon: Icons.edit_note_rounded,
+              ),
               SizedBox(height: responsive.mediumSpacing),
               _buildViewPastReportsButton(responsive),
               SizedBox(height: responsive.largeSpacing),
@@ -136,71 +154,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
-  Widget _buildDescriptionCard(Responsive responsive) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(responsive.mediumSpacing),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFFE8F5E9), const Color(0xFFC8E6C9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.2),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withOpacity(0.08)),
-            ),
-            child: const Icon(
-              Icons.edit_note_rounded,
-              color: Colors.black87,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Market Price Details',
-                  style: TextStyle(
-                    fontSize: responsive.bodyFontSize + 2,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.black87,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Enter the actual price details of your pepper batch',
-                  style: TextStyle(
-                    fontSize: responsive.bodyFontSize - 1,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // Button to navigate to the Past Sales Reports
   Widget _buildViewPastReportsButton(Responsive responsive) {
     return SizedBox(
       width: double.infinity,
@@ -215,7 +169,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         },
         icon: const Icon(Icons.history_rounded, size: 20),
         label: Text(
-          'View My Past Reports',
+          'View My Past Sales Details',
           style: TextStyle(
             fontSize: responsive.bodyFontSize,
             fontWeight: FontWeight.w600,
@@ -233,6 +187,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
+  // Main form section with all input fields and dropdowns
   Widget _buildFormSection(Responsive responsive) {
     return Container(
       padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -261,7 +216,15 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           SizedBox(height: responsive.mediumSpacing),
 
           // Date Picker
-          _buildDateField(responsive),
+          DatePickerField(
+            label: 'Sale Date',
+            selectedDate: _selectedDate,
+            onDateChanged: (date) {
+              setState(() {
+                _selectedDate = date;
+              });
+            },
+          ),
           SizedBox(height: responsive.mediumSpacing),
 
           // Variety Dropdown
@@ -297,13 +260,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           SizedBox(height: responsive.mediumSpacing),
 
           // Price Input
-          _buildTextField(
-            responsive,
+          CustomTextField(
             controller: _priceController,
             label: 'Price per kg (LKR)',
-            icon: Icons.attach_money_rounded,
-            keyboardType: TextInputType.numberWithOptions(decimal: true),
             hint: 'Enter price per kg',
+            keyboardType: TextInputType.numberWithOptions(decimal: true),
+            showErrors: showErrors,
+            errorColor: _errorColor,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return _requiredMessageFor('Price per kg (LKR)');
@@ -317,18 +280,18 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           SizedBox(height: responsive.mediumSpacing),
 
           // Quantity Input (in kg)
-          _buildTextField(
-            responsive,
+          CustomTextField(
             controller: _quantityController,
             label: 'Quantity (kg)',
-            icon: Icons.scale_rounded,
-            keyboardType: TextInputType.number,
             hint: 'Enter quantity in kg',
+            keyboardType: TextInputType.numberWithOptions(decimal: true),
+            showErrors: showErrors,
+            errorColor: _errorColor,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return _requiredMessageFor('Quantity (kg)');
               }
-              if (int.tryParse(value) == null) {
+              if (double.tryParse(value) == null) {
                 return 'Please enter a valid number';
               }
               return null;
@@ -346,13 +309,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           SizedBox(height: responsive.mediumSpacing),
 
           // Notes Input (Optional)
-          _buildTextField(
-            responsive,
+          CustomTextField(
             controller: _notesController,
             label: 'Additional Notes (Optional)',
-            icon: Icons.note_rounded,
-            keyboardType: TextInputType.multiline,
             hint: 'Any additional information...',
+            keyboardType: TextInputType.multiline,
+            showErrors: showErrors,
+            errorColor: _errorColor,
             maxLines: 3,
           ),
         ],
@@ -360,150 +323,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
-  Widget _buildDateField(Responsive responsive) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Sale Date',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 6),
-        InkWell(
-          onTap: () async {
-            final DateTime? picked = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime(2020),
-              lastDate: DateTime.now(),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: ColorScheme.light(
-                      primary: const Color(0xFF2E7D32),
-                      onPrimary: Colors.white,
-                      surface: Colors.white,
-                      onSurface: Colors.black87,
-                    ),
-                  ),
-                  child: child!,
-                );
-              },
-            );
-            if (picked != null && picked != _selectedDate) {
-              setState(() {
-                _selectedDate = picked;
-              });
-            }
-          },
-          child: Container(
-            padding: EdgeInsets.all(responsive.smallSpacing + 8),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey.shade50,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                  style: TextStyle(
-                    fontSize: responsive.bodyFontSize,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_drop_down_rounded,
-                  color: Colors.grey.shade600,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTextField(
-    Responsive responsive, {
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    required TextInputType keyboardType,
-    required String hint,
-    String? Function(String?)? validator,
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          maxLines: maxLines,
-          validator: validator,
-          autovalidateMode: showErrors
-              ? AutovalidateMode.onUserInteraction
-              : AutovalidateMode.disabled,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(
-              color: Colors.grey.shade400,
-              fontSize: responsive.bodyFontSize - 1,
-            ),
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: const Color(0xFF2E7D32), width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _errorColor),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: _errorColor, width: 2),
-            ),
-            errorStyle: TextStyle(color: _errorColor, fontSize: 12),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: responsive.smallSpacing + 8,
-              vertical: responsive.smallSpacing + 8,
-            ),
-          ),
-          style: TextStyle(
-            fontSize: responsive.bodyFontSize,
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-
+  // Dropdown field builder
   Widget _buildDropdownField(
     Responsive responsive, {
     required String label,
@@ -586,6 +406,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
+  // Custom dropdown field builder
   Widget _buildCustomDropdownField(
     Responsive responsive, {
     required String title,
@@ -669,6 +490,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
+  // Toggle dropdown overlay
   void _toggleDropdown(
     GlobalKey key,
     List<String> items,
@@ -729,6 +551,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     Overlay.of(context).insert(_overlayEntry!);
   }
 
+  // Submit button with loading state and success feedback
   Widget _buildSubmitButton(Responsive responsive) {
     return SizedBox(
       width: double.infinity,
@@ -774,11 +597,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
+  // Handle form submission
   void _handleSubmit() async {
     setState(() {
       showErrors = true;
     });
-
+    // Validate form
     final isFormValid = _formKey.currentState?.validate() ?? false;
     final hasDropdowns =
         _selectedVariety != null &&
@@ -796,7 +620,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         'grade': _selectedGrade,
         'district': _selectedDistrict,
         'pricePerKg': double.parse(_priceController.text.trim()),
-        'quantity': int.parse(_quantityController.text.trim()),
+        'quantity': double.parse(_quantityController.text.trim()),
         if (notes.isNotEmpty) 'notes': notes,
       };
 
@@ -806,48 +630,59 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             _reportId!,
             payload,
           );
+          // Store submitted data for marketplace sync
+          _lastSubmittedData = Map<String, dynamic>.from(payload);
+          // Sync marketplace product with updated details
+          await _syncMarketplaceOnUpdate();
         } else {
-          await _actualPriceDataService.createActualPriceData(payload);
+          final createdReport = await _actualPriceDataService
+              .createActualPriceData(payload);
+          // Capture the newly created report ID for marketplace linking
+          _newlyCreatedReportId =
+              createdReport['_id'] as String? ?? createdReport['id'] as String?;
+          // Store submitted data for marketplace addition
+          _lastSubmittedData = Map<String, dynamic>.from(payload);
         }
         if (!mounted) return;
 
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  Icons.check_circle_rounded,
-                  color: Colors.green.shade600,
-                  size: 28,
+        if (_isEditMode) {
+          // Simple success dialog for updates
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green.shade600,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Success',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+              content: Text('Record updated successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context, true); // Return to previous screen
+                  },
+                  child: const Text('OK'),
                 ),
-                const SizedBox(width: 8),
-                Text('Success', style: TextStyle(fontWeight: FontWeight.w700)),
               ],
             ),
-            content: Text(
-              _isEditMode
-                  ? 'Record updated successfully.'
-                  : 'Record created successfully.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  if (_isEditMode) {
-                    Navigator.pop(context, true); // Return to previous screen
-                  } else {
-                    _resetForm();
-                  }
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+          );
+        } else {
+          // Marketplace prompt for new submissions
+          _showMarketplacePrompt();
+        }
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -867,6 +702,330 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     }
   }
 
+  // Syncs marketplace products with updated price details
+  Future<void> _syncMarketplaceOnUpdate() async {
+    try {
+      if (_lastSubmittedData == null || _selectedVariety == null) {
+        return; // No data to sync
+      }
+
+      // Fetch all marketplace products
+      final products = await _marketService.fetchProducts();
+
+      // Find product with matching pepper variety name
+      MarketProduct? marketProduct;
+      try {
+        marketProduct = products.firstWhere(
+          (p) => p.name.toLowerCase() == _selectedVariety?.toLowerCase(),
+        );
+      } catch (e) {
+        // Product not found in marketplace, which is fine
+        marketProduct = null;
+      }
+
+      if (marketProduct != null && marketProduct.id.isNotEmpty) {
+        // Update the marketplace product with new price and details
+        final updatedData = <String, dynamic>{
+          'name': _lastSubmittedData!['pepperType'],
+          'price': _lastSubmittedData!['pricePerKg'],
+          'unit': 'kg',
+          // Include additional details
+          'quantity': _lastSubmittedData!['quantity'],
+          'grade': _lastSubmittedData!['grade'],
+          'district': _lastSubmittedData!['district'],
+        };
+
+        await _marketService.updateProduct(marketProduct.id, updatedData);
+      }
+    } catch (e) {
+      // Log error without blocking the update process
+      print('Marketplace sync error: $e');
+    }
+  }
+
+  // Show marketplace prompt after successful submission
+  void _showMarketplacePrompt() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => MarketplacePromptDialog(
+        onNoThanks: () {
+          Navigator.pop(context);
+          _resetForm();
+        },
+        onYesAdd: () {
+          Navigator.pop(context);
+          _handleAddToMarketplace();
+        },
+      ),
+    );
+  }
+
+  // Handle adding product to marketplace
+  Future<void> _handleAddToMarketplace() async {
+    if (_lastSubmittedData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text('No data available to add to marketplace')),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      _resetForm();
+      return;
+    }
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: 8,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.white, Colors.grey.shade50],
+            ),
+          ),
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Animated loading icon
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      const Color(0xFF2E7D32).withOpacity(0.1),
+                      const Color(0xFF2E7D32).withOpacity(0.05),
+                    ],
+                  ),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFF2E7D32).withOpacity(0.2),
+                    width: 2,
+                  ),
+                ),
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 4,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      const Color(0xFF2E7D32),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // Main text
+              Text(
+                'Adding to Marketplace',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Subtitle
+              Text(
+                'Your product is being processed...',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // Progress steps
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2E7D32).withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF2E7D32).withOpacity(0.1),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _buildProgressStep(
+                      'Validating Information',
+                      true,
+                      Icons.check_circle,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildProgressStep(
+                      'Adding the Product',
+                      false,
+                      Icons.publish,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Hint text
+              Text(
+                'Please wait while we upload your product',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[500],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      // Prepare marketplace product data
+      final productData = <String, dynamic>{
+        'name': _lastSubmittedData!['pepperType'],
+        'price': _lastSubmittedData!['pricePerKg'],
+        'unit': 'kg',
+      };
+
+      // Create product in marketplace
+      final createdProduct = await _marketService.createProduct(productData);
+
+      // Update report with marketplace product ID (use either existing report ID or newly created one)
+      final reportIdToUpdate = _isEditMode ? _reportId : _newlyCreatedReportId;
+      if (reportIdToUpdate != null && createdProduct.id.isNotEmpty) {
+        await _actualPriceDataService.updateActualPriceData(reportIdToUpdate, {
+          'marketplaceProductId': createdProduct.id,
+        });
+      }
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (!mounted) return;
+
+      // Show success dialog
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green.shade600,
+                    size: 48,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Successfully Added!',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Your product has been added to the marketplace.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Close the success dialog
+                      _resetForm(); // Reset form to allow new entry
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (!mounted) return;
+
+      // Show error snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Failed to add to marketplace: $e')),
+            ],
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      _resetForm();
+    }
+  }
+
+  // Reset form
   void _resetForm() {
     _formKey.currentState?.reset();
     _priceController.clear();
@@ -878,6 +1037,52 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       _selectedDistrict = null;
       _selectedDate = DateTime.now();
       showErrors = false;
+      _newlyCreatedReportId = null;
+      _lastSubmittedData = null;
     });
+  }
+
+  // Build progress step
+  Widget _buildProgressStep(String label, bool isCompleted, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: isCompleted
+                ? const Color(0xFF2E7D32).withOpacity(0.15)
+                : Colors.grey.shade200,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: isCompleted ? const Color(0xFF2E7D32) : Colors.grey.shade400,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isCompleted ? Colors.black87 : Colors.grey[600],
+            ),
+          ),
+        ),
+        if (isCompleted)
+          Icon(Icons.done, size: 18, color: const Color(0xFF2E7D32))
+        else
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.grey.shade400),
+            ),
+          ),
+      ],
+    );
   }
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../utils/responsive.dart';
+import '../../../utils/responsive.dart';
 import 'export_details_by_country.dart';
-import '../../services/auth_service.dart';
-import '../../services/market_forecast/past_export_price_service.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/market_forecast/past_export_price_service.dart';
 
 class ExportPriceTrends extends StatefulWidget {
   const ExportPriceTrends({super.key});

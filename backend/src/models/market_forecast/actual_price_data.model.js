@@ -10,6 +10,7 @@ const actualPriceDataSchema = new mongoose.Schema(
     pricePerKg: { type: Number, required: true },
     quantity: { type: Number, required: true },
     notes: { type: String },
+    marketplaceProductId: { type: String },
   },
   { timestamps: true },
 );

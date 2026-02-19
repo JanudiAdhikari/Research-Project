@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:CeylonPepper/features/market_forecast/navigation.dart';
+import 'package:CeylonPepper/features/market_forecast/screens/navigation.dart';
 import '../disease_detection/screens/home_screen.dart';
 import '../disease_detection/services/weather_service.dart';
 import '../disease_detection/services/location_service.dart';

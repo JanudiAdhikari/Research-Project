@@ -1,7 +1,7 @@
 import 'package:CeylonPepper/features/quality_grading/screens/quality_grading_dashboard.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
-import '../../market_forecast/navigation.dart';
+import '../../market_forecast/screens/navigation.dart';
 import 'batch_details_screen.dart';
 import 'how_it_works_screen.dart';
 

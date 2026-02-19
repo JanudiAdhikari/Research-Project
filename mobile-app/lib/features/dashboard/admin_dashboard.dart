@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
 import '../../utils/localization.dart';
 import '../../utils/language_prefs.dart';
+import '../../services/auth_service.dart';
+import '../auth/login_page.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -16,6 +18,9 @@ class _AdminDashboardState extends State<AdminDashboard>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   String _currentLanguage = 'en';
+  String _userName = 'Admin';
+
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -30,14 +35,14 @@ class _AdminDashboardState extends State<AdminDashboard>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
+
+    _loadUserName();
 
     // Load saved language preference
     LanguagePrefs.getLanguage().then((lang) {
@@ -55,6 +60,7 @@ class _AdminDashboardState extends State<AdminDashboard>
     super.dispose();
   }
 
+  // Switch language and save preference
   void _switchLanguage(String languageCode) {
     setState(() {
       _currentLanguage = languageCode;
@@ -62,273 +68,199 @@ class _AdminDashboardState extends State<AdminDashboard>
     LanguagePrefs.setLanguage(languageCode);
   }
 
+  // Simple translation function
   String _translate(String key) {
     return AppLocalizations.translate(_currentLanguage, key);
+  }
+
+  // Convert string to title case
+  String _titleCase(String s) {
+    final parts = s.trim().split(RegExp(r'\s+'));
+    return parts
+        .map((p) {
+          if (p.isEmpty) return '';
+          final lower = p.toLowerCase();
+          return lower.length == 1
+              ? lower.toUpperCase()
+              : '${lower[0].toUpperCase()}${lower.substring(1)}';
+        })
+        .where((p) => p.isNotEmpty)
+        .join(' ');
+  }
+
+  // Display user name in header
+  Future<void> _loadUserName() async {
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user != null) {
+        final firstRaw =
+            (user['firstName'] ?? user['first_name'] ?? user['name'] ?? '')
+                .toString();
+        final lastRaw = (user['lastName'] ?? user['last_name'] ?? '')
+            .toString();
+        final first = _titleCase(firstRaw);
+        final last = _titleCase(lastRaw);
+        final name = (first + (last.isNotEmpty ? ' $last' : '')).trim();
+        if (mounted && name.isNotEmpty) {
+          setState(() => _userName = name);
+          return;
+        }
+      }
+    } catch (e) {
+      // Keep default "Admin" if error occurs
+    }
+  }
+
+  Color _colorWithOpacity(Color color, double opacity) {
+    return color.withValues(alpha: opacity);
   }
 
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
     final primary = const Color(0xFF2E7D32);
-    final lightGreen = const Color(0xFFE8F5E9);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Language Switch Button
-                Padding(
-                  padding: EdgeInsets.all(responsive.pagePadding),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: primary),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            _languageButton('EN', 'en', responsive),
-                            Container(
-                              width: 1,
-                              height: 24,
-                              color: primary,
-                            ),
-                            _languageButton('සි', 'si', responsive),
-                            Container(
-                              width: 1,
-                              height: 24,
-                              color: primary,
-                            ),
-                            _languageButton('தமிழ்', 'ta', responsive),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await Future.delayed(const Duration(milliseconds: 500));
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  _buildHeader(responsive, primary),
 
-                // Header
-                Container(
-                  padding: responsive.padding(
-                    mobile: const EdgeInsets.fromLTRB(24, 20, 24, 30),
-                    tablet: const EdgeInsets.fromLTRB(32, 24, 32, 36),
-                    desktop: const EdgeInsets.fromLTRB(40, 28, 40, 42),
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [primary, primary.withOpacity(0.85)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(
-                        responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                      ),
-                      bottomRight: Radius.circular(
-                        responsive.value(mobile: 32, tablet: 36, desktop: 40),
-                      ),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primary.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _translate('hello_admin'),
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: responsive.bodyFontSize,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                              ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
-                              Text(
-                                _translate('system_control_panel'),
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: responsive.fontSize(
-                                    mobile: 26,
-                                    tablet: 28,
-                                    desktop: 32,
-                                  ),
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: CircleAvatar(
-                              radius: responsive.value(
-                                mobile: 26,
-                                tablet: 28,
-                                desktop: 32,
-                              ),
-                              backgroundColor: Colors.white,
-                              child: Icon(
-                                Icons.admin_panel_settings,
-                                color: primary,
-                                size: responsive.value(
-                                  mobile: 28,
-                                  tablet: 32,
-                                  desktop: 36,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-                      _systemStatusCard(responsive),
-                    ],
-                  ),
-                ),
+                  ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
-                ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-                // Section Title
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.pagePadding,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
-                        height: responsive.value(mobile: 22, tablet: 24, desktop: 26),
-                        decoration: BoxDecoration(
-                          color: primary,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      ResponsiveSpacing.horizontal(
-                        mobile: 12,
-                        tablet: 14,
-                        desktop: 16,
-                      ),
-                      Text(
-                        _translate('management_tools'),
-                        style: TextStyle(
-                          fontSize: responsive.headingFontSize,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
-
-                // Feature Grid
-                SlideTransition(
-                  position: _slideAnimation,
-                  child: Padding(
+                  // Section Title
+                  Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: responsive.pagePadding,
                     ),
-                    child: ResponsiveBuilder(
-                      mobile: GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.95,
-                        children: _buildFeatureCards(responsive),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: responsive.value(
+                            mobile: 4,
+                            tablet: 5,
+                            desktop: 6,
+                          ),
+                          height: responsive.value(
+                            mobile: 22,
+                            tablet: 24,
+                            desktop: 26,
+                          ),
+                          decoration: BoxDecoration(
+                            color: primary,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        ResponsiveSpacing.horizontal(
+                          mobile: 12,
+                          tablet: 14,
+                          desktop: 16,
+                        ),
+                        Text(
+                          _translate('management_tools'),
+                          style: TextStyle(
+                            fontSize: responsive.headingFontSize,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
+
+                  // Feature Grid
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: responsive.pagePadding,
                       ),
-                      tablet: GridView.count(
-                        crossAxisCount: 3,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 20,
-                        mainAxisSpacing: 20,
-                        childAspectRatio: 0.95,
-                        children: _buildFeatureCards(responsive),
-                      ),
-                      desktop: GridView.count(
-                        crossAxisCount: 6,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 24,
-                        mainAxisSpacing: 24,
-                        childAspectRatio: 0.85,
-                        children: _buildFeatureCards(responsive),
+                      child: ResponsiveBuilder(
+                        mobile: GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 0.95,
+                          children: _buildFeatureCards(responsive),
+                        ),
+                        tablet: GridView.count(
+                          crossAxisCount: 3,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 20,
+                          mainAxisSpacing: 20,
+                          childAspectRatio: 0.95,
+                          children: _buildFeatureCards(responsive),
+                        ),
+                        desktop: GridView.count(
+                          crossAxisCount: 6,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisSpacing: 24,
+                          mainAxisSpacing: 24,
+                          childAspectRatio: 0.85,
+                          children: _buildFeatureCards(responsive),
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
+                  ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
-                // Tips or Notices
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: responsive.pagePadding,
-                  ),
-                  child: Text(
-                    _translate('system_notices'),
-                    style: TextStyle(
-                      fontSize: responsive.headingFontSize,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade900,
+                  // Tips or Notices
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: responsive.pagePadding,
+                    ),
+                    child: Text(
+                      _translate('system_notices'),
+                      style: TextStyle(
+                        fontSize: responsive.headingFontSize,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade900,
+                      ),
                     ),
                   ),
-                ),
 
-                ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
+                  ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
-                _noticeCard(
-                  responsive,
-                  title: _translate('pending_verification'),
-                  icon: Icons.pending_actions_rounded,
-                  color: Colors.deepOrange,
-                ),
-                _noticeCard(
-                  responsive,
-                  title: _translate('server_running'),
-                  icon: Icons.check_circle_rounded,
-                  color: Colors.green,
-                ),
-                _noticeCard(
-                  responsive,
-                  title: _translate('new_registrations'),
-                  icon: Icons.person_add_rounded,
-                  color: Colors.blue,
-                ),
+                  _noticeCard(
+                    responsive,
+                    title: _translate('pending_verification'),
+                    icon: Icons.pending_actions_rounded,
+                    color: Colors.deepOrange,
+                  ),
+                  _noticeCard(
+                    responsive,
+                    title: _translate('server_running'),
+                    icon: Icons.check_circle_rounded,
+                    color: Colors.green,
+                  ),
+                  _noticeCard(
+                    responsive,
+                    title: _translate('new_registrations'),
+                    icon: Icons.person_add_rounded,
+                    color: Colors.blue,
+                  ),
 
-                ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
-              ],
+                  ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
+                ],
+              ),
             ),
           ),
         ),
@@ -336,20 +268,255 @@ class _AdminDashboardState extends State<AdminDashboard>
     );
   }
 
-  Widget _languageButton(String label, String languageCode, Responsive responsive) {
+  /// Build Header
+  Widget _buildHeader(Responsive responsive, Color primary) {
+    return Container(
+      padding: responsive.padding(
+        mobile: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        tablet: const EdgeInsets.fromLTRB(32, 24, 32, 36),
+        desktop: const EdgeInsets.fromLTRB(40, 28, 40, 42),
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primary, _colorWithOpacity(primary, 0.85)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(
+            responsive.value(mobile: 28, tablet: 36, desktop: 40),
+          ),
+          bottomRight: Radius.circular(
+            responsive.value(mobile: 28, tablet: 36, desktop: 40),
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _colorWithOpacity(primary, 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Hello, $_userName 👋",
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontSize: responsive.fontSize(
+                          mobile: 13,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
+                    Text(
+                      _translate('system_control_panel'),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: responsive.fontSize(
+                          mobile: 22,
+                          tablet: 26,
+                          desktop: 30,
+                        ),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // Language Switcher
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: _colorWithOpacity(Colors.white, 0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _languageButton('EN', 'en', responsive, primary),
+                        Container(
+                          width: 1,
+                          height: responsive.value(
+                            mobile: 20,
+                            tablet: 22,
+                            desktop: 24,
+                          ),
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                        _languageButton('සි', 'si', responsive, primary),
+                        Container(
+                          width: 1,
+                          height: responsive.value(
+                            mobile: 20,
+                            tablet: 22,
+                            desktop: 24,
+                          ),
+                          color: Colors.white.withValues(alpha: 0.3),
+                        ),
+                        _languageButton('தமிழ்', 'ta', responsive, primary),
+                      ],
+                    ),
+                  ),
+                  ResponsiveSpacing(mobile: 10, tablet: 12, desktop: 14),
+                  PopupMenuButton<String>(
+                    icon: Container(
+                      padding: EdgeInsets.all(
+                        responsive.value(mobile: 2, tablet: 3, desktop: 4),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: CircleAvatar(
+                        radius: responsive.value(
+                          mobile: 18,
+                          tablet: 22,
+                          desktop: 26,
+                        ),
+                        backgroundColor: _colorWithOpacity(primary, 0.1),
+                        child: Icon(
+                          Icons.person_rounded,
+                          color: primary,
+                          size: responsive.value(
+                            mobile: 20,
+                            tablet: 24,
+                            desktop: 28,
+                          ),
+                        ),
+                      ),
+                    ),
+                    onSelected: (value) async {
+                      if (value == 'logout') {
+                        await AuthService().logout();
+                        if (!mounted) return;
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                          (route) => false,
+                        );
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'profile',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              size: responsive.smallIconSize,
+                            ),
+                            ResponsiveSpacing.horizontal(
+                              mobile: 10,
+                              tablet: 12,
+                              desktop: 14,
+                            ),
+                            Text(_translate('profile')),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'settings',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.settings_outlined,
+                              size: responsive.smallIconSize,
+                            ),
+                            ResponsiveSpacing.horizontal(
+                              mobile: 10,
+                              tablet: 12,
+                              desktop: 14,
+                            ),
+                            Text(_translate('settings')),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuDivider(),
+                      PopupMenuItem(
+                        value: 'logout',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.logout,
+                              color: Colors.red,
+                              size: responsive.smallIconSize,
+                            ),
+                            ResponsiveSpacing.horizontal(
+                              mobile: 10,
+                              tablet: 12,
+                              desktop: 14,
+                            ),
+                            Text(
+                              _translate('logout'),
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
+          _systemStatusCard(responsive),
+        ],
+      ),
+    );
+  }
+
+  // Language Button Widget
+  Widget _languageButton(
+    String label,
+    String languageCode,
+    Responsive responsive,
+    Color primary,
+  ) {
     final isSelected = _currentLanguage == languageCode;
-    final primary = const Color(0xFF2E7D32);
 
     return GestureDetector(
       onTap: () => _switchLanguage(languageCode),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: isSelected ? primary : Colors.transparent,
+        padding: responsive.padding(
+          mobile: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          tablet: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          desktop: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        ),
+        color: isSelected
+            ? Colors.white.withValues(alpha: 0.25)
+            : Colors.transparent,
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : primary,
-            fontWeight: FontWeight.w600,
+            color: Colors.white,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            fontSize: responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
           ),
         ),
       ),
@@ -368,9 +535,7 @@ class _AdminDashboardState extends State<AdminDashboard>
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 16, tablet: 18, desktop: 20),
         ),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-        ),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
       ),
       child: Row(
         children: [
@@ -406,10 +571,7 @@ class _AdminDashboardState extends State<AdminDashboard>
         title: _translate('users_management'),
         icon: Icons.group_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.blue.shade400,
-            Colors.blue.shade700,
-          ],
+          colors: [Colors.blue.shade400, Colors.blue.shade700],
         ),
         onTap: () {},
       ),
@@ -418,10 +580,7 @@ class _AdminDashboardState extends State<AdminDashboard>
         title: _translate('view_reports'),
         icon: Icons.insert_chart_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.teal.shade400,
-            Colors.teal.shade700,
-          ],
+          colors: [Colors.teal.shade400, Colors.teal.shade700],
         ),
         onTap: () {},
       ),
@@ -430,10 +589,7 @@ class _AdminDashboardState extends State<AdminDashboard>
         title: _translate('system_analytics'),
         icon: Icons.analytics_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.orange.shade400,
-            Colors.orange.shade700,
-          ],
+          colors: [Colors.orange.shade400, Colors.orange.shade700],
         ),
         onTap: () {},
       ),
@@ -442,10 +598,7 @@ class _AdminDashboardState extends State<AdminDashboard>
         title: _translate('verify_products'),
         icon: Icons.verified_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.green.shade400,
-            Colors.green.shade700,
-          ],
+          colors: [Colors.green.shade400, Colors.green.shade700],
         ),
         onTap: () {},
       ),
@@ -454,10 +607,7 @@ class _AdminDashboardState extends State<AdminDashboard>
         title: _translate('market_control'),
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.purple.shade400,
-            Colors.purple.shade700,
-          ],
+          colors: [Colors.purple.shade400, Colors.purple.shade700],
         ),
         onTap: () {},
       ),
@@ -466,10 +616,7 @@ class _AdminDashboardState extends State<AdminDashboard>
         title: _translate('blockchain_logs'),
         icon: Icons.link_rounded,
         gradient: LinearGradient(
-          colors: [
-            Colors.red.shade400,
-            Colors.red.shade700,
-          ],
+          colors: [Colors.red.shade400, Colors.red.shade700],
         ),
         onTap: () {},
       ),
@@ -477,12 +624,12 @@ class _AdminDashboardState extends State<AdminDashboard>
   }
 
   Widget _featureCard(
-      Responsive responsive, {
-        required String title,
-        required IconData icon,
-        required Gradient gradient,
-        required Function onTap,
-      }) {
+    Responsive responsive, {
+    required String title,
+    required IconData icon,
+    required Gradient gradient,
+    required Function onTap,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -537,7 +684,11 @@ class _AdminDashboardState extends State<AdminDashboard>
                       child: Icon(
                         icon,
                         color: Colors.white,
-                        size: responsive.value(mobile: 28, tablet: 32, desktop: 36),
+                        size: responsive.value(
+                          mobile: 28,
+                          tablet: 32,
+                          desktop: 36,
+                        ),
                       ),
                     ),
                     const Spacer(),
@@ -567,11 +718,11 @@ class _AdminDashboardState extends State<AdminDashboard>
   }
 
   Widget _noticeCard(
-      Responsive responsive, {
-        required String title,
-        required IconData icon,
-        required Color color,
-      }) {
+    Responsive responsive, {
+    required String title,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
       margin: EdgeInsets.fromLTRB(
         responsive.pagePadding,

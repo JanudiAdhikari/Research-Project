@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import '../../utils/responsive.dart';
+import '../../../utils/responsive.dart';
 import 'weekly_prediction.dart';
 import 'package:intl/intl.dart';
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/responsive.dart';
+import '../../../utils/responsive.dart';
 
 class Recommendations extends StatelessWidget {
   // predictedPrice = forecasted next week's price

@@ -1,7 +1,7 @@
-import 'package:CeylonPepper/features/market_forecast/recommendations.dart';
+import 'package:CeylonPepper/features/market_forecast/screens/recommendations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import '../../utils/responsive.dart';
+import '../../../utils/responsive.dart';
 
 class WeeklyPrediction extends StatelessWidget {
   final String? year;

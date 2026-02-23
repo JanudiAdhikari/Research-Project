@@ -101,15 +101,17 @@ class _FarmerCertificationsDashboardScreenState
       );
 
       List<CertificationModel> finalList = list;
-      if (_statusFilter.toLowerCase() == 'expired') {
+
+      final status = _statusFilter.toLowerCase();
+
+      if (status == 'expired') {
         finalList = list.where((e) => e.isExpired).toList();
-      }
-      if (_statusFilter.toLowerCase() == 'all') {
+      } else if (status == 'all') {
         finalList = list;
-      }
-      if (['pending', 'verified', 'rejected']
-          .contains(_statusFilter.toLowerCase())) {
-        finalList = list.where((e) => !e.isExpired).toList();
+      } else if (['pending', 'verified', 'rejected'].contains(status)) {
+        finalList = list
+            .where((e) => !e.isExpired && e.status == status)
+            .toList();
       }
 
       setState(() {
@@ -141,8 +143,9 @@ class _FarmerCertificationsDashboardScreenState
           content: const Text('Certificate submitted'),
           backgroundColor: _primary,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     }
@@ -189,8 +192,7 @@ class _FarmerCertificationsDashboardScreenState
               child: _loading
                   ? Center(
                       child: CircularProgressIndicator(
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(_primary),
+                        valueColor: AlwaysStoppedAnimation<Color>(_primary),
                       ),
                     )
                   : _error != null
@@ -207,17 +209,29 @@ class _FarmerCertificationsDashboardScreenState
                           child: ListView.separated(
                             padding: EdgeInsets.symmetric(
                               horizontal: responsive.value(
-                                  mobile: 16, tablet: 24, desktop: 32),
+                                mobile: 16,
+                                tablet: 24,
+                                desktop: 32,
+                              ),
                               vertical: responsive.value(
-                                  mobile: 4, tablet: 6, desktop: 8),
+                                mobile: 4,
+                                tablet: 6,
+                                desktop: 8,
+                              ),
                             ),
                             itemCount: _items.length,
                             separatorBuilder: (_, __) => ResponsiveSpacing(
-                                mobile: 12, tablet: 14, desktop: 16),
+                              mobile: 12,
+                              tablet: 14,
+                              desktop: 16,
+                            ),
                             itemBuilder: (context, index) {
                               final c = _items[index];
-                              return _certCard(c, responsive,
-                                  () => _openDetails(c));
+                              return _certCard(
+                                c,
+                                responsive,
+                                () => _openDetails(c),
+                              );
                             },
                           ),
                         ),
@@ -306,7 +320,10 @@ class _FarmerCertificationsDashboardScreenState
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: responsive.fontSize(
-                        mobile: 20, tablet: 24, desktop: 28),
+                      mobile: 20,
+                      tablet: 24,
+                      desktop: 28,
+                    ),
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                   ),
@@ -317,7 +334,10 @@ class _FarmerCertificationsDashboardScreenState
                   style: TextStyle(
                     color: colorWithOpacity(Colors.white, 0.8),
                     fontSize: responsive.fontSize(
-                        mobile: 12, tablet: 13, desktop: 14),
+                      mobile: 12,
+                      tablet: 13,
+                      desktop: 14,
+                    ),
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -370,15 +390,21 @@ class _FarmerCertificationsDashboardScreenState
             controller: _searchCtrl,
             onSubmitted: (_) => _load(),
             style: TextStyle(
-              fontSize:
-                  responsive.fontSize(mobile: 14, tablet: 15, desktop: 16),
+              fontSize: responsive.fontSize(
+                mobile: 14,
+                tablet: 15,
+                desktop: 16,
+              ),
             ),
             decoration: InputDecoration(
               hintText: 'Search by type, number, issuing body...',
               hintStyle: TextStyle(
                 color: Colors.grey[400],
-                fontSize:
-                    responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+                fontSize: responsive.fontSize(
+                  mobile: 13,
+                  tablet: 14,
+                  desktop: 15,
+                ),
               ),
               prefixIcon: Icon(
                 Icons.search_rounded,
@@ -434,7 +460,13 @@ class _FarmerCertificationsDashboardScreenState
               child: _dropdownBox(
                 responsive,
                 value: _statusFilter,
-                items: const ['All', 'Pending', 'Verified', 'Rejected', 'Expired'],
+                items: const [
+                  'All',
+                  'Pending',
+                  'Verified',
+                  'Rejected',
+                  'Expired',
+                ],
                 icon: Icons.filter_list_rounded,
                 onChanged: (v) {
                   if (v == null) return;
@@ -480,10 +512,7 @@ class _FarmerCertificationsDashboardScreenState
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 12, tablet: 14, desktop: 16),
         ),
-        border: Border.all(
-          color: colorWithOpacity(_primary, 0.15),
-          width: 1.5,
-        ),
+        border: Border.all(color: colorWithOpacity(_primary, 0.15), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: colorWithOpacity(Colors.black, 0.04),
@@ -503,23 +532,26 @@ class _FarmerCertificationsDashboardScreenState
           ),
           style: TextStyle(
             color: Colors.grey[800],
-            fontSize:
-                responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+            fontSize: responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
             fontWeight: FontWeight.w600,
           ),
           items: items
-              .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Row(
-                      children: [
-                        Icon(icon,
-                            size: 14,
-                            color: colorWithOpacity(_primary, 0.7)),
-                        const SizedBox(width: 6),
-                        Text(e),
-                      ],
-                    ),
-                  ))
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Row(
+                    children: [
+                      Icon(
+                        icon,
+                        size: 14,
+                        color: colorWithOpacity(_primary, 0.7),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(e),
+                    ],
+                  ),
+                ),
+              )
               .toList(),
           onChanged: onChanged,
         ),
@@ -555,8 +587,11 @@ class _FarmerCertificationsDashboardScreenState
               'Failed to load',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                fontSize:
-                    responsive.fontSize(mobile: 18, tablet: 20, desktop: 22),
+                fontSize: responsive.fontSize(
+                  mobile: 18,
+                  tablet: 20,
+                  desktop: 22,
+                ),
                 color: Colors.grey[800],
               ),
             ),
@@ -566,8 +601,11 @@ class _FarmerCertificationsDashboardScreenState
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey[600],
-                fontSize:
-                    responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+                fontSize: responsive.fontSize(
+                  mobile: 13,
+                  tablet: 14,
+                  desktop: 15,
+                ),
               ),
             ),
             ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
@@ -579,9 +617,16 @@ class _FarmerCertificationsDashboardScreenState
                 backgroundColor: _primary,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(
-                  horizontal:
-                      responsive.value(mobile: 24, tablet: 28, desktop: 32),
-                  vertical: responsive.value(mobile: 14, tablet: 16, desktop: 18),
+                  horizontal: responsive.value(
+                    mobile: 24,
+                    tablet: 28,
+                    desktop: 32,
+                  ),
+                  vertical: responsive.value(
+                    mobile: 14,
+                    tablet: 16,
+                    desktop: 18,
+                  ),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -622,8 +667,11 @@ class _FarmerCertificationsDashboardScreenState
               'No certifications found',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                fontSize:
-                    responsive.fontSize(mobile: 18, tablet: 20, desktop: 22),
+                fontSize: responsive.fontSize(
+                  mobile: 18,
+                  tablet: 20,
+                  desktop: 22,
+                ),
                 color: Colors.grey[800],
               ),
             ),
@@ -632,8 +680,11 @@ class _FarmerCertificationsDashboardScreenState
               'Add your first certificate to get started',
               style: TextStyle(
                 color: Colors.grey[500],
-                fontSize:
-                    responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+                fontSize: responsive.fontSize(
+                  mobile: 13,
+                  tablet: 14,
+                  desktop: 15,
+                ),
               ),
             ),
             ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
@@ -645,9 +696,16 @@ class _FarmerCertificationsDashboardScreenState
                 backgroundColor: _primary,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(
-                  horizontal:
-                      responsive.value(mobile: 24, tablet: 28, desktop: 32),
-                  vertical: responsive.value(mobile: 14, tablet: 16, desktop: 18),
+                  horizontal: responsive.value(
+                    mobile: 24,
+                    tablet: 28,
+                    desktop: 32,
+                  ),
+                  vertical: responsive.value(
+                    mobile: 14,
+                    tablet: 16,
+                    desktop: 18,
+                  ),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -735,7 +793,10 @@ class _FarmerCertificationsDashboardScreenState
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: responsive.fontSize(
-                                  mobile: 14, tablet: 15, desktop: 16),
+                                mobile: 14,
+                                tablet: 15,
+                                desktop: 16,
+                              ),
                               color: Colors.grey[800],
                             ),
                           ),
@@ -753,7 +814,10 @@ class _FarmerCertificationsDashboardScreenState
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: responsive.fontSize(
-                            mobile: 12, tablet: 13, desktop: 14),
+                          mobile: 12,
+                          tablet: 13,
+                          desktop: 14,
+                        ),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -766,7 +830,10 @@ class _FarmerCertificationsDashboardScreenState
                       style: TextStyle(
                         color: Colors.grey[500],
                         fontSize: responsive.fontSize(
-                            mobile: 12, tablet: 13, desktop: 14),
+                          mobile: 12,
+                          tablet: 13,
+                          desktop: 14,
+                        ),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -777,9 +844,15 @@ class _FarmerCertificationsDashboardScreenState
                     // Meta chips
                     Wrap(
                       spacing: responsive.value(
-                          mobile: 6, tablet: 8, desktop: 10),
+                        mobile: 6,
+                        tablet: 8,
+                        desktop: 10,
+                      ),
                       runSpacing: responsive.value(
-                          mobile: 6, tablet: 8, desktop: 10),
+                        mobile: 6,
+                        tablet: 8,
+                        desktop: 10,
+                      ),
                       children: [
                         _metaChip(
                           Icons.schedule_outlined,
@@ -844,8 +917,11 @@ class _FarmerCertificationsDashboardScreenState
           Text(
             text,
             style: TextStyle(
-              fontSize:
-                  responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
+              fontSize: responsive.fontSize(
+                mobile: 11,
+                tablet: 12,
+                desktop: 13,
+              ),
               fontWeight: FontWeight.w600,
               color: Colors.grey[700],
             ),

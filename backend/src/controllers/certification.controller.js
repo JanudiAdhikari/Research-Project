@@ -224,6 +224,11 @@ const updateMyCertification = async (req, res) => {
         .status(400)
         .json({ message: "Only pending certifications can be edited" });
     }
+    if (isExpired(cert.expiryDate)) {
+      return res
+        .status(400)
+        .json({ message: "Expired certifications cannot be edited" });
+    }
 
     const {
       certificationType,
@@ -327,14 +332,10 @@ const deleteMyCertification = async (req, res) => {
       _id: id,
       firebaseUid: req.user.uid,
     });
+
     if (!cert) return res.status(404).json({ message: "Not found" });
 
-    if (cert.status !== "pending") {
-      return res
-        .status(400)
-        .json({ message: "Only pending certifications can be deleted" });
-    }
-
+    // delete attachment if exists
     if (cert.attachment?.publicId) {
       await deleteFromCloudinary({
         publicId: cert.attachment.publicId,
@@ -343,7 +344,8 @@ const deleteMyCertification = async (req, res) => {
     }
 
     await Certification.deleteOne({ _id: id });
-    return res.json({ message: "Deleted" });
+
+    return res.json({ message: "Deleted successfully" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }

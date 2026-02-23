@@ -1,7 +1,9 @@
 import 'dart:io';
+
 import 'package:file_picker/file_picker.dart';
-import 'package:open_filex/open_filex.dart';
 import 'package:flutter/material.dart';
+import 'package:open_filex/open_filex.dart';
+
 import '../models/certification_model.dart';
 import '../services/certification_api.dart';
 import '../../../utils/responsive.dart';
@@ -12,41 +14,51 @@ Color colorWithOpacity(Color c, double opacity) {
   return c.withAlpha(alpha);
 }
 
-class FarmerAddCertificationScreen extends StatefulWidget {
+class FarmerEditCertificationScreen extends StatefulWidget {
   final CertificationApi api;
+  final CertificationModel initial;
 
-  const FarmerAddCertificationScreen({super.key, required this.api});
+  const FarmerEditCertificationScreen({
+    super.key,
+    required this.api,
+    required this.initial,
+  });
 
   @override
-  State<FarmerAddCertificationScreen> createState() =>
-      _FarmerAddCertificationScreenState();
+  State<FarmerEditCertificationScreen> createState() =>
+      _FarmerEditCertificationScreenState();
 }
 
-class _FarmerAddCertificationScreenState
-    extends State<FarmerAddCertificationScreen>
+class _FarmerEditCertificationScreenState
+    extends State<FarmerEditCertificationScreen>
     with SingleTickerProviderStateMixin {
   static const Color _primary = Color(0xFF2E7D32);
 
   final _formKey = GlobalKey<FormState>();
 
+  // Match Add page options
   static const _certTypeOptions = <String>['SL-GAP', 'Other'];
-  String? _certificationType;
-
   static const _issuingBodyOptions = <String>[
     'Department of Agriculture Sri Lanka',
     'Other',
   ];
+
+  String? _certificationType;
   String? _issuingBody;
 
-  final _certNumberCtrl = TextEditingController();
+  late final TextEditingController _certNumberCtrl;
 
   DateTime? _issueDate;
   DateTime? _expiryDate;
-  File? _attachmentFile;
+
+  // Attachment like Add page + remove existing logic
+  File? _attachmentFile; // newly picked file
   String? _attachmentName;
   bool _attachmentIsPdf = false;
 
-  bool _submitting = false;
+  bool _removeExistingAttachment = false;
+
+  bool _saving = false;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -55,6 +67,14 @@ class _FarmerAddCertificationScreenState
   @override
   void initState() {
     super.initState();
+
+    final c = widget.initial;
+    _certificationType = c.certificationType;
+    _issuingBody = c.issuingBody;
+    _certNumberCtrl = TextEditingController(text: c.certificateNumber);
+    _issueDate = c.issueDate;
+    _expiryDate = c.expiryDate;
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 700),
       vsync: this,
@@ -64,8 +84,9 @@ class _FarmerAddCertificationScreenState
     );
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
-          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-        );
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
     _animationController.forward();
   }
 
@@ -74,6 +95,13 @@ class _FarmerAddCertificationScreenState
     _certNumberCtrl.dispose();
     _animationController.dispose();
     super.dispose();
+  }
+
+  String _formatDate(DateTime? d) {
+    if (d == null) return '';
+    final mm = d.month.toString().padLeft(2, '0');
+    final dd = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$mm-$dd';
   }
 
   Future<String?> _showOtherInputDialog({
@@ -158,9 +186,8 @@ class _FarmerAddCertificationScreenState
       firstDate: DateTime(now.year - 10),
       lastDate: DateTime(now.year + 20),
       builder: (ctx, child) => Theme(
-        data: Theme.of(
-          ctx,
-        ).copyWith(colorScheme: ColorScheme.fromSeed(seedColor: _primary)),
+        data: Theme.of(ctx)
+            .copyWith(colorScheme: ColorScheme.fromSeed(seedColor: _primary)),
         child: child!,
       ),
     );
@@ -200,6 +227,9 @@ class _FarmerAddCertificationScreenState
         _attachmentFile = file;
         _attachmentName = name;
         _attachmentIsPdf = ext == 'pdf';
+
+        // if user picks a new file, do NOT remove existing
+        _removeExistingAttachment = false;
       });
     } catch (e) {
       _toast("File pick failed: $e");
@@ -207,10 +237,21 @@ class _FarmerAddCertificationScreenState
   }
 
   void _removeAttachment() {
+    final hasExisting = widget.initial.attachment.hasFile;
+
     setState(() {
-      _attachmentFile = null;
-      _attachmentName = null;
-      _attachmentIsPdf = false;
+      if (_attachmentFile != null) {
+        // user only cancels the new selection
+        _attachmentFile = null;
+        _attachmentName = null;
+        _attachmentIsPdf = false;
+        _removeExistingAttachment = false;
+      } else if (hasExisting) {
+        // mark existing attachment for removal on save
+        _removeExistingAttachment = true;
+      } else {
+        _removeExistingAttachment = false;
+      }
     });
   }
 
@@ -219,14 +260,7 @@ class _FarmerAddCertificationScreenState
     await OpenFilex.open(_attachmentFile!.path);
   }
 
-  String _formatDate(DateTime? d) {
-    if (d == null) return '';
-    final mm = d.month.toString().padLeft(2, '0');
-    final dd = d.day.toString().padLeft(2, '0');
-    return '${d.year}-$mm-$dd';
-  }
-
-  Future<void> _submit() async {
+  Future<void> _save() async {
     if (_formKey.currentState?.validate() != true) return;
 
     if (_issueDate == null) {
@@ -242,36 +276,26 @@ class _FarmerAddCertificationScreenState
       return;
     }
 
-    setState(() => _submitting = true);
+    setState(() => _saving = true);
 
     try {
-      final created = await widget.api.createCertification(
+      await widget.api.updateCertification(
+        widget.initial.id,
         certificationType: _certificationType!.trim(),
         certificateNumber: _certNumberCtrl.text.trim(),
         issuingBody: _issuingBody!.trim(),
         issueDate: _issueDate!,
         expiryDate: _expiryDate!,
-        attachmentFile: _attachmentFile,
+        removeAttachment: _attachmentFile != null ? false : _removeExistingAttachment,
+        newAttachmentFile: _attachmentFile,
       );
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Submitted successfully'),
-          backgroundColor: _primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-
-      Navigator.pop<CertificationModel>(context, created);
+      Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
       _toast(e.toString());
-      setState(() => _submitting = false);
+      setState(() => _saving = false);
     }
   }
 
@@ -289,16 +313,23 @@ class _FarmerAddCertificationScreenState
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
+    final initial = widget.initial;
+
+    final raw = (initial.attachment.originalName ?? '').trim();
+    final currentName = raw.isNotEmpty
+        ? raw
+        : (initial.attachment.isPdf ? 'Document' : 'Image');
+
+    // Determine if UI has any file to show
+    final hasPicked = _attachmentFile != null;
+    final hasExisting = initial.attachment.hasFile && !_removeExistingAttachment;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: Column(
           children: [
-            // Header matching dashboard style
             _buildHeader(responsive),
-
-            // Scrollable form content
             Expanded(
               child: FadeTransition(
                 opacity: _fadeAnimation,
@@ -313,33 +344,24 @@ class _FarmerAddCertificationScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Section label
                           _buildSectionTitle(
                             responsive,
                             'Certification Details',
                             Icons.verified_outlined,
                           ),
 
-                          ResponsiveSpacing(
-                            mobile: 16,
-                            tablet: 20,
-                            desktop: 24,
-                          ),
+                          ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
-                          // Form card
                           _sectionCard(
                             responsive,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Certification type dropdown
+                                // Certification Type dropdown (same as add)
                                 _buildDropdown(
                                   responsive,
-                                  value:
-                                      (_certificationType == null ||
-                                          _certTypeOptions.contains(
-                                            _certificationType,
-                                          ))
+                                  value: (_certificationType == null ||
+                                          _certTypeOptions.contains(_certificationType))
                                       ? _certificationType
                                       : 'Other',
                                   items: _certTypeOptions,
@@ -355,53 +377,36 @@ class _FarmerAddCertificationScreenState
                                   onChanged: (val) async {
                                     if (val == null) return;
                                     if (val == 'Other') {
-                                      final custom =
-                                          await _showOtherInputDialog(
-                                            title: 'Other Certification Type',
-                                            hint: 'Type certification name',
-                                          );
-                                      if (custom == null) return;
-                                      setState(
-                                        () => _certificationType = custom,
+                                      final custom = await _showOtherInputDialog(
+                                        title: 'Other Certification Type',
+                                        hint: 'Type certification name',
                                       );
+                                      if (custom == null) return;
+                                      setState(() => _certificationType = custom);
                                     } else {
                                       setState(() => _certificationType = val);
                                     }
                                   },
                                 ),
 
-                                ResponsiveSpacing(
-                                  mobile: 14,
-                                  tablet: 16,
-                                  desktop: 18,
-                                ),
+                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
 
-                                // Certificate number
                                 _buildTextField(
                                   responsive,
                                   controller: _certNumberCtrl,
                                   label: 'Certificate Number',
                                   icon: Icons.confirmation_number_outlined,
                                   validator: (v) =>
-                                      (v == null || v.trim().isEmpty)
-                                      ? 'Required'
-                                      : null,
+                                      (v == null || v.trim().isEmpty) ? 'Required' : null,
                                 ),
 
-                                ResponsiveSpacing(
-                                  mobile: 14,
-                                  tablet: 16,
-                                  desktop: 18,
-                                ),
+                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
 
-                                // Issuing body dropdown
+                                // Issuing Body dropdown (same as add)
                                 _buildDropdown(
                                   responsive,
-                                  value:
-                                      (_issuingBody == null ||
-                                          _issuingBodyOptions.contains(
-                                            _issuingBody,
-                                          ))
+                                  value: (_issuingBody == null ||
+                                          _issuingBodyOptions.contains(_issuingBody))
                                       ? _issuingBody
                                       : 'Other',
                                   items: _issuingBodyOptions,
@@ -417,11 +422,10 @@ class _FarmerAddCertificationScreenState
                                   onChanged: (val) async {
                                     if (val == null) return;
                                     if (val == 'Other') {
-                                      final custom =
-                                          await _showOtherInputDialog(
-                                            title: 'Other Issuing Body',
-                                            hint: 'Type issuing organization',
-                                          );
+                                      final custom = await _showOtherInputDialog(
+                                        title: 'Other Issuing Body',
+                                        hint: 'Type issuing organization',
+                                      );
                                       if (custom == null) return;
                                       setState(() => _issuingBody = custom);
                                     } else {
@@ -430,13 +434,8 @@ class _FarmerAddCertificationScreenState
                                   },
                                 ),
 
-                                ResponsiveSpacing(
-                                  mobile: 14,
-                                  tablet: 16,
-                                  desktop: 18,
-                                ),
+                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
 
-                                // Issue date picker
                                 _buildDateField(
                                   responsive,
                                   label: 'Issue Date',
@@ -445,13 +444,8 @@ class _FarmerAddCertificationScreenState
                                   onTap: () => _pickDate(isIssueDate: true),
                                 ),
 
-                                ResponsiveSpacing(
-                                  mobile: 14,
-                                  tablet: 16,
-                                  desktop: 18,
-                                ),
+                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
 
-                                // Expiry date picker
                                 _buildDateField(
                                   responsive,
                                   label: 'Expiry Date',
@@ -460,30 +454,25 @@ class _FarmerAddCertificationScreenState
                                   onTap: () => _pickDate(isIssueDate: false),
                                 ),
 
-                                ResponsiveSpacing(
-                                  mobile: 14,
-                                  tablet: 16,
-                                  desktop: 18,
+                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
+
+                                // Attachment field styled like Add page, but shows current too
+                                _buildAttachmentField(
+                                  responsive,
+                                  currentName: currentName,
+                                  currentIsPdf: initial.attachment.isPdf,
+                                  hasExisting: hasExisting,
+                                  hasPicked: hasPicked,
                                 ),
-                                _buildAttachmentField(responsive),
                               ],
                             ),
                           ),
 
-                          ResponsiveSpacing(
-                            mobile: 24,
-                            tablet: 28,
-                            desktop: 32,
-                          ),
+                          ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
-                          // Submit button
-                          _buildSubmitButton(responsive),
+                          _buildSaveButton(responsive),
 
-                          ResponsiveSpacing(
-                            mobile: 24,
-                            tablet: 32,
-                            desktop: 40,
-                          ),
+                          ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
                         ],
                       ),
                     ),
@@ -528,9 +517,8 @@ class _FarmerAddCertificationScreenState
       ),
       child: Row(
         children: [
-          // Back button
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () => Navigator.pop(context, false),
             child: Container(
               padding: EdgeInsets.all(
                 responsive.value(mobile: 8, tablet: 10, desktop: 12),
@@ -546,56 +534,31 @@ class _FarmerAddCertificationScreenState
               ),
             ),
           ),
-
           ResponsiveSpacing.horizontal(mobile: 14, tablet: 16, desktop: 18),
-
-          // Title + subtitle
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Add Certification',
+                  'Edit Certification',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: responsive.fontSize(
-                      mobile: 20,
-                      tablet: 24,
-                      desktop: 28,
-                    ),
+                    fontSize:
+                        responsive.fontSize(mobile: 20, tablet: 24, desktop: 28),
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Fill in the details below',
+                  'Update details and save',
                   style: TextStyle(
                     color: colorWithOpacity(Colors.white, 0.8),
-                    fontSize: responsive.fontSize(
-                      mobile: 12,
-                      tablet: 13,
-                      desktop: 14,
-                    ),
+                    fontSize:
+                        responsive.fontSize(mobile: 12, tablet: 13, desktop: 14),
                   ),
                 ),
               ],
-            ),
-          ),
-
-          // Decorative icon
-          Container(
-            padding: EdgeInsets.all(
-              responsive.value(mobile: 10, tablet: 12, desktop: 14),
-            ),
-            decoration: BoxDecoration(
-              color: colorWithOpacity(Colors.white, 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.workspace_premium_rounded,
-              color: Colors.white,
-              size: responsive.value(mobile: 22, tablet: 24, desktop: 26),
             ),
           ),
         ],
@@ -623,11 +586,8 @@ class _FarmerAddCertificationScreenState
           child: Text(
             title,
             style: TextStyle(
-              fontSize: responsive.fontSize(
-                mobile: 17,
-                tablet: 20,
-                desktop: 22,
-              ),
+              fontSize:
+                  responsive.fontSize(mobile: 17, tablet: 20, desktop: 22),
               fontWeight: FontWeight.w700,
               color: Colors.black87,
             ),
@@ -828,9 +788,8 @@ class _FarmerAddCertificationScreenState
             horizontal: 12,
           ),
           filled: hasDate,
-          fillColor: hasDate
-              ? colorWithOpacity(_primary, 0.04)
-              : Colors.transparent,
+          fillColor:
+              hasDate ? colorWithOpacity(_primary, 0.04) : Colors.transparent,
         ),
         child: Text(
           hasDate ? _formatDate(date) : 'Select date',
@@ -844,99 +803,24 @@ class _FarmerAddCertificationScreenState
     );
   }
 
-  Widget _buildSubmitButton(Responsive responsive) {
-    return SizedBox(
-      width: double.infinity,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _submitting ? null : _submit,
-          borderRadius: BorderRadius.circular(
-            responsive.value(mobile: 14, tablet: 16, desktop: 18),
-          ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(
-              vertical: responsive.value(mobile: 16, tablet: 18, desktop: 20),
-            ),
-            decoration: BoxDecoration(
-              gradient: _submitting
-                  ? null
-                  : LinearGradient(
-                      colors: [_primary, colorWithOpacity(_primary, 0.85)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-              color: _submitting ? Colors.grey[300] : null,
-              borderRadius: BorderRadius.circular(
-                responsive.value(mobile: 14, tablet: 16, desktop: 18),
-              ),
-              boxShadow: _submitting
-                  ? []
-                  : [
-                      BoxShadow(
-                        color: colorWithOpacity(_primary, 0.4),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (_submitting)
-                  SizedBox(
-                    width: responsive.value(
-                      mobile: 18,
-                      tablet: 20,
-                      desktop: 22,
-                    ),
-                    height: responsive.value(
-                      mobile: 18,
-                      tablet: 20,
-                      desktop: 22,
-                    ),
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.grey[600]!,
-                      ),
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    color: Colors.white,
-                    size: responsive.value(mobile: 20, tablet: 22, desktop: 24),
-                  ),
-                ResponsiveSpacing.horizontal(
-                  mobile: 10,
-                  tablet: 12,
-                  desktop: 14,
-                ),
-                Text(
-                  _submitting ? 'Submitting...' : 'Submit Certificate',
-                  style: TextStyle(
-                    color: _submitting ? Colors.grey[600] : Colors.white,
-                    fontSize: responsive.fontSize(
-                      mobile: 15,
-                      tablet: 16,
-                      desktop: 17,
-                    ),
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _buildAttachmentField(
+    Responsive responsive, {
+    required String currentName,
+    required bool currentIsPdf,
+    required bool hasExisting,
+    required bool hasPicked,
+  }) {
+    // same UI as Add page
+    final hasFile = hasPicked;
 
-  Widget _buildAttachmentField(Responsive responsive) {
-    final hasFile = _attachmentFile != null;
+    // what to display
+    final displayName = hasPicked
+        ? (_attachmentName ?? 'Selected file')
+        : hasExisting
+            ? currentName
+            : 'No attachment';
+
+    final displayIsPdf = hasPicked ? _attachmentIsPdf : currentIsPdf;
 
     return Container(
       width: double.infinity,
@@ -976,16 +860,16 @@ class _FarmerAddCertificationScreenState
                 ),
               ),
               TextButton.icon(
-                onPressed: _pickAttachment,
+                onPressed: _saving ? null : _pickAttachment,
                 icon: const Icon(Icons.upload_file),
-                label: Text(hasFile ? "Replace" : "Upload"),
+                label: Text(hasPicked ? "Replace" : "Upload"),
                 style: TextButton.styleFrom(foregroundColor: _primary),
               ),
             ],
           ),
           const SizedBox(height: 10),
 
-          if (!hasFile)
+          if (!hasPicked && !hasExisting && !_removeExistingAttachment)
             Text(
               "Upload JPG, PNG, WEBP, or PDF (max 10MB).",
               style: TextStyle(
@@ -995,6 +879,38 @@ class _FarmerAddCertificationScreenState
                   tablet: 13,
                   desktop: 13,
                 ),
+              ),
+            )
+          else if (_removeExistingAttachment && !hasPicked)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colorWithOpacity(Colors.red, 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.delete_outline, color: Colors.red.shade600),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "Attachment will be removed (Save to apply)",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: "Undo",
+                    onPressed: _saving
+                        ? null
+                        : () => setState(() => _removeExistingAttachment = false),
+                    icon: const Icon(Icons.undo),
+                    color: Colors.red.shade600,
+                  ),
+                ],
               ),
             )
           else
@@ -1008,7 +924,7 @@ class _FarmerAddCertificationScreenState
               child: Row(
                 children: [
                   Icon(
-                    _attachmentIsPdf
+                    displayIsPdf
                         ? Icons.picture_as_pdf_rounded
                         : Icons.image_rounded,
                     color: _primary,
@@ -1016,7 +932,7 @@ class _FarmerAddCertificationScreenState
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      _attachmentName ?? "Selected file",
+                      displayName,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -1027,13 +943,13 @@ class _FarmerAddCertificationScreenState
                   ),
                   IconButton(
                     tooltip: "Preview",
-                    onPressed: _previewPickedAttachment,
+                    onPressed: (_saving || !hasPicked) ? null : _previewPickedAttachment,
                     icon: const Icon(Icons.visibility_outlined),
                     color: _primary,
                   ),
                   IconButton(
                     tooltip: "Remove",
-                    onPressed: _removeAttachment,
+                    onPressed: _saving ? null : _removeAttachment,
                     icon: const Icon(Icons.delete_outline),
                     color: Colors.redAccent,
                   ),
@@ -1041,6 +957,83 @@ class _FarmerAddCertificationScreenState
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton(Responsive responsive) {
+    return SizedBox(
+      width: double.infinity,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _saving ? null : _save,
+          borderRadius: BorderRadius.circular(
+            responsive.value(mobile: 14, tablet: 16, desktop: 18),
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(
+              vertical: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+            ),
+            decoration: BoxDecoration(
+              gradient: _saving
+                  ? null
+                  : LinearGradient(
+                      colors: [_primary, colorWithOpacity(_primary, 0.85)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+              color: _saving ? Colors.grey[300] : null,
+              borderRadius: BorderRadius.circular(
+                responsive.value(mobile: 14, tablet: 16, desktop: 18),
+              ),
+              boxShadow: _saving
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: colorWithOpacity(_primary, 0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_saving)
+                  SizedBox(
+                    width:
+                        responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                    height:
+                        responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.save_outlined,
+                    color: Colors.white,
+                    size: responsive.value(mobile: 20, tablet: 22, desktop: 24),
+                  ),
+                ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
+                Text(
+                  _saving ? 'Saving...' : 'Save Changes',
+                  style: TextStyle(
+                    color: _saving ? Colors.grey[600] : Colors.white,
+                    fontSize: responsive.fontSize(
+                        mobile: 15, tablet: 16, desktop: 17),
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

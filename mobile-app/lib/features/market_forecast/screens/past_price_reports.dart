@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import '../../../services/market_forecast/actual_price_data_service.dart';
 import '../widgets/summary_statistics_card.dart';
-import '../widgets/reports_list_header.dart';
 import '../widgets/price_report_card.dart';
 import '../widgets/empty_reports_view.dart';
 import '../widgets/error_view.dart';
@@ -20,6 +19,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
   List<Map<String, dynamic>> pastReports = [];
   bool _isLoading = true;
   String? _errorMessage;
+  bool _sortAscending = false;
 
   @override
   void initState() {
@@ -39,6 +39,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
       if (mounted) {
         setState(() {
           pastReports = records;
+          _sortReports();
           _isLoading = false;
         });
       }
@@ -50,6 +51,45 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
         });
       }
     }
+  }
+
+  // Sort reports by date (most recent first by default)
+  void _sortReports() {
+    pastReports.sort((a, b) {
+      DateTime? dateA = _parseDate(
+        a['date'] ?? a['createdAt'] ?? a['reportDate'],
+      );
+      DateTime? dateB = _parseDate(
+        b['date'] ?? b['createdAt'] ?? b['reportDate'],
+      );
+
+      if (dateA == null || dateB == null) return 0;
+
+      return _sortAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
+    });
+  }
+
+  // Helper method to parse date from various formats
+  DateTime? _parseDate(dynamic dateValue) {
+    if (dateValue == null) return null;
+
+    if (dateValue is DateTime) return dateValue;
+    if (dateValue is String) {
+      try {
+        return DateTime.parse(dateValue);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Toggle sort order
+  void _toggleSortOrder() {
+    setState(() {
+      _sortAscending = !_sortAscending;
+      _sortReports();
+    });
   }
 
   // Delete a report with confirmation prompt
@@ -144,7 +184,27 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                 children: [
                   SummaryStatisticsCard(reports: pastReports),
                   SizedBox(height: responsive.largeSpacing),
-                  ReportsListHeader(reportCount: pastReports.length),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Recent Sales',
+                        style: TextStyle(
+                          fontSize: responsive.bodyFontSize + 2,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.sort),
+                        tooltip: _sortAscending
+                            ? 'Oldest first'
+                            : 'Newest first',
+                        onPressed: _toggleSortOrder,
+                      ),
+                    ],
+                  ),
                   SizedBox(height: responsive.smallSpacing + 4),
                   ListView.builder(
                     shrinkWrap: true,

@@ -22,18 +22,6 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
   final TextEditingController _batchWeightKgController = TextEditingController();
   final TextEditingController _batchWeightGController = TextEditingController();
 
-  final Map<String, bool> _certificates = {
-    'GAP': false,
-    'Certificate of Origin (COO)': false,
-    'Quarantine Certificate': false,
-    'Quality Certificate': false,
-    'ISO 22000': false,
-    'HACCP (SLS 1266)': false,
-    'FSSC 22000': false,
-    'Organic Certification': false,
-    'Fair Trade': false,
-  };
-
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -230,86 +218,6 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                             icon: Icons.wb_sunny_rounded,
                             items: const ['Sun Dried', 'Machine Dried'],
                             onChanged: (value) => setState(() => _dryingMethod = value!),
-                          ),
-
-                          ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
-                          // Certificates Section
-                          _buildSectionHeader(
-                            responsive,
-                            primary,
-                            'Certificates & Compliance',
-                            Icons.verified_rounded,
-                          ),
-
-                          ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.shade200),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: _certificates.keys.map((cert) {
-                                final index = _certificates.keys.toList().indexOf(cert);
-                                final isLast = index == _certificates.length - 1;
-
-                                return Column(
-                                  children: [
-                                    CheckboxListTile(
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: responsive.value(
-                                          mobile: 16,
-                                          tablet: 18,
-                                          desktop: 20,
-                                        ),
-                                        vertical: 4,
-                                      ),
-                                      title: Text(
-                                        cert,
-                                        style: TextStyle(
-                                          fontSize: responsive.bodyFontSize,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.grey[800],
-                                        ),
-                                      ),
-                                      value: _certificates[cert],
-                                      activeColor: primary,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _certificates[cert] = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                    if (!isLast)
-                                      Divider(
-                                        height: 1,
-                                        indent: responsive.value(
-                                          mobile: 16,
-                                          tablet: 18,
-                                          desktop: 20,
-                                        ),
-                                        endIndent: responsive.value(
-                                          mobile: 16,
-                                          tablet: 18,
-                                          desktop: 20,
-                                        ),
-                                      ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
                           ),
 
                           ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
@@ -721,7 +629,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Batch Weight (Optional)',
+            'Batch Weight',
             style: TextStyle(
               color: Colors.grey[700],
               fontSize: responsive.bodyFontSize,

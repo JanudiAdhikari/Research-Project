@@ -9,7 +9,7 @@ le_district = joblib.load("district_encoder.pkl")
 le_type = joblib.load("type_encoder.pkl")
 le_grade = joblib.load("grade_encoder.pkl")
 
-app = FastAPI(title="Sri Lanka Pepper Price Prediction API")
+app = FastAPI(title="Pepper Price Prediction API")
 
 
 # Request Body Schema
@@ -21,12 +21,7 @@ class PredictionRequest(BaseModel):
     month: int
     week: int
 
-
-@app.get("/")
-def home():
-    return {"message": "Pepper Price Prediction API is running"}
-
-
+# API Endpoint for weekly price prediction
 @app.post("/predictlocalprice")
 def predict_price(data: PredictionRequest):
 

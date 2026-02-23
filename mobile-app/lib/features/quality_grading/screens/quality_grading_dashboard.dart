@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import '../../../widgets/bottom_navigation.dart';
+import '../../certifications/screens/farmer_certifications_dashboard_screen.dart';
 import 'batch_details_screen.dart';
 import 'how_it_works_screen.dart';
 import 'image_capture_guide_screen.dart';
@@ -564,9 +565,10 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           icon: Icons.verified_rounded,
           color: Colors.green,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Opening certification...")),
-            );
+            Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FarmerCertificationsDashboardScreen()),
+              );
           },
         ),
       ],

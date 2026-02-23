@@ -256,17 +256,6 @@ class _FarmerAddCertificationScreenState
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Submitted successfully'),
-          backgroundColor: _primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-
       Navigator.pop<CertificationModel>(context, created);
     } catch (e) {
       if (!mounted) return;
@@ -280,7 +269,7 @@ class _FarmerAddCertificationScreenState
       SnackBar(
         content: Text(msg),
         backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
+        behavior: SnackBarBehavior.fixed,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );

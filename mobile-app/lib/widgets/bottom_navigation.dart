@@ -27,7 +27,8 @@ class BottomNavigation extends StatelessWidget {
             {'index': 0, 'icon': Icons.home, 'label': 'Home'},
             {'index': 1, 'icon': Icons.store_rounded, 'label': 'Market'},
             {'index': 2, 'icon': Icons.agriculture_rounded, 'label': 'My Farm'},
-            {'index': 3, 'icon': Icons.person_rounded, 'label': 'Profile'},
+            {'index': 3, 'icon': Icons.book, 'label': 'Diary'},
+            {'index': 4, 'icon': Icons.person_rounded, 'label': 'Profile'},
           ];
 
     return Container(

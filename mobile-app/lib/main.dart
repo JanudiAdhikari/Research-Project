@@ -7,6 +7,7 @@ import 'features/auth/signup_page.dart';
 import 'features/disease_detection/screens/image_picker_screen.dart';
 import 'features/auth/splash_screen.dart';
 import 'widgets/navigation_wrapper.dart';
+import 'providers/app_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,6 +16,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+     await AppProviders.initialize();
     print("✅ Firebase initialized successfully");
     runApp(const MyApp());
   } catch (e) {

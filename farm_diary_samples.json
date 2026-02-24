@@ -1,0 +1,270 @@
+[
+  {
+    "title": "Morning Watering Session",
+    "description": "Watered all pepper plants in the morning before heat. Used drip irrigation system.",
+    "activityType": "watering",
+    "diaryDate": "2024-02-24T06:30:00Z",
+    "weather": {
+      "condition": "sunny",
+      "temperature": 22.5,
+      "humidity": 65,
+      "rainfall": 0
+    },
+    "observations": {
+      "plantHealth": "good",
+      "diseaseSymptoms": null,
+      "pestPresence": null,
+      "yieldEstimate": "Looking good so far"
+    },
+    "actions": "Applied water evenly to all plants",
+    "inputs": {
+      "waterQuantity": 150,
+      "otherInputs": "Used drip irrigation"
+    },
+    "notes": "Plants looking healthy after morning watering. No visible stress.",
+    "tags": ["morning", "routine", "irrigation"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  },
+  {
+    "title": "NPK Fertilizer Application",
+    "description": "Applied NPK 16:16:16 fertilizer to boost plant growth. Mixed with water for even distribution.",
+    "activityType": "fertilizing",
+    "diaryDate": "2024-02-23T08:00:00Z",
+    "weather": {
+      "condition": "cloudy",
+      "temperature": 26.0,
+      "humidity": 70,
+      "rainfall": 0
+    },
+    "observations": {
+      "plantHealth": "good",
+      "diseaseSymptoms": null,
+      "pestPresence": null,
+      "yieldEstimate": null
+    },
+    "actions": "Mixed 5kg NPK fertilizer with 50L water and sprayed evenly",
+    "inputs": {
+      "fertilizer": "NPK 16:16:16 - 5kg",
+      "waterQuantity": 50,
+      "otherInputs": "Sprayer equipment used"
+    },
+    "notes": "Applied during cloudy morning for better absorption. Plants well-watered before application.",
+    "tags": ["fertilizer", "nutrients", "growth"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  },
+  {
+    "title": "Pest Control - Mite Infestation",
+    "description": "Treated red spider mites found on lower leaves. Applied organic pesticide.",
+    "activityType": "pest_control",
+    "diaryDate": "2024-02-22T14:30:00Z",
+    "weather": {
+      "condition": "sunny",
+      "temperature": 31.0,
+      "humidity": 55,
+      "rainfall": 0
+    },
+    "observations": {
+      "plantHealth": "fair",
+      "diseaseSymptoms": "Red spider mites on lower leaves",
+      "pestPresence": "Red spider mites - moderate infestation on 30% of plants",
+      "yieldEstimate": "Potential yield impact if not controlled"
+    },
+    "actions": "Sprayed with neem oil-based pesticide on affected areas",
+    "inputs": {
+      "pesticide": "Neem oil (5% concentration) - 2L",
+      "waterQuantity": 40,
+      "otherInputs": "Spray bottle with 1mm nozzle"
+    },
+    "notes": "Applied in late afternoon to minimize sun damage. Recommend follow-up treatment in 7 days.",
+    "tags": ["pest-control", "mites", "organic"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  },
+  {
+    "title": "Weekly Health Inspection",
+    "description": "Conducted routine inspection of all plants. Checked for diseases, pests, and overall health.",
+    "activityType": "inspection",
+    "diaryDate": "2024-02-21T09:00:00Z",
+    "weather": {
+      "condition": "cloudy",
+      "temperature": 24.5,
+      "humidity": 72,
+      "rainfall": 5
+    },
+    "observations": {
+      "plantHealth": "excellent",
+      "diseaseSymptoms": "None observed",
+      "pestPresence": "None observed",
+      "yieldEstimate": "Plants developing well, flowers starting to appear"
+    },
+    "actions": "Examined 100 plants systematically, checked soil moisture, pruned dead leaves",
+    "inputs": {
+      "otherInputs": "Magnifying glass for detailed inspection"
+    },
+    "notes": "All plants looking healthy. Flowers appearing on 60% of plants. Recommend light pruning of lower branches.",
+    "tags": ["inspection", "routine", "health-check"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  },
+  {
+    "title": "Plant Pruning and Dead Leaf Removal",
+    "description": "Removed dead leaves and pruned branches for better air circulation and shape.",
+    "activityType": "pruning",
+    "diaryDate": "2024-02-20T10:15:00Z",
+    "weather": {
+      "condition": "sunny",
+      "temperature": 27.0,
+      "humidity": 60,
+      "rainfall": 0
+    },
+    "observations": {
+      "plantHealth": "good",
+      "diseaseSymptoms": null,
+      "pestPresence": null,
+      "yieldEstimate": null
+    },
+    "actions": "Pruned 15% of branches, removed dead leaves, improved canopy shape",
+    "inputs": {
+      "otherInputs": "Pruning shears, secateurs"
+    },
+    "notes": "Better air circulation will help prevent fungal diseases. Plants responded well to last pruning.",
+    "tags": ["pruning", "maintenance", "canopy"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  },
+  {
+    "title": "Weeding and Soil Preparation",
+    "description": "Removed weeds around plants and loosened soil for better water infiltration.",
+    "activityType": "weeding",
+    "diaryDate": "2024-02-19T07:00:00Z",
+    "weather": {
+      "condition": "cloudy",
+      "temperature": 23.0,
+      "humidity": 75,
+      "rainfall": 0
+    },
+    "observations": {
+      "plantHealth": "good",
+      "diseaseSymptoms": null,
+      "pestPresence": null,
+      "yieldEstimate": null
+    },
+    "actions": "Manual weeding of area, soil aeriation with hoe",
+    "inputs": {
+      "otherInputs": "Hand tools, hoe"
+    },
+    "notes": "Removed approximately 20kg of weeds. Soil is well-structured after loosening.",
+    "tags": ["weeding", "soil-prep", "maintenance"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  },
+  {
+    "title": "Fungal Disease Treatment",
+    "description": "Started preventive treatment for early signs of powdery mildew on leaf surfaces.",
+    "activityType": "disease_treatment",
+    "diaryDate": "2024-02-18T15:45:00Z",
+    "weather": {
+      "condition": "rainy",
+      "temperature": 20.0,
+      "humidity": 85,
+      "rainfall": 12
+    },
+    "observations": {
+      "plantHealth": "fair",
+      "diseaseSymptoms": "White powdery coating on 15% of leaves, early stage",
+      "pestPresence": null,
+      "yieldEstimate": "Early intervention should prevent yield loss"
+    },
+    "actions": "Applied fungicide spray to affected areas and susceptible plants",
+    "inputs": {
+      "pesticide": "Sulfur-based fungicide (3% concentration) - 3L",
+      "waterQuantity": 30,
+      "otherInputs": "Sprayer with fine mist nozzle"
+    },
+    "notes": "Treated early before spread. Humidity levels high due to rain. Improve ventilation. Plan follow-up in 10 days.",
+    "tags": ["disease", "fungal", "preventive"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  },
+  {
+    "title": "First Harvest - Green Peppers",
+    "description": "Harvested first batch of mature green peppers. Quality excellent.",
+    "activityType": "harvesting",
+    "diaryDate": "2024-02-17T08:30:00Z",
+    "weather": {
+      "condition": "sunny",
+      "temperature": 28.5,
+      "humidity": 58,
+      "rainfall": 0
+    },
+    "observations": {
+      "plantHealth": "excellent",
+      "diseaseSymptoms": null,
+      "pestPresence": null,
+      "yieldEstimate": "Harvested 45kg from 500 plants (9kg/100 plants)"
+    },
+    "actions": "Hand-picked mature green peppers carefully. Sorted by size and quality.",
+    "inputs": {
+      "otherInputs": "Harvesting baskets, hand gloves"
+    },
+    "notes": "First harvest successful! Peppers grade A quality - firm, uniform green color, perfect size. Stored in cool shed.",
+    "tags": ["harvest", "yield", "quality"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  },
+  {
+    "title": "Added Support Trellis for Climbing Peppers",
+    "description": "Installed bamboo trellis support system for plants that need it.",
+    "activityType": "other",
+    "diaryDate": "2024-02-16T11:00:00Z",
+    "weather": {
+      "condition": "sunny",
+      "temperature": 25.0,
+      "humidity": 62,
+      "rainfall": 0
+    },
+    "observations": {
+      "plantHealth": "good",
+      "diseaseSymptoms": null,
+      "pestPresence": null,
+      "yieldEstimate": null
+    },
+    "actions": "Built and installed bamboo trellis infrastructure for 200 plants",
+    "inputs": {
+      "otherInputs": "Bamboo poles (100 pieces), jute twine (50m), labor"
+    },
+    "notes": "Trellis system will improve air circulation and fruit quality. Cost-effective support solution.",
+    "tags": ["infrastructure", "support", "quality"],
+    "location": {
+      "latitude": 6.9271,
+      "longitude": 80.7789,
+      "altitude": 250
+    }
+  }
+]

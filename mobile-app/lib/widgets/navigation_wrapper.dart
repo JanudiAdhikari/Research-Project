@@ -9,6 +9,7 @@ import 'my_farm_screen.dart';
 import 'quality_screen.dart';
 import 'market_screen.dart';
 import 'profile_screen.dart';
+import '../features/farm_diary/screens/farm_diary_list_screen.dart';
 
 class NavigationWrapper extends StatefulWidget {
   const NavigationWrapper({Key? key}) : super(key: key);
@@ -57,6 +58,7 @@ class _NavigationWrapperState extends State<NavigationWrapper> {
         FarmerDashboard(),
         MarketScreen(),
         MyFarmScreen(),
+        FarmDiaryListScreen(),
         ProfileScreen(),
       ];
     }

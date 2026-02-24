@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../models/certification_model.dart';
 import '../services/certification_api.dart';
 import '../../../utils/responsive.dart';
+import 'farmer_edit_certification_screen.dart';
 
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
@@ -87,14 +90,48 @@ class _FarmerCertificationDetailsScreenState
     }
   }
 
-  Future<void> _deleteIfAllowed() async {
+  bool get _canEdit {
+    final c = _cert;
+    if (c == null) return false;
+    return c.status == 'pending' && c.isExpired == false;
+  }
+
+  Future<void> _openEdit() async {
     final c = _cert;
     if (c == null) return;
 
-    if (c.status != 'pending') {
-      _toast('Only pending certifications can be deleted');
+    if (!_canEdit) {
+      _toast('This certificate cannot be edited.');
       return;
     }
+
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            FarmerEditCertificationScreen(api: widget.api, initial: c),
+      ),
+    );
+
+    if (changed == true) {
+      await _load();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Updated successfully'),
+          backgroundColor: _primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _delete() async {
+    final c = _cert;
+    if (c == null) return;
 
     final ok = await showDialog<bool>(
       context: context,
@@ -107,23 +144,27 @@ class _FarmerCertificationDetailsScreenState
                 color: Colors.red.shade50,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.delete_outline_rounded,
-                  color: Colors.red.shade600, size: 20),
+              child: Icon(
+                Icons.delete_outline_rounded,
+                color: Colors.red.shade600,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
-            const Text('Delete Certificate',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            const Text(
+              'Delete Certificate',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
           ],
         ),
         content: const Text(
-            'Are you sure you want to delete this certificate? This action cannot be undone.'),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          'Are you sure you want to delete this certificate? This action cannot be undone.',
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child:
-                Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -131,7 +172,8 @@ class _FarmerCertificationDetailsScreenState
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Delete'),
           ),
@@ -144,19 +186,40 @@ class _FarmerCertificationDetailsScreenState
     try {
       await widget.api.deleteCertification(c.id);
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Certificate deleted'),
           backgroundColor: _primary,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
+
       Navigator.pop(context, true);
     } catch (e) {
       _toast(e.toString());
     }
+  }
+
+  Future<void> _openAttachment() async {
+    final c = _cert;
+    if (c == null) return;
+    if (!c.attachment.hasFile) {
+      _toast('No attachment');
+      return;
+    }
+
+    final url = Uri.tryParse(c.attachment.url!.trim());
+    if (url == null) {
+      _toast('Invalid attachment URL');
+      return;
+    }
+
+    final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (!ok) _toast('Cannot open attachment');
   }
 
   void _toast(String msg) {
@@ -165,8 +228,7 @@ class _FarmerCertificationDetailsScreenState
         content: Text(msg),
         backgroundColor: Colors.redAccent,
         behavior: SnackBarBehavior.floating,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -180,16 +242,12 @@ class _FarmerCertificationDetailsScreenState
       body: SafeArea(
         child: Column(
           children: [
-            // Header matching dashboard style
             _buildHeader(responsive),
-
-            // Content area
             Expanded(
               child: _loading
                   ? Center(
                       child: CircularProgressIndicator(
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(_primary),
+                        valueColor: AlwaysStoppedAnimation<Color>(_primary),
                       ),
                     )
                   : _error != null
@@ -203,29 +261,45 @@ class _FarmerCertificationDetailsScreenState
                         child: SingleChildScrollView(
                           padding: EdgeInsets.all(
                             responsive.value(
-                                mobile: 16, tablet: 24, desktop: 32),
+                              mobile: 16,
+                              tablet: 24,
+                              desktop: 32,
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Main details card
                               _buildDetailsCard(responsive),
-
                               ResponsiveSpacing(
-                                  mobile: 16, tablet: 20, desktop: 24),
+                                mobile: 16,
+                                tablet: 20,
+                                desktop: 24,
+                              ),
 
-                              // Verification / rejection info card (if present)
+                              if (_cert!.attachment.hasFile) ...[
+                                _buildAttachmentCard(responsive),
+                                ResponsiveSpacing(
+                                  mobile: 16,
+                                  tablet: 20,
+                                  desktop: 24,
+                                ),
+                              ],
+
                               if (_hasExtraInfo()) ...[
                                 _buildExtraInfoCard(responsive),
                                 ResponsiveSpacing(
-                                    mobile: 16, tablet: 20, desktop: 24),
+                                  mobile: 16,
+                                  tablet: 20,
+                                  desktop: 24,
+                                ),
                               ],
 
-                              // Action buttons
                               _buildActionButtons(responsive),
-
                               ResponsiveSpacing(
-                                  mobile: 24, tablet: 32, desktop: 40),
+                                mobile: 24,
+                                tablet: 32,
+                                desktop: 40,
+                              ),
                             ],
                           ),
                         ),
@@ -243,9 +317,7 @@ class _FarmerCertificationDetailsScreenState
     if (c == null) return false;
     return c.verifiedBy != null ||
         c.verificationDate != null ||
-        (c.status == 'rejected' &&
-            c.rejectionReason != null &&
-            c.rejectionReason!.isNotEmpty);
+        (c.status == 'rejected' && (c.rejectionReason ?? '').trim().isNotEmpty);
   }
 
   Widget _buildHeader(Responsive responsive) {
@@ -279,7 +351,6 @@ class _FarmerCertificationDetailsScreenState
       ),
       child: Row(
         children: [
-          // Back button
           GestureDetector(
             onTap: () => Navigator.pop(context),
             child: Container(
@@ -297,10 +368,7 @@ class _FarmerCertificationDetailsScreenState
               ),
             ),
           ),
-
           ResponsiveSpacing.horizontal(mobile: 14, tablet: 16, desktop: 18),
-
-          // Title + cert type subtitle
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,7 +378,10 @@ class _FarmerCertificationDetailsScreenState
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: responsive.fontSize(
-                        mobile: 20, tablet: 24, desktop: 28),
+                      mobile: 20,
+                      tablet: 24,
+                      desktop: 28,
+                    ),
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                   ),
@@ -322,7 +393,10 @@ class _FarmerCertificationDetailsScreenState
                     style: TextStyle(
                       color: colorWithOpacity(Colors.white, 0.8),
                       fontSize: responsive.fontSize(
-                          mobile: 12, tablet: 13, desktop: 14),
+                        mobile: 12,
+                        tablet: 13,
+                        desktop: 14,
+                      ),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -330,8 +404,6 @@ class _FarmerCertificationDetailsScreenState
               ],
             ),
           ),
-
-          // Refresh button
           GestureDetector(
             onTap: _load,
             child: Container(
@@ -369,10 +441,7 @@ class _FarmerCertificationDetailsScreenState
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 16, tablet: 18, desktop: 20),
         ),
-        border: Border.all(
-          color: colorWithOpacity(_primary, 0.12),
-          width: 1.5,
-        ),
+        border: Border.all(color: colorWithOpacity(_primary, 0.12), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: colorWithOpacity(Colors.black, 0.05),
@@ -384,7 +453,6 @@ class _FarmerCertificationDetailsScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Card header: icon + cert type + status chip
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -411,7 +479,10 @@ class _FarmerCertificationDetailsScreenState
                       c.certificationType,
                       style: TextStyle(
                         fontSize: responsive.fontSize(
-                            mobile: 17, tablet: 19, desktop: 21),
+                          mobile: 17,
+                          tablet: 19,
+                          desktop: 21,
+                        ),
                         fontWeight: FontWeight.w800,
                         color: Colors.grey[800],
                       ),
@@ -423,42 +494,155 @@ class _FarmerCertificationDetailsScreenState
               ),
             ],
           ),
-
           ResponsiveSpacing(mobile: 18, tablet: 20, desktop: 22),
-
           Divider(height: 1, color: colorWithOpacity(_primary, 0.08)),
-
           ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
 
-          // Section label
           _buildSectionLabel(responsive, 'Certificate Information'),
-
           ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
 
-          _infoRow(responsive, Icons.confirmation_number_outlined,
-              'Certificate No.', c.certificateNumber),
-          _infoRow(responsive, Icons.account_balance_outlined,
-              'Issuing Body', c.issuingBody),
-          _infoRow(responsive, Icons.event_outlined,
-              'Issue Date', _formatDate(c.issueDate)),
-          _infoRow(responsive, Icons.event_available_outlined,
-              'Expiry Date', _formatDate(c.expiryDate),
-              isLast: false),
+          _infoRow(
+            responsive,
+            Icons.confirmation_number_outlined,
+            'Certificate No.',
+            c.certificateNumber,
+          ),
+          _infoRow(
+            responsive,
+            Icons.account_balance_outlined,
+            'Issuing Body',
+            c.issuingBody,
+          ),
+          _infoRow(
+            responsive,
+            Icons.event_outlined,
+            'Issue Date',
+            _formatDate(c.issueDate),
+          ),
+          _infoRow(
+            responsive,
+            Icons.event_available_outlined,
+            'Expiry Date',
+            _formatDate(c.expiryDate),
+            isLast: true,
+          ),
 
           ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
-
           Divider(height: 1, color: colorWithOpacity(_primary, 0.08)),
-
           ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
 
           _buildSectionLabel(responsive, 'Submission Timeline'),
-
           ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
 
-          _infoRow(responsive, Icons.schedule_outlined,
-              'Submitted On', _formatDate(c.createdAt)),
-          _infoRow(responsive, Icons.update_outlined,
-              'Last Updated', _formatDate(c.updatedAt), isLast: true),
+          _infoRow(
+            responsive,
+            Icons.schedule_outlined,
+            'Submitted On',
+            _formatDate(c.createdAt),
+          ),
+          _infoRow(
+            responsive,
+            Icons.update_outlined,
+            'Last Updated',
+            _formatDate(c.updatedAt),
+            isLast: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachmentCard(Responsive responsive) {
+    final c = _cert!;
+
+    final rawName = (c.attachment.originalName ?? '').trim();
+    final name = rawName.isNotEmpty
+        ? rawName
+        : (c.attachment.isPdf ? 'Document' : 'Image');
+
+    final typeText = c.attachment.isPdf ? 'PDF document' : 'Image file';
+
+    return Container(
+      width: double.infinity,
+      padding: responsive.padding(
+        mobile: const EdgeInsets.all(16),
+        tablet: const EdgeInsets.all(20),
+        desktop: const EdgeInsets.all(24),
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(
+          responsive.value(mobile: 16, tablet: 18, desktop: 20),
+        ),
+        border: Border.all(color: colorWithOpacity(_primary, 0.12), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: colorWithOpacity(_primary, 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              c.attachment.isPdf
+                  ? Icons.picture_as_pdf_outlined
+                  : Icons.image_outlined,
+              color: _primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Attachment',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: responsive.fontSize(
+                      mobile: 14,
+                      tablet: 15,
+                      desktop: 16,
+                    ),
+                    color: Colors.grey[800],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  name,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: responsive.fontSize(
+                      mobile: 12,
+                      tablet: 13,
+                      desktop: 14,
+                    ),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  typeText,
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: responsive.fontSize(
+                      mobile: 11,
+                      tablet: 12,
+                      desktop: 13,
+                    ),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton.icon(
+            onPressed: _openAttachment,
+            icon: const Icon(Icons.open_in_new_rounded),
+            label: const Text('Open'),
+          ),
         ],
       ),
     );
@@ -476,7 +660,9 @@ class _FarmerCertificationDetailsScreenState
         desktop: const EdgeInsets.all(24),
       ),
       decoration: BoxDecoration(
-        color: isRejected ? Colors.red.shade50 : colorWithOpacity(_primary, 0.04),
+        color: isRejected
+            ? Colors.red.shade50
+            : colorWithOpacity(_primary, 0.04),
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 16, tablet: 18, desktop: 20),
         ),
@@ -503,28 +689,40 @@ class _FarmerCertificationDetailsScreenState
               Text(
                 isRejected ? 'Rejection Details' : 'Verification Details',
                 style: TextStyle(
-                  fontSize:
-                      responsive.fontSize(mobile: 14, tablet: 15, desktop: 16),
+                  fontSize: responsive.fontSize(
+                    mobile: 14,
+                    tablet: 15,
+                    desktop: 16,
+                  ),
                   fontWeight: FontWeight.w700,
                   color: isRejected ? Colors.red.shade700 : _primary,
                 ),
               ),
             ],
           ),
-
           ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-
           if (c.verifiedBy != null)
-            _infoRow(responsive, Icons.person_outline, 'Verified By',
-                c.verifiedBy!.toUpperCase()),
+            _infoRow(
+              responsive,
+              Icons.person_outline,
+              'Verified By',
+              c.verifiedBy!.toUpperCase(),
+            ),
           if (c.verificationDate != null)
-            _infoRow(responsive, Icons.event_outlined, 'Verification Date',
-                _formatDate(c.verificationDate!)),
-          if (isRejected &&
-              c.rejectionReason != null &&
-              c.rejectionReason!.isNotEmpty)
-            _infoRow(responsive, Icons.info_outline, 'Rejection Reason',
-                c.rejectionReason!, isLast: true),
+            _infoRow(
+              responsive,
+              Icons.event_outlined,
+              'Verification Date',
+              _formatDate(c.verificationDate!),
+            ),
+          if (isRejected && (c.rejectionReason ?? '').trim().isNotEmpty)
+            _infoRow(
+              responsive,
+              Icons.info_outline,
+              'Rejection Reason',
+              c.rejectionReason!.trim(),
+              isLast: true,
+            ),
         ],
       ),
     );
@@ -571,8 +769,11 @@ class _FarmerCertificationDetailsScreenState
               style: TextStyle(
                 color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
-                fontSize:
-                    responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+                fontSize: responsive.fontSize(
+                  mobile: 13,
+                  tablet: 14,
+                  desktop: 15,
+                ),
               ),
             ),
           ),
@@ -581,8 +782,11 @@ class _FarmerCertificationDetailsScreenState
               value,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                fontSize:
-                    responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+                fontSize: responsive.fontSize(
+                  mobile: 13,
+                  tablet: 14,
+                  desktop: 15,
+                ),
                 color: Colors.grey[800],
               ),
             ),
@@ -595,77 +799,85 @@ class _FarmerCertificationDetailsScreenState
   Widget _buildActionButtons(Responsive responsive) {
     return Row(
       children: [
-        // Back button
-        Expanded(
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => Navigator.pop(context),
-              borderRadius: BorderRadius.circular(
-                responsive.value(mobile: 14, tablet: 16, desktop: 18),
-              ),
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  vertical:
-                      responsive.value(mobile: 15, tablet: 17, desktop: 19),
+        if (_canEdit) ...[
+          Expanded(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _openEdit,
+                borderRadius: BorderRadius.circular(
+                  responsive.value(mobile: 14, tablet: 16, desktop: 18),
                 ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(
-                    responsive.value(mobile: 14, tablet: 16, desktop: 18),
-                  ),
-                  border: Border.all(
-                    color: colorWithOpacity(_primary, 0.3),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorWithOpacity(Colors.black, 0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    vertical: responsive.value(
+                      mobile: 15,
+                      tablet: 17,
+                      desktop: 19,
                     ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.arrow_back_rounded,
-                      color: _primary,
-                      size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                  ),
+                  decoration: BoxDecoration(
+                    color: _primary,
+                    borderRadius: BorderRadius.circular(
+                      responsive.value(mobile: 14, tablet: 16, desktop: 18),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Back',
-                      style: TextStyle(
-                        color: _primary,
-                        fontSize: responsive.fontSize(
-                            mobile: 14, tablet: 15, desktop: 16),
-                        fontWeight: FontWeight.w700,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorWithOpacity(_primary, 0.35),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.edit_outlined,
+                        color: Colors.white,
+                        size: responsive.value(
+                          mobile: 18,
+                          tablet: 20,
+                          desktop: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: responsive.fontSize(
+                            mobile: 14,
+                            tablet: 15,
+                            desktop: 16,
+                          ),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+          ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
+        ],
 
-        ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
-
-        // Delete button
         Expanded(
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: _deleteIfAllowed,
+              onTap: _delete,
               borderRadius: BorderRadius.circular(
                 responsive.value(mobile: 14, tablet: 16, desktop: 18),
               ),
               child: Container(
                 padding: EdgeInsets.symmetric(
-                  vertical:
-                      responsive.value(mobile: 15, tablet: 17, desktop: 19),
+                  vertical: responsive.value(
+                    mobile: 15,
+                    tablet: 17,
+                    desktop: 19,
+                  ),
                 ),
                 decoration: BoxDecoration(
                   color: Colors.redAccent,
@@ -686,7 +898,11 @@ class _FarmerCertificationDetailsScreenState
                     Icon(
                       Icons.delete_outline_rounded,
                       color: Colors.white,
-                      size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                      size: responsive.value(
+                        mobile: 18,
+                        tablet: 20,
+                        desktop: 22,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -694,7 +910,10 @@ class _FarmerCertificationDetailsScreenState
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: responsive.fontSize(
-                            mobile: 14, tablet: 15, desktop: 16),
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -736,8 +955,11 @@ class _FarmerCertificationDetailsScreenState
               'Failed to load',
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                fontSize:
-                    responsive.fontSize(mobile: 18, tablet: 20, desktop: 22),
+                fontSize: responsive.fontSize(
+                  mobile: 18,
+                  tablet: 20,
+                  desktop: 22,
+                ),
                 color: Colors.grey[800],
               ),
             ),
@@ -747,8 +969,11 @@ class _FarmerCertificationDetailsScreenState
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey[600],
-                fontSize:
-                    responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+                fontSize: responsive.fontSize(
+                  mobile: 13,
+                  tablet: 14,
+                  desktop: 15,
+                ),
               ),
             ),
             ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
@@ -760,10 +985,16 @@ class _FarmerCertificationDetailsScreenState
                 backgroundColor: _primary,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(
-                  horizontal:
-                      responsive.value(mobile: 24, tablet: 28, desktop: 32),
-                  vertical:
-                      responsive.value(mobile: 14, tablet: 16, desktop: 18),
+                  horizontal: responsive.value(
+                    mobile: 24,
+                    tablet: 28,
+                    desktop: 32,
+                  ),
+                  vertical: responsive.value(
+                    mobile: 14,
+                    tablet: 16,
+                    desktop: 18,
+                  ),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -800,8 +1031,11 @@ class _FarmerCertificationDetailsScreenState
             'Certificate not found',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize:
-                  responsive.fontSize(mobile: 17, tablet: 19, desktop: 21),
+              fontSize: responsive.fontSize(
+                mobile: 17,
+                tablet: 19,
+                desktop: 21,
+              ),
               color: Colors.grey[700],
             ),
           ),
@@ -844,8 +1078,7 @@ class _FarmerCertificationDetailsScreenState
         style: TextStyle(
           fontWeight: FontWeight.w700,
           color: fg,
-          fontSize:
-              responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
+          fontSize: responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
         ),
       ),
     );

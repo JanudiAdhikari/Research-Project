@@ -1,5 +1,9 @@
 const Certification = require("../models/certification.models");
 const User = require("../models/user.models");
+const {
+  uploadBufferToCloudinary,
+  deleteFromCloudinary,
+} = require("../utils/cloudinaryUpload");
 
 // Helper: compute expired
 const isExpired = (expiryDate) => {
@@ -73,7 +77,6 @@ const createCertification = async (req, res) => {
 
     const issue = parseDate(issueDate);
     const expiry = parseDate(expiryDate);
-
     if (!issue || !expiry) {
       return res
         .status(400)
@@ -81,8 +84,33 @@ const createCertification = async (req, res) => {
     }
 
     const check = validateIssueExpiry(issue, expiry);
-    if (!check.ok) {
-      return res.status(400).json({ message: check.message });
+    if (!check.ok) return res.status(400).json({ message: check.message });
+
+    // Optional attachment upload
+    let attachment = {
+      url: null,
+      publicId: null,
+      resourceType: null,
+      originalName: null,
+    };
+
+    if (req.file) {
+      const isPdf = req.file.mimetype === "application/pdf";
+      const resourceType = isPdf ? "raw" : "image";
+
+      const uploadResult = await uploadBufferToCloudinary({
+        buffer: req.file.buffer,
+        folder: "ceylonpepper/certifications",
+        publicId: `${req.user.uid}_${certificateNumber}_${Date.now()}`,
+        resourceType,
+      });
+
+      attachment = {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        resourceType: uploadResult.resource_type,
+        originalName: req.file.originalname,
+      };
     }
 
     const cert = await Certification.create({
@@ -93,6 +121,7 @@ const createCertification = async (req, res) => {
       issuingBody,
       issueDate: issue,
       expiryDate: expiry,
+      attachment,
       status: "pending",
       verifiedBy: null,
       verificationDate: null,
@@ -188,13 +217,17 @@ const updateMyCertification = async (req, res) => {
       _id: id,
       firebaseUid: req.user.uid,
     });
-
     if (!cert) return res.status(404).json({ message: "Not found" });
 
     if (cert.status !== "pending") {
       return res
         .status(400)
         .json({ message: "Only pending certifications can be edited" });
+    }
+    if (isExpired(cert.expiryDate)) {
+      return res
+        .status(400)
+        .json({ message: "Expired certifications cannot be edited" });
     }
 
     const {
@@ -203,9 +236,9 @@ const updateMyCertification = async (req, res) => {
       issuingBody,
       issueDate,
       expiryDate,
+      removeAttachment,
     } = req.body;
 
-    // Use incoming values if provided, otherwise existing values
     const finalIssue =
       issueDate != null ? parseDate(issueDate) : cert.issueDate;
     const finalExpiry =
@@ -221,16 +254,57 @@ const updateMyCertification = async (req, res) => {
     }
 
     const check = validateIssueExpiry(finalIssue, finalExpiry);
-    if (!check.ok) {
-      return res.status(400).json({ message: check.message });
-    }
+    if (!check.ok) return res.status(400).json({ message: check.message });
 
-    // Update only provided fields
     if (certificationType != null) cert.certificationType = certificationType;
     if (certificateNumber != null) cert.certificateNumber = certificateNumber;
     if (issuingBody != null) cert.issuingBody = issuingBody;
     if (issueDate != null) cert.issueDate = finalIssue;
     if (expiryDate != null) cert.expiryDate = finalExpiry;
+
+    // Attachment logic
+    const shouldRemove =
+      String(removeAttachment || "").toLowerCase() === "true";
+
+    if (shouldRemove && cert.attachment?.publicId) {
+      await deleteFromCloudinary({
+        publicId: cert.attachment.publicId,
+        resourceType: cert.attachment.resourceType,
+      });
+      cert.attachment = {
+        url: null,
+        publicId: null,
+        resourceType: null,
+        originalName: null,
+      };
+    }
+
+    if (req.file) {
+      // replace old
+      if (cert.attachment?.publicId) {
+        await deleteFromCloudinary({
+          publicId: cert.attachment.publicId,
+          resourceType: cert.attachment.resourceType,
+        });
+      }
+
+      const isPdf = req.file.mimetype === "application/pdf";
+      const resourceType = isPdf ? "raw" : "image";
+
+      const uploadResult = await uploadBufferToCloudinary({
+        buffer: req.file.buffer,
+        folder: "ceylonpepper/certifications",
+        publicId: `${req.user.uid}_${cert.certificateNumber || "CERT"}_${Date.now()}`,
+        resourceType,
+      });
+
+      cert.attachment = {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        resourceType: uploadResult.resource_type,
+        originalName: req.file.originalname,
+      };
+    }
 
     // Reset verification metadata since user changed data
     cert.verifiedBy = null;
@@ -239,10 +313,7 @@ const updateMyCertification = async (req, res) => {
 
     await cert.save();
 
-    return res.json({
-      message: "Updated",
-      cert: mapCertForResponse(cert),
-    });
+    return res.json({ message: "Updated", cert: mapCertForResponse(cert) });
   } catch (err) {
     if (err.code === 11000) {
       return res.status(409).json({ message: "Certificate already exists" });
@@ -264,15 +335,17 @@ const deleteMyCertification = async (req, res) => {
 
     if (!cert) return res.status(404).json({ message: "Not found" });
 
-    if (cert.status !== "pending") {
-      return res
-        .status(400)
-        .json({ message: "Only pending certifications can be deleted" });
+    // delete attachment if exists
+    if (cert.attachment?.publicId) {
+      await deleteFromCloudinary({
+        publicId: cert.attachment.publicId,
+        resourceType: cert.attachment.resourceType,
+      });
     }
 
     await Certification.deleteOne({ _id: id });
 
-    return res.json({ message: "Deleted" });
+    return res.json({ message: "Deleted successfully" });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }

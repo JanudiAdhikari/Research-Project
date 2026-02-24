@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
+import '../../services/market_service.dart';
+import '../../models/market_product.dart';
 
 class MarketplaceScreen extends StatefulWidget {
   const MarketplaceScreen({super.key});
@@ -9,18 +11,79 @@ class MarketplaceScreen extends StatefulWidget {
 }
 
 class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  final MarketService _marketService = MarketService();
+  List<MarketProduct> _products = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
   String _selectedQuality = 'All';
   String _selectedDistrict = 'All';
   String _sortBy = 'Latest';
 
   final List<String> _qualityFilters = ['All', 'Premium', 'Standard', 'Good'];
-  final List<String> _sortOptions = ['Latest', 'Price: Low to High', 'Price: High to Low'];
+  final List<String> _sortOptions = [
+    'Latest',
+    'Price: Low to High',
+    'Price: High to Low',
+  ];
 
-  // Mock marketplace data - real-world pepper listings
-  final List<Map<String, dynamic>> _pepperListings = [
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final products = await _marketService.fetchProducts();
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to load products: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Convert products to map format for compatibility with existing UI
+  List<Map<String, dynamic>> get _pepperListings {
+    return _products.map((product) {
+      return {
+        'id': product.id,
+        'image':
+            product.imageUrl ??
+            'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=400',
+        'district': 'Available',
+        'price': product.price,
+        'quality': 'Standard',
+        'weight': 1.0, // Default weight for display
+        'unit': product.unit,
+        'seller': 'Vendor',
+        'rating': 4.5,
+        'description': product.name,
+        'name': product.name,
+      };
+    }).toList();
+  }
+
+  // Mock marketplace data - backup data
+  final List<Map<String, dynamic>> _mockPepperListings = [
     {
       'id': '1',
-      'image': 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=400',
+      'image':
+          'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=400',
       'district': 'Matale',
       'price': 1850.00,
       'quality': 'Premium',
@@ -32,7 +95,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     },
     {
       'id': '2',
-      'image': 'https://images.unsplash.com/photo-1606787364406-a3cdb98d2946?w=400',
+      'image':
+          'https://images.unsplash.com/photo-1606787364406-a3cdb98d2946?w=400',
       'district': 'Kandy',
       'price': 1650.00,
       'quality': 'Standard',
@@ -44,7 +108,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     },
     {
       'id': '3',
-      'image': 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=400',
+      'image':
+          'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=400',
       'district': 'Kurunegala',
       'price': 1950.00,
       'quality': 'Premium',
@@ -56,7 +121,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     },
     {
       'id': '4',
-      'image': 'https://images.unsplash.com/photo-1606787364406-a3cdb98d2946?w=400',
+      'image':
+          'https://images.unsplash.com/photo-1606787364406-a3cdb98d2946?w=400',
       'district': 'Gampaha',
       'price': 1400.00,
       'quality': 'Good',
@@ -68,7 +134,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     },
     {
       'id': '5',
-      'image': 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=400',
+      'image':
+          'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=400',
       'district': 'Matale',
       'price': 1750.00,
       'quality': 'Standard',
@@ -80,7 +147,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     },
     {
       'id': '6',
-      'image': 'https://images.unsplash.com/photo-1606787364406-a3cdb98d2946?w=400',
+      'image':
+          'https://images.unsplash.com/photo-1606787364406-a3cdb98d2946?w=400',
       'district': 'Kandy',
       'price': 2100.00,
       'quality': 'Premium',
@@ -97,12 +165,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
     // Filter by quality
     if (_selectedQuality != 'All') {
-      filtered = filtered.where((item) => item['quality'] == _selectedQuality).toList();
+      filtered = filtered
+          .where((item) => item['quality'] == _selectedQuality)
+          .toList();
     }
 
     // Filter by district
     if (_selectedDistrict != 'All') {
-      filtered = filtered.where((item) => item['district'] == _selectedDistrict).toList();
+      filtered = filtered
+          .where((item) => item['district'] == _selectedDistrict)
+          .toList();
     }
 
     // Sort
@@ -134,6 +206,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _loadProducts,
+            tooltip: 'Refresh products',
+          ),
+          IconButton(
             icon: const Icon(Icons.search_rounded),
             onPressed: () {
               // TODO: Implement search
@@ -141,7 +218,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.filter_list_rounded),
-            onPressed: () => _showFilterBottomSheet(context, responsive, primary),
+            onPressed: () =>
+                _showFilterBottomSheet(context, responsive, primary),
           ),
         ],
       ),
@@ -192,10 +270,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     });
                   },
                   itemBuilder: (context) => _sortOptions
-                      .map((option) => PopupMenuItem(
-                    value: option,
-                    child: Text(option),
-                  ))
+                      .map(
+                        (option) =>
+                            PopupMenuItem(value: option, child: Text(option)),
+                      )
                       .toList(),
                 ),
               ],
@@ -204,39 +282,80 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
           // Listings grid
           Expanded(
-            child: _filteredListings.isEmpty
+            child: _isLoading
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: primary),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Loading marketplace...',
+                          style: TextStyle(
+                            fontSize: responsive.bodyFontSize,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : _errorMessage != null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: responsive.bodyFontSize,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: _loadProducts,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : _filteredListings.isEmpty
                 ? _buildEmptyState(responsive, primary)
                 : RefreshIndicator(
-              onRefresh: () async {
-                await Future.delayed(const Duration(seconds: 1));
-                setState(() {});
-              },
-              child: GridView.builder(
-                padding: EdgeInsets.all(responsive.pagePadding),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: responsive.value(
-                    mobile: 1,
-                    tablet: 2,
-                    desktop: 3,
-                  ).toInt(),
-                  childAspectRatio: responsive.value(
-                    mobile: 0.85,
-                    tablet: 0.9,
-                    desktop: 0.85,
-                  ).toDouble(),
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: _filteredListings.length,
-                itemBuilder: (context, index) {
-                  return _buildPepperCard(
-                    responsive,
-                    primary,
-                    _filteredListings[index],
-                  );
-                },
-              ),
-            ),
+                    onRefresh: _loadProducts,
+                    child: GridView.builder(
+                      padding: EdgeInsets.all(responsive.pagePadding),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: responsive
+                            .value(mobile: 1, tablet: 2, desktop: 3)
+                            .toInt(),
+                        childAspectRatio: responsive
+                            .value(mobile: 0.85, tablet: 0.9, desktop: 0.85)
+                            .toDouble(),
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
+                      itemCount: _filteredListings.length,
+                      itemBuilder: (context, index) {
+                        return _buildPepperCard(
+                          responsive,
+                          primary,
+                          _filteredListings[index],
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -306,15 +425,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Widget _buildPepperCard(
-      Responsive responsive,
-      Color primary,
-      Map<String, dynamic> listing,
-      ) {
+    Responsive responsive,
+    Color primary,
+    Map<String, dynamic> listing,
+  ) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           // TODO: Navigate to detail page
@@ -546,11 +663,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off_rounded,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.search_off_rounded, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No listings found',
@@ -587,10 +700,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   void _showFilterBottomSheet(
-      BuildContext context,
-      Responsive responsive,
-      Color primary,
-      ) {
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -639,29 +752,32 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: ['All', 'Matale', 'Kandy', 'Kurunegala', 'Gampaha']
-                        .map((district) {
-                      final isSelected = _selectedDistrict == district;
-                      return ChoiceChip(
-                        label: Text(district),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setModalState(() {
-                            _selectedDistrict = district;
-                          });
-                          setState(() {});
-                        },
-                        selectedColor: primary.withOpacity(0.15),
-                        labelStyle: TextStyle(
-                          color: isSelected ? primary : Colors.grey[700],
-                          fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                        ),
-                        side: BorderSide(
-                          color: isSelected ? primary : Colors.grey[300]!,
-                        ),
-                      );
-                    }).toList(),
+                    children:
+                        ['All', 'Matale', 'Kandy', 'Kurunegala', 'Gampaha'].map(
+                          (district) {
+                            final isSelected = _selectedDistrict == district;
+                            return ChoiceChip(
+                              label: Text(district),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                setModalState(() {
+                                  _selectedDistrict = district;
+                                });
+                                setState(() {});
+                              },
+                              selectedColor: primary.withOpacity(0.15),
+                              labelStyle: TextStyle(
+                                color: isSelected ? primary : Colors.grey[700],
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                              ),
+                              side: BorderSide(
+                                color: isSelected ? primary : Colors.grey[300]!,
+                              ),
+                            );
+                          },
+                        ).toList(),
                   ),
                   const SizedBox(height: 20),
                   SizedBox(

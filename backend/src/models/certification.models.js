@@ -21,6 +21,14 @@ const certificationSchema = new mongoose.Schema(
     issueDate: { type: Date, required: true },
     expiryDate: { type: Date, required: true },
 
+    // optional
+    attachment: {
+      url: { type: String, default: null },
+      publicId: { type: String, default: null },
+      resourceType: { type: String, default: null }, // "image" or "raw"
+      originalName: { type: String, default: null },
+    },
+
     status: {
       type: String,
       enum: ["pending", "verified", "rejected"],
@@ -47,10 +55,7 @@ const certificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Prevent duplicates per user
-certificationSchema.index(
-  { firebaseUid: 1, certificateNumber: 1 },
-  { unique: true }
-);
+// Prevent duplicates per User
+certificationSchema.index({ firebaseUid: 1, certificateNumber: 1 }, { unique: true });
 
 module.exports = mongoose.model("Certification", certificationSchema);

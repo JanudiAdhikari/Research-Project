@@ -126,7 +126,10 @@ class _LoginPageState extends State<LoginPage>
 
       if (_rememberMe) {
         await prefs.setString("saved_email", _emailController.text.trim());
-        await prefs.setString("saved_password", _passwordController.text.trim());
+        await prefs.setString(
+          "saved_password",
+          _passwordController.text.trim(),
+        );
         await prefs.setBool("remember_me", true);
       } else {
         await prefs.remove("saved_email");
@@ -139,13 +142,13 @@ class _LoginPageState extends State<LoginPage>
 
         if (role == "farmer") {
           Navigator.pushReplacement(
-  context,
-  MaterialPageRoute(builder: (_) => const NavigationWrapper()),
-);
+            context,
+            MaterialPageRoute(builder: (_) => const NavigationWrapper()),
+          );
         } else if (role == "exporter") {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const ExporterDashboard()),
+            MaterialPageRoute(builder: (_) => const NavigationWrapper()),
           );
         } else if (role == "admin") {
           Navigator.pushReplacement(
@@ -205,9 +208,7 @@ class _LoginPageState extends State<LoginPage>
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: responsive.maxContentWidth,
-              ),
+              constraints: BoxConstraints(maxWidth: responsive.maxContentWidth),
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                   horizontal: responsive.pagePadding,
@@ -219,15 +220,13 @@ class _LoginPageState extends State<LoginPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        ResponsiveSpacing(
-                          mobile: 40,
-                          tablet: 60,
-                          desktop: 60,
-                        ),
+                        ResponsiveSpacing(mobile: 40, tablet: 60, desktop: 60),
 
                         // Logo with background
                         Container(
-                          padding: EdgeInsets.all(responsive.spacing(mobile: 16, tablet: 20)),
+                          padding: EdgeInsets.all(
+                            responsive.spacing(mobile: 16, tablet: 20),
+                          ),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: lightGreen,
@@ -412,33 +411,34 @@ class _LoginPageState extends State<LoginPage>
                             ),
                             child: _isLoading
                                 ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
                                 : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "Login",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: responsive.titleFontSize + 1,
-                                    letterSpacing: 0.5,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Login",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize:
+                                              responsive.titleFontSize + 1,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Icon(
+                                        Icons.arrow_forward_rounded,
+                                        size: responsive.smallIconSize,
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: responsive.smallIconSize,
-                                ),
-                              ],
-                            ),
                           ),
                         ),
 
@@ -447,9 +447,13 @@ class _LoginPageState extends State<LoginPage>
                         // Divider with "OR"
                         Row(
                           children: [
-                            Expanded(child: Divider(color: Colors.grey.shade300)),
+                            Expanded(
+                              child: Divider(color: Colors.grey.shade300),
+                            ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: Text(
                                 "OR",
                                 style: TextStyle(
@@ -459,7 +463,9 @@ class _LoginPageState extends State<LoginPage>
                                 ),
                               ),
                             ),
-                            Expanded(child: Divider(color: Colors.grey.shade300)),
+                            Expanded(
+                              child: Divider(color: Colors.grey.shade300),
+                            ),
                           ],
                         ),
 
@@ -480,31 +486,56 @@ class _LoginPageState extends State<LoginPage>
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () async {
-                                final user = await _authService.signInWithGoogle();
+                                final user = await _authService
+                                    .signInWithGoogle();
 
                                 if (user == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text("Google login failed")),
+                                    SnackBar(
+                                      content: Text("Google login failed"),
+                                    ),
                                   );
                                   return;
                                 }
 
                                 final role = user["role"];
 
-                                if (role == "farmer") {
+                                // if (role == "farmer") {
+                                //   Navigator.pushReplacement(
+                                //     context,
+                                //     MaterialPageRoute(
+                                //       builder: (_) => const FarmerDashboard(),
+                                //     ),
+                                //   );
+                                // } else if (role == "exporter") {
+                                //   Navigator.pushReplacement(
+                                //     context,
+                                //     MaterialPageRoute(
+                                //       builder: (_) => const ExporterDashboard(),
+                                //     ),
+                                //   );
+                                // } else if (role == "admin") {
+                                //   Navigator.pushReplacement(
+                                //     context,
+                                //     MaterialPageRoute(
+                                //       builder: (_) => const AdminDashboard(),
+                                //     ),
+                                //   );
+                                // }
+
+                                if (role == "admin") {
                                   Navigator.pushReplacement(
                                     context,
-                                    MaterialPageRoute(builder: (_) => const FarmerDashboard()),
+                                    MaterialPageRoute(
+                                      builder: (_) => const AdminDashboard(),
+                                    ),
                                   );
-                                } else if (role == "exporter") {
+                                } else {
                                   Navigator.pushReplacement(
                                     context,
-                                    MaterialPageRoute(builder: (_) => const ExporterDashboard()),
-                                  );
-                                } else if (role == "admin") {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                                    MaterialPageRoute(
+                                      builder: (_) => const NavigationWrapper(),
+                                    ),
                                   );
                                 }
                               },
@@ -600,9 +631,7 @@ class _LoginPageState extends State<LoginPage>
           controller: controller,
           keyboardType: keyboardType,
           obscureText: obscureText,
-          style: TextStyle(
-            fontSize: responsive.bodyFontSize + 1,
-          ),
+          style: TextStyle(fontSize: responsive.bodyFontSize + 1),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(
@@ -623,16 +652,11 @@ class _LoginPageState extends State<LoginPage>
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: Colors.grey.shade300,
-              ),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: primary,
-                width: 2,
-              ),
+              borderSide: BorderSide(color: primary, width: 2),
             ),
           ),
         ),

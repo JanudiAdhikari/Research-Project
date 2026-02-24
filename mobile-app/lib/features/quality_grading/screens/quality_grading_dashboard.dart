@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import '../../../widgets/bottom_navigation.dart';
+import '../../certifications/screens/farmer_certifications_dashboard_screen.dart';
 import 'batch_details_screen.dart';
 import 'how_it_works_screen.dart';
 import 'image_capture_guide_screen.dart';
 import 'iot_device_setup_screen.dart';
 import 'past_reports_screen.dart';
 import 'quality_tips_main_screen.dart';
+import 'image_upload_screen2.dart';
 
 class QualityGradingDashboard extends StatefulWidget {
   const QualityGradingDashboard({super.key});
 
   @override
-  State<QualityGradingDashboard> createState() => _QualityGradingDashboardState();
+  State<QualityGradingDashboard> createState() =>
+      _QualityGradingDashboardState();
 }
 
 class _QualityGradingDashboardState extends State<QualityGradingDashboard>
@@ -53,7 +56,10 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         backgroundColor: primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -74,16 +80,30 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
             return SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.pagePadding,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: responsive.value(mobile: 16, tablet: 20, desktop: 24)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 16,
+                        tablet: 20,
+                        desktop: 24,
+                      ),
+                    ),
 
                     // Summary Statistics Cards
                     _buildSummaryGrid(context, responsive),
 
-                    SizedBox(height: responsive.value(mobile: 20, tablet: 24, desktop: 28)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 20,
+                        tablet: 24,
+                        desktop: 28,
+                      ),
+                    ),
 
                     // Main Action Cards
                     Text(
@@ -94,10 +114,22 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                         color: Colors.grey[800],
                       ),
                     ),
-                    SizedBox(height: responsive.value(mobile: 10, tablet: 12, desktop: 16)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 10,
+                        tablet: 12,
+                        desktop: 16,
+                      ),
+                    ),
                     _buildActionCardsGrid(context, responsive, primary),
 
-                    SizedBox(height: responsive.value(mobile: 20, tablet: 24, desktop: 28)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 20,
+                        tablet: 24,
+                        desktop: 28,
+                      ),
+                    ),
 
                     // Educational Resources Section
                     Text(
@@ -108,10 +140,22 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                         color: Colors.grey[800],
                       ),
                     ),
-                    SizedBox(height: responsive.value(mobile: 10, tablet: 12, desktop: 16)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 10,
+                        tablet: 12,
+                        desktop: 16,
+                      ),
+                    ),
                     _buildResourceCards(context, responsive, primary),
 
-                    SizedBox(height: responsive.value(mobile: 24, tablet: 32, desktop: 40)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 24,
+                        tablet: 32,
+                        desktop: 40,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -123,8 +167,11 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         currentIndex: 2, // Quality tab is index 2
         onTabSelected: (index) {
           // Handle navigation based on index
-          if (index != 2) { // If not already on Quality tab
-            Navigator.pop(context); // Go back and let NavigationWrapper handle it
+          if (index != 2) {
+            // If not already on Quality tab
+            Navigator.pop(
+              context,
+            ); // Go back and let NavigationWrapper handle it
           }
         },
       ),
@@ -141,7 +188,10 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         backgroundColor: primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -162,16 +212,30 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
             return SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.pagePadding,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: responsive.value(mobile: 16, tablet: 20, desktop: 24)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 16,
+                        tablet: 20,
+                        desktop: 24,
+                      ),
+                    ),
 
                     // Summary Statistics Cards - NOW WITH ALL 4 CARDS
                     _buildSummaryGrid(context, responsive),
 
-                    SizedBox(height: responsive.value(mobile: 20, tablet: 24, desktop: 28)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 20,
+                        tablet: 24,
+                        desktop: 28,
+                      ),
+                    ),
 
                     // Main Action Cards
                     Text(
@@ -182,10 +246,22 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                         color: Colors.grey[800],
                       ),
                     ),
-                    SizedBox(height: responsive.value(mobile: 10, tablet: 12, desktop: 16)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 10,
+                        tablet: 12,
+                        desktop: 16,
+                      ),
+                    ),
                     _buildActionCardsGrid(context, responsive, primary),
 
-                    SizedBox(height: responsive.value(mobile: 20, tablet: 24, desktop: 28)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 20,
+                        tablet: 24,
+                        desktop: 28,
+                      ),
+                    ),
 
                     // Educational Resources Section
                     Text(
@@ -196,10 +272,22 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                         color: Colors.grey[800],
                       ),
                     ),
-                    SizedBox(height: responsive.value(mobile: 10, tablet: 12, desktop: 16)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 10,
+                        tablet: 12,
+                        desktop: 16,
+                      ),
+                    ),
                     _buildResourceCards(context, responsive, primary),
 
-                    SizedBox(height: responsive.value(mobile: 24, tablet: 32, desktop: 40)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 24,
+                        tablet: 32,
+                        desktop: 40,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -211,13 +299,21 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
   }
 
   Widget _buildSummaryGrid(BuildContext context, Responsive responsive) {
-    final crossAxisCount = responsive.value(mobile: 2, tablet: 4, desktop: 4).toInt();
+    final crossAxisCount = responsive
+        .value(mobile: 2, tablet: 4, desktop: 4)
+        .toInt();
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final spacing = responsive.value(mobile: 10, tablet: 12, desktop: 14);
-        final itemWidth = (constraints.maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
-        final itemHeight = responsive.value(mobile: 100, tablet: 115, desktop: 125);
+        final itemWidth =
+            (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+            crossAxisCount;
+        final itemHeight = responsive.value(
+          mobile: 100,
+          tablet: 115,
+          desktop: 125,
+        );
 
         return Wrap(
           spacing: spacing,
@@ -252,12 +348,12 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
   }
 
   Widget _summaryCard(
-      Responsive responsive, {
-        required String title,
-        required String value,
-        required IconData icon,
-        required Color color,
-      }) {
+    Responsive responsive, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -270,13 +366,17 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           ),
         ],
       ),
-      padding: EdgeInsets.all(responsive.value(mobile: 10, tablet: 12, desktop: 14)),
+      padding: EdgeInsets.all(
+        responsive.value(mobile: 10, tablet: 12, desktop: 14),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: EdgeInsets.all(responsive.value(mobile: 7, tablet: 8, desktop: 9)),
+            padding: EdgeInsets.all(
+              responsive.value(mobile: 7, tablet: 8, desktop: 9),
+            ),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               shape: BoxShape.circle,
@@ -318,14 +418,26 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     );
   }
 
-  Widget _buildActionCardsGrid(BuildContext context, Responsive responsive, Color primary) {
-    final crossAxisCount = responsive.value(mobile: 2, tablet: 2, desktop: 4).toInt();
+  Widget _buildActionCardsGrid(
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
+    final crossAxisCount = responsive
+        .value(mobile: 2, tablet: 2, desktop: 4)
+        .toInt();
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final spacing = responsive.value(mobile: 10, tablet: 12, desktop: 16);
-        final itemWidth = (constraints.maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
-        final itemHeight = responsive.value(mobile: 140, tablet: 155, desktop: 150);
+        final itemWidth =
+            (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+            crossAxisCount;
+        final itemHeight = responsive.value(
+          mobile: 140,
+          tablet: 155,
+          desktop: 150,
+        );
 
         final actionCards = _buildActionCards(context, responsive, primary);
 
@@ -333,18 +445,18 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           spacing: spacing,
           runSpacing: spacing,
           children: actionCards.map((card) {
-            return SizedBox(
-              width: itemWidth,
-              height: itemHeight,
-              child: card,
-            );
+            return SizedBox(width: itemWidth, height: itemHeight, child: card);
           }).toList(),
         );
       },
     );
   }
 
-  List<Widget> _buildActionCards(BuildContext context, Responsive responsive, Color primary) {
+  List<Widget> _buildActionCards(
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
     return [
       _actionCard(
         context,
@@ -361,6 +473,12 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
             MaterialPageRoute(builder: (_) => const BatchDetailsScreen()),
           );
         },
+        // onTap: () {
+        //   Navigator.push(
+        //     context,
+        //     MaterialPageRoute(builder: (_) => const ImageUploadScreen2()),
+        //   );
+        // },
       ),
       _actionCard(
         context,
@@ -374,9 +492,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const PastReportsScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const PastReportsScreen()),
           );
         },
       ),
@@ -392,9 +508,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const HowItWorksScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
           );
         },
       ),
@@ -418,14 +532,14 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
   }
 
   Widget _actionCard(
-      BuildContext context,
-      Responsive responsive, {
-        required String title,
-        required String subtitle,
-        required IconData icon,
-        required Gradient gradient,
-        required Function onTap,
-      }) {
+    BuildContext context,
+    Responsive responsive, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Gradient gradient,
+    required Function onTap,
+  }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -459,20 +573,28 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                 ),
               ),
               Padding(
-                padding: EdgeInsets.all(responsive.value(mobile: 12, tablet: 14, desktop: 16)),
+                padding: EdgeInsets.all(
+                  responsive.value(mobile: 12, tablet: 14, desktop: 16),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: EdgeInsets.all(responsive.value(mobile: 7, tablet: 8, desktop: 9)),
+                      padding: EdgeInsets.all(
+                        responsive.value(mobile: 7, tablet: 8, desktop: 9),
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         icon,
-                        size: responsive.value(mobile: 20, tablet: 24, desktop: 28),
+                        size: responsive.value(
+                          mobile: 20,
+                          tablet: 24,
+                          desktop: 28,
+                        ),
                         color: Colors.white,
                       ),
                     ),
@@ -483,7 +605,11 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                         Text(
                           title,
                           style: TextStyle(
-                            fontSize: responsive.value(mobile: 14, tablet: 15, desktop: 16),
+                            fontSize: responsive.value(
+                              mobile: 14,
+                              tablet: 15,
+                              desktop: 16,
+                            ),
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                             height: 1.2,
@@ -491,14 +617,24 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(height: responsive.value(mobile: 3, tablet: 4, desktop: 5)),
+                        SizedBox(
+                          height: responsive.value(
+                            mobile: 3,
+                            tablet: 4,
+                            desktop: 5,
+                          ),
+                        ),
                         Row(
                           children: [
                             Flexible(
                               child: Text(
                                 subtitle,
                                 style: TextStyle(
-                                  fontSize: responsive.value(mobile: 11, tablet: 12, desktop: 13),
+                                  fontSize: responsive.value(
+                                    mobile: 11,
+                                    tablet: 12,
+                                    desktop: 13,
+                                  ),
                                   color: Colors.white.withOpacity(0.95),
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -510,7 +646,11 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                             Icon(
                               Icons.arrow_forward_rounded,
                               color: Colors.white.withOpacity(0.95),
-                              size: responsive.value(mobile: 13, tablet: 15, desktop: 17),
+                              size: responsive.value(
+                                mobile: 13,
+                                tablet: 15,
+                                desktop: 17,
+                              ),
                             ),
                           ],
                         ),
@@ -526,7 +666,11 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     );
   }
 
-  Widget _buildResourceCards(BuildContext context, Responsive responsive, Color primary) {
+  Widget _buildResourceCards(
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
     return Column(
       children: [
         _resourceCard(
@@ -535,12 +679,12 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           description: "Connect your ESP32 bulk density device",
           icon: Icons.bluetooth_rounded,
           color: Colors.indigo,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const IotDeviceSetupScreen()),
-              );
-            }
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const IotDeviceSetupScreen()),
+            );
+          },
         ),
         SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
         _resourceCard(
@@ -549,12 +693,14 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           description: "Learn how to capture quality images",
           icon: Icons.camera_alt_rounded,
           color: Colors.teal,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ImageCaptureGuideScreen()),
-              );
-            }
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ImageCaptureGuideScreen(),
+              ),
+            );
+          },
         ),
         SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
         _resourceCard(
@@ -564,8 +710,11 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           icon: Icons.verified_rounded,
           color: Colors.green,
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Opening certification...")),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const FarmerCertificationsDashboardScreen(),
+              ),
             );
           },
         ),
@@ -574,13 +723,13 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
   }
 
   Widget _resourceCard(
-      Responsive responsive, {
-        required String title,
-        required String description,
-        required IconData icon,
-        required Color color,
-        required VoidCallback onTap,
-      }) {
+    Responsive responsive, {
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
@@ -599,11 +748,15 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
               ),
             ],
           ),
-          padding: EdgeInsets.all(responsive.value(mobile: 12, tablet: 14, desktop: 16)),
+          padding: EdgeInsets.all(
+            responsive.value(mobile: 12, tablet: 14, desktop: 16),
+          ),
           child: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(responsive.value(mobile: 9, tablet: 10, desktop: 11)),
+                padding: EdgeInsets.all(
+                  responsive.value(mobile: 9, tablet: 10, desktop: 11),
+                ),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
@@ -614,7 +767,9 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                   size: responsive.value(mobile: 20, tablet: 22, desktop: 24),
                 ),
               ),
-              SizedBox(width: responsive.value(mobile: 10, tablet: 12, desktop: 14)),
+              SizedBox(
+                width: responsive.value(mobile: 10, tablet: 12, desktop: 14),
+              ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -623,18 +778,32 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: responsive.value(mobile: 14, tablet: 15, desktop: 16),
+                        fontSize: responsive.value(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                         fontWeight: FontWeight.w700,
                         color: Colors.grey[800],
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: responsive.value(mobile: 2, tablet: 3, desktop: 4)),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 2,
+                        tablet: 3,
+                        desktop: 4,
+                      ),
+                    ),
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: responsive.value(mobile: 11, tablet: 12, desktop: 13),
+                        fontSize: responsive.value(
+                          mobile: 11,
+                          tablet: 12,
+                          desktop: 13,
+                        ),
                         color: Colors.grey[600],
                         fontWeight: FontWeight.w500,
                       ),
@@ -683,7 +852,10 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Got it", style: TextStyle(color: Color(0xFF43A047))),
+            child: const Text(
+              "Got it",
+              style: TextStyle(color: Color(0xFF43A047)),
+            ),
           ),
         ],
       ),
@@ -712,10 +884,26 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
-              _featureItem(Icons.scale_rounded, "Bulk Density", "IoT device measures density (g/L)"),
-              _featureItem(Icons.visibility_rounded, "Visual Analysis", "AI detects mold, defects, adulteration"),
-              _featureItem(Icons.science_rounded, "Piperine Estimation", "Variety-based quality indicator"),
-              _featureItem(Icons.verified_rounded, "GAP Validation", "Certificate verification for buyers"),
+              _featureItem(
+                Icons.scale_rounded,
+                "Bulk Density",
+                "IoT device measures density (g/L)",
+              ),
+              _featureItem(
+                Icons.visibility_rounded,
+                "Visual Analysis",
+                "AI detects mold, defects, adulteration",
+              ),
+              _featureItem(
+                Icons.science_rounded,
+                "Piperine Estimation",
+                "Variety-based quality indicator",
+              ),
+              _featureItem(
+                Icons.verified_rounded,
+                "GAP Validation",
+                "Certificate verification for buyers",
+              ),
             ],
           ),
         ),
@@ -736,7 +924,10 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.lightbulb_outline_rounded, color: Colors.purple.shade600),
+            Icon(
+              Icons.lightbulb_outline_rounded,
+              color: Colors.purple.shade600,
+            ),
             const SizedBox(width: 12),
             const Text("Quality Tips"),
           ],
@@ -784,12 +975,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
         ],
       ),
     );
@@ -824,10 +1010,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                 const SizedBox(height: 2),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -843,14 +1026,13 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle_rounded, color: Colors.purple.shade400, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              tip,
-              style: const TextStyle(fontSize: 14),
-            ),
+          Icon(
+            Icons.check_circle_rounded,
+            color: Colors.purple.shade400,
+            size: 20,
           ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(tip, style: const TextStyle(fontSize: 14))),
         ],
       ),
     );
@@ -878,10 +1060,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                text,
-                style: const TextStyle(fontSize: 14),
-              ),
+              child: Text(text, style: const TextStyle(fontSize: 14)),
             ),
           ),
         ],

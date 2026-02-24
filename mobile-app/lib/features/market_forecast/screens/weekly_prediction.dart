@@ -3,702 +3,392 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 
-class WeeklyPrediction extends StatelessWidget {
-  final String? year;
-  final String? month;
-  final String? week;
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-  WeeklyPrediction({
-    super.key,
+class PricePredictionService {
+  final String apiUrl;
+  PricePredictionService({required this.apiUrl});
+  Future<double> fetchPredictedPrice({
+    required String district,
+    required String pepperType,
+    required String grade,
+    required int year,
+    required int month,
+    required int week, // ISO week number
+  }) async {
+    // Map grade values to API expected format
+    String mappedGrade = grade;
+    if (grade == 'Grade 1')
+      mappedGrade = 'GR1';
+    else if (grade == 'Grade 2')
+      mappedGrade = 'GR2';
+
+    // Construct the request body
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'district': district,
+        'pepper_type': pepperType,
+        'grade': mappedGrade,
+        'year': year,
+        'month': month,
+        'week': week,
+      }),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final price = data['predicted_price_LKR_per_kg'];
+      if (price == null) {
+        throw Exception(
+          'Predicted price not found in response. Full response: ${response.body}',
+        );
+      }
+      return (price is num)
+          ? price.toDouble()
+          : double.tryParse(price.toString()) ?? 0.0;
+    } else {
+      throw Exception(
+        'Failed to fetch predicted price. Status: ${response.statusCode}, Body: ${response.body}',
+      );
+    }
+  }
+}
+
+// Screen to display the predicted price
+class WeeklyPrediction extends StatefulWidget {
+  final String year;
+  final String month;
+  final String week;
+  final String district;
+  final String pepperType;
+  final String grade;
+  final int weekNumber;
+
+  const WeeklyPrediction({
+    Key? key,
     required this.year,
     required this.month,
     required this.week,
-  });
+    required this.district,
+    required this.pepperType,
+    required this.grade,
+    required this.weekNumber,
+  }) : super(key: key);
 
-  final List<double> blackPepperPriceData = <double>[
-    1500,
-    1600,
-    1750,
-    2000,
-    1800,
-    1950,
-    2100,
-    2200,
-    2300,
-    2400,
-  ];
+  @override
+  State<WeeklyPrediction> createState() => _WeeklyPredictionState();
+}
 
-  final List<double> whitePepperPriceData = <double>[
-    1800,
-    1750,
-    1900,
-    2100,
-    2000,
-    2200,
-    2300,
-    2400,
-    2500,
-    2600,
-  ];
+class _WeeklyPredictionState extends State<WeeklyPrediction> {
+  double? predictedPrice;
+  bool isLoading = true;
+  String? errorMsg;
 
-  final Color blackPepperColor = Colors.orange;
-  final Color whitePepperColor = Colors.blue;
-
-  String getMonthName(int month) {
-    final monthNames = [
-      "",
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-    return monthNames[month];
+  @override
+  void initState() {
+    super.initState();
+    fetchPrediction();
   }
 
-  List<Map<String, dynamic>> generatePreviousWeeks(
-    int year,
-    int month,
-    int weekNumber,
-    int count,
-  ) {
-    List<Map<String, dynamic>> weeks = [];
-
-    DateTime firstDayOfMonth = DateTime(year, month, 1);
-    int dayOfWeek = firstDayOfMonth.weekday;
-    int offset = (dayOfWeek == 1) ? 0 : (8 - dayOfWeek);
-    DateTime firstMonday = firstDayOfMonth.add(Duration(days: offset));
-    DateTime selectedWeekStart = firstMonday.add(
-      Duration(days: (weekNumber - 1) * 7),
+  Future<void> fetchPrediction() async {
+    final service = PricePredictionService(
+      apiUrl:
+          'http://10.0.2.2:8000/predictlocalprice', // Using 10.0.2.2 for Android emulator
     );
-
-    for (int i = count - 1; i >= 0; i--) {
-      DateTime weekStart = selectedWeekStart.subtract(Duration(days: i * 7));
-      int wYear = weekStart.year;
-      int wMonth = weekStart.month;
-
-      DateTime firstOfMonth = DateTime(wYear, wMonth, 1);
-      int firstWeekday = firstOfMonth.weekday;
-      int firstMondayOffset = (firstWeekday == 1) ? 0 : (8 - firstWeekday);
-      DateTime monthFirstMonday = firstOfMonth.add(
-        Duration(days: firstMondayOffset),
+    try {
+      final price = await service.fetchPredictedPrice(
+        district: widget.district,
+        pepperType: widget.pepperType,
+        grade: widget.grade,
+        year: int.tryParse(widget.year) ?? 2025,
+        month: int.tryParse(widget.month) ?? 1,
+        week: widget.weekNumber,
       );
-
-      int weekInMonth =
-          ((weekStart.difference(monthFirstMonday).inDays) / 7).floor() + 1;
-      if (weekStart.isBefore(monthFirstMonday)) weekInMonth = 1;
-
-      weeks.add({'year': wYear, 'month': wMonth, 'week': weekInMonth});
+      setState(() {
+        predictedPrice = price;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMsg = e.toString();
+        isLoading = false;
+      });
     }
-
-    return weeks;
-  }
-
-  List<String> formatWeekLabelsFromMap(List<Map<String, dynamic>> weeks) {
-    final monthNames = [
-      "",
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    return weeks
-        .map((w) => "${monthNames[w['month']!]} w${w['week']!}")
-        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final responsive = context.responsive;
-    final y = int.tryParse(year ?? '') ?? 2025;
-    final m = int.tryParse(month ?? '') ?? 1;
-    final w = int.tryParse(week ?? '') ?? 1;
-
-    final previousWeeks = generatePreviousWeeks(y, m, w, 5);
-    final weekLabels = formatWeekLabelsFromMap(previousWeeks);
-    final dataLength = previousWeeks.length;
-
-    List<double> blackData = [];
-    List<double> whiteData = [];
-    for (int i = 0; i < dataLength; i++) {
-      int priceIndex = i % blackPepperPriceData.length;
-      blackData.add(blackPepperPriceData[priceIndex]);
-      whiteData.add(whitePepperPriceData[priceIndex]);
-    }
-
-    // Calculate statistics
-    final currentPrice = 1890.0; // This week's price
-    final predictedPrice = 2150.0; // Next week's predicted price
-    final previousPrice = blackData.last;
-    final priceChange = predictedPrice - currentPrice;
-    final percentageChange = (priceChange / currentPrice) * 100;
-    final highPrice = blackData.reduce((a, b) => a > b ? a : b);
-    final lowPrice = blackData.reduce((a, b) => a < b ? a : b);
-    final avgPrice = blackData.reduce((a, b) => a + b) / blackData.length;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-
       appBar: AppBar(
         title: const Text('Price Forecast Analysis'),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
       ),
-
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: responsive.mediumSpacing),
-
-              // Header Card with Period and Predicted Price
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(responsive.largeSpacing),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.green[400]!, Colors.green[600]!],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.green[400]!.withOpacity(0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : errorMsg != null
+          ? Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                'Error: $errorMsg',
+                style: const TextStyle(fontSize: 16, color: Colors.red),
+              ),
+            )
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 30.0),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Period Information
+                    // Week label
                     Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: responsive.mediumSpacing,
-                        vertical: responsive.smallSpacing / 2,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 1,
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Text(
+                        '${widget.week}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF388E3C),
                         ),
                       ),
-                      child: Row(
+                    ),
+                    const SizedBox(height: 6),
+                    // Predicted price card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 28,
+                        horizontal: 18,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: const Color(0xFF81C784),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.green.withOpacity(0.08),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.calendar_today,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            week ?? 'Date Range',
+                          const Text(
+                            'Predicted Price',
                             style: TextStyle(
-                              fontSize: responsive.bodyFontSize,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text:
+                                      'Rs. ${predictedPrice!.toStringAsFixed(0)} ',
+                                  style: TextStyle(
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: '/kg',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.black54,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Estimated average for the week',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    SizedBox(height: responsive.mediumSpacing),
-
-                    // Predicted Price Section
-                    Text(
-                      'Predicted Price',
-                      style: TextStyle(
-                        fontSize: responsive.smallFontSize,
-                        color: Colors.black87,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
                     const SizedBox(height: 8),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          'Rs. ',
-                          style: TextStyle(
-                            fontSize: responsive.titleFontSize * 1.2,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          '${predictedPrice.toInt()}',
-                          style: const TextStyle(
-                            fontSize: 56,
-                            color: Colors.black87,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            '/kg',
-                            style: TextStyle(
-                              fontSize: responsive.titleFontSize * 1.1,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    SizedBox(height: responsive.mediumSpacing),
-
-                    // Price Change Indicator
+                    // Selected details (district, pepper type, grade)
                     Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: responsive.mediumSpacing,
-                        vertical: responsive.smallSpacing,
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
-                        color: priceChange >= 0
-                            ? Colors.lightGreen[300]!.withOpacity(0.8)
-                            : Colors.red[300]!.withOpacity(0.8),
-                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.5),
-                          width: 2,
+                          color: Colors.green.withOpacity(0.06),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                (priceChange >= 0
-                                        ? Colors.lightGreen[300]
-                                        : Colors.red[300])!
-                                    .withOpacity(0.3),
-                            blurRadius: 10,
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      child: Column(
                         children: [
-                          Icon(
-                            priceChange >= 0
-                                ? Icons.trending_up
-                                : Icons.trending_down,
-                            color: Colors.black87,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          // District row
+                          Row(
                             children: [
-                              Text(
-                                'Price Change',
-                                style: TextStyle(
-                                  fontSize: responsive.smallFontSize,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w500,
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F5E9),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Color(0xFF388E3C),
+                                  size: 18,
                                 ),
                               ),
-                              Text(
-                                '${priceChange >= 0 ? '+' : ''}Rs. ${priceChange.toStringAsFixed(0)} (${percentageChange.toStringAsFixed(1)}%)',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w700,
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'District',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.district,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Divider(height: 1, color: Colors.grey.shade200),
+                          const SizedBox(height: 10),
+
+                          // Pepper type row
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF3E0),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
+                                child: Icon(
+                                  Icons.local_florist,
+                                  color: Colors.brown.shade700,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Pepper Type',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.pepperType,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Divider(height: 1, color: Colors.grey.shade200),
+                          const SizedBox(height: 10),
+
+                          // Grade row
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF8E1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.grade,
+                                  color: Colors.amber.shade700,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Grade',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    widget.grade,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ],
                       ),
                     ),
-
-                    SizedBox(height: responsive.mediumSpacing),
                   ],
                 ),
               ),
-
-              SizedBox(height: responsive.largeSpacing),
-
-              // Current vs Previous Price
-              ResponsiveText(
-                'Current vs Previous Price',
-                mobileFontSize: responsive.titleFontSize,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey[800],
-              ),
-              SizedBox(height: responsive.mediumSpacing),
-
-              Center(
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.all(responsive.mediumSpacing),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _priceColumn(
-                        icon: Icons.trending_flat,
-                        label: 'Previous Week',
-                        value: previousPrice.toInt(),
-                        color: Colors.blue[700],
-                        responsive: responsive,
-                      ),
-                      Container(height: 50, width: 1, color: Colors.grey[300]),
-                      _priceColumn(
-                        icon: Icons.trending_up,
-                        label: 'Current Week',
-                        value: currentPrice.toInt(),
-                        color: Colors.green[700],
-                        responsive: responsive,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              SizedBox(height: responsive.largeSpacing),
-
-              ResponsiveText(
-                'Past Price Trend',
-                mobileFontSize: responsive.titleFontSize,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey[800],
-              ),
-              SizedBox(height: responsive.smallSpacing / 2),
-              Text(
-                'Last 5 weeks comparison',
-                style: TextStyle(
-                  fontSize: responsive.smallFontSize,
-                  color: Colors.grey[600],
-                ),
-              ),
-
-              SizedBox(height: responsive.mediumSpacing),
-              _buildLegend(responsive),
-              SizedBox(height: responsive.mediumSpacing),
-
-              Center(
-                child: Container(
-                  width: responsive.maxContentWidth,
-                  height: 260,
-                  padding: EdgeInsets.all(responsive.smallSpacing),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(
-                      responsive.largeSpacing / 2,
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 10,
-                        offset: Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: LineChart(
-                    LineChartData(
-                      minX: 0,
-                      maxX: (dataLength - 1).toDouble(),
-                      minY: 1000,
-                      maxY: 3200,
-                      gridData: FlGridData(
-                        show: true,
-                        drawVerticalLine: false,
-                        horizontalInterval: 500,
-                      ),
-                      borderData: FlBorderData(show: false),
-                      titlesData: FlTitlesData(
-                        topTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        rightTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            interval: 500,
-                            reservedSize: 40,
-                          ),
-                        ),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            interval: 1,
-                            reservedSize: 45,
-                            getTitlesWidget: (value, meta) {
-                              if (value.toInt() >= weekLabels.length) {
-                                return const SizedBox.shrink();
-                              }
-                              return SideTitleWidget(
-                                axisSide: meta.axisSide,
-                                angle: 0.5,
-                                child: Text(
-                                  weekLabels[value.toInt()],
-                                  style: TextStyle(
-                                    fontSize: responsive.smallFontSize * 0.9,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      lineBarsData: [
-                        LineChartBarData(
-                          isCurved: true,
-                          barWidth: 3,
-                          color: blackPepperColor,
-                          dotData: FlDotData(show: true),
-                          spots: List.generate(
-                            dataLength,
-                            (i) => FlSpot(i.toDouble(), blackData[i]),
-                          ),
-                        ),
-                        LineChartBarData(
-                          isCurved: true,
-                          barWidth: 3,
-                          color: whitePepperColor,
-                          dotData: FlDotData(show: true),
-                          spots: List.generate(
-                            dataLength,
-                            (i) => FlSpot(i.toDouble(), whiteData[i]),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: responsive.largeSpacing),
-
-              // Market Insights
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(responsive.mediumSpacing),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue[200]!),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.lightbulb_outline,
-                          color: Colors.blue[700],
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Market Insights',
-                          style: TextStyle(
-                            fontSize: responsive.bodyFontSize,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.blue[900],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: responsive.smallSpacing),
-                    _buildInsightRow(
-                      Icons.trending_up,
-                      'Price trend shows ${priceChange >= 0 ? 'upward' : 'downward'} movement',
-                      responsive,
-                    ),
-                    const SizedBox(height: 6),
-                    _buildInsightRow(
-                      Icons.analytics_outlined,
-                      'Historical average: Rs. ${avgPrice.toInt()}/kg',
-                      responsive,
-                    ),
-                    const SizedBox(height: 6),
-                    _buildInsightRow(
-                      Icons.info_outline,
-                      'Price range: Rs. ${lowPrice.toInt()} - Rs. ${highPrice.toInt()}',
-                      responsive,
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: responsive.largeSpacing),
-
-              Center(
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.6,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: const Text(
-                      'Recommendations',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => Recommendations(
-                            // predictedPrice: next-week forecast (1950)
-                            predictedPrice: predictedPrice,
-                            currentPrice: currentPrice,
-                            previousPrice: previousPrice,
-                            averagePrice: avgPrice,
-                            month: month,
-                            week: week,
-                            year: year,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-
-              SizedBox(height: responsive.largeSpacing),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInsightRow(IconData icon, String text, Responsive responsive) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: Colors.blue[700]),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: responsive.smallFontSize,
-              color: Colors.blue[900],
-              height: 1.3,
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLegend(Responsive responsive) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _legendItem(
-          color: blackPepperColor,
-          label: 'Black Pepper',
-          responsive: responsive,
-        ),
-        SizedBox(width: responsive.mediumSpacing),
-        _legendItem(
-          color: whitePepperColor,
-          label: 'White Pepper',
-          responsive: responsive,
-        ),
-      ],
-    );
-  }
-
-  Widget _priceColumn({
-    required IconData icon,
-    required String label,
-    required int value,
-    required Color? color,
-    required Responsive responsive,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(icon, color: color, size: 28),
-        SizedBox(height: responsive.smallSpacing / 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: responsive.smallFontSize,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Rs. $value /kg',
-          style: TextStyle(
-            fontSize: responsive.titleFontSize * 0.9,
-            color: Colors.grey[900],
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _legendItem({
-    required Color color,
-    required String label,
-    required Responsive responsive,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: responsive.smallSpacing,
-          height: responsive.smallSpacing,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-        ),
-        SizedBox(width: responsive.smallSpacing / 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: responsive.bodyFontSize,
-            color: Colors.grey,
-          ),
-        ),
-      ],
     );
   }
 }

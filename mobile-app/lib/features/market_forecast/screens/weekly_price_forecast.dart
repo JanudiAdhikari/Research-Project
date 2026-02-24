@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import '../../../utils/responsive.dart';
 import 'weekly_prediction.dart';
 import 'package:intl/intl.dart';
+import '../services/weather_service.dart';
+import '../services/district_coordinates.dart';
 
 class WeeklyPriceForecast extends StatefulWidget {
   const WeeklyPriceForecast({Key? key}) : super(key: key);
@@ -32,6 +34,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
   bool isLoadingWeekDetails = false;
   bool isLoadingWeatherDetails = false;
 
+  // Weather data
+  Map<String, dynamic>? weatherData;
+
   // Auto-calculated next week values
   late String nextWeekMonth;
   late int nextWeekNumber;
@@ -56,7 +61,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     'Ratnapura',
   ];
   final List<String> pepperTypes = ['Black', 'White'];
-  final List<String> grades = ['Grade 1', 'Grade 2', 'Grade 3'];
+  final List<String> grades = ['Grade 1', 'Grade 2'];
 
   // Month names for mapping
   final List<String> months = [
@@ -83,26 +88,35 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
   void _calculateNextWeek() {
     DateTime today = DateTime.now();
     DateTime nextWeek = today.add(const Duration(days: 7));
+    // Get the Monday of the next week (start of week)
+    DateTime nextWeekMonday = nextWeek.subtract(
+      Duration(days: nextWeek.weekday - 1),
+    );
 
     // Get month name
-    nextWeekMonth = months[nextWeek.month - 1];
+    nextWeekMonth = months[nextWeekMonday.month - 1];
 
-    // Calculate week number
-    nextWeekNumber = _getWeekNumber(nextWeek);
+    // Calculate week number using the Monday of the week
+    nextWeekNumber = _getWeekNumber(nextWeekMonday);
 
-    // Get year
-    nextWeekYear = nextWeek.year.toString();
+    // Get year (ISO year for the Monday)
+    nextWeekYear = nextWeekMonday.year.toString();
 
     // Calculate date range
-    weekDateRange = _getWeekDateRange(nextWeek);
+    weekDateRange = _getWeekDateRange(nextWeekMonday);
   }
 
   // Calculate ISO week number
   int _getWeekNumber(DateTime date) {
-    final dayOfWeek = date.weekday;
-    final ordinalDayOfYear =
-        date.difference(DateTime(date.year, 1, 1)).inDays + 1;
-    return ((ordinalDayOfYear - dayOfWeek + 10) / 7).floor();
+    // ISO week starts on Monday. Week 1 is the week with the first Thursday of the year.
+    // Adjust date to Thursday in current week (ISO)
+    DateTime thursday = date.add(Duration(days: 3 - ((date.weekday + 6) % 7)));
+    // The year that the Thursday falls in is the ISO year
+    int isoYear = thursday.year;
+    DateTime firstThursday = DateTime(isoYear, 1, 4);
+    int weekNumber =
+        1 + ((thursday.difference(firstThursday).inDays) / 7).floor();
+    return weekNumber;
   }
 
   @override
@@ -147,6 +161,26 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
         title: const Text('Weekly Price Forecast'),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Reset All',
+            onPressed: () {
+              setState(() {
+                selectedDistrict = null;
+                selectedPepperType = null;
+                selectedGrade = null;
+                showWeekDetails = false;
+                showWeatherDetails = false;
+                isLoadingWeekDetails = false;
+                isLoadingWeatherDetails = false;
+                weatherData = null;
+                showErrors = false;
+                _calculateNextWeek();
+              });
+            },
+          ),
+        ],
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -195,7 +229,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                       _buildDropdownField(
                         "Grade",
                         selectedGrade,
-                        grades,
+                        selectedPepperType == 'White' ? ['Grade 1'] : grades,
                         (val) => setState(() => selectedGrade = val),
                       ),
                       ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -245,15 +279,24 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                 return; // stop navigation
                               }
 
-                              // All good → navigate with calculated week data
+                              // Navigate with calculated week data
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => WeeklyPrediction(
-                                    year: nextWeekYear,
-                                    month: nextWeekMonth,
-                                    week: weekDateRange,
-                                  ),
+                                  builder: (context) {
+                                    // Convert month name to month number (1-based)
+                                    int monthNumber =
+                                        months.indexOf(nextWeekMonth) + 1;
+                                    return WeeklyPrediction(
+                                      year: nextWeekYear,
+                                      month: monthNumber.toString(),
+                                      week: weekDateRange,
+                                      district: selectedDistrict!,
+                                      pepperType: selectedPepperType!,
+                                      grade: selectedGrade!,
+                                      weekNumber: nextWeekNumber,
+                                    );
+                                  },
                                 ),
                               );
                             },
@@ -549,20 +592,32 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
               child: _buildFetchButton(
                 isLoading: isLoadingWeatherDetails,
                 onPressed: () async {
+                  if (selectedDistrict == null) return;
                   setState(() {
                     isLoadingWeatherDetails = true;
                   });
-                  // Simulate API call delay
-                  await Future.delayed(const Duration(milliseconds: 1500));
-                  setState(() {
-                    isLoadingWeatherDetails = false;
-                    showWeatherDetails = true;
-                  });
+                  final coords = districtCoordinates[selectedDistrict!];
+                  if (coords != null) {
+                    final weatherService = WeatherService();
+                    final data = await weatherService.getWeatherData(
+                      coords['lat']!,
+                      coords['lon']!,
+                    );
+                    setState(() {
+                      weatherData = weatherService.parseWeatherData(data);
+                      isLoadingWeatherDetails = false;
+                      showWeatherDetails = true;
+                    });
+                  } else {
+                    setState(() {
+                      isLoadingWeatherDetails = false;
+                    });
+                  }
                 },
                 color: Colors.green.shade700,
               ),
             ),
-          if (showWeatherDetails) ...[
+          if (showWeatherDetails && weatherData != null) ...[
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -596,7 +651,6 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisSpacing: 6,
                       mainAxisSpacing: 6,
-                      // Increase aspect ratio (width/height) to reduce card height
                       childAspectRatio: responsive.value(
                         mobile: 1.4,
                         tablet: 1.6,
@@ -607,25 +661,29 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           icon: Icons.opacity,
                           iconColor: Colors.blue,
                           label: "Rainfall",
-                          value: "120",
+                          value: weatherData!["rainfall"].toString(),
                           unit: "mm",
                           responsive: responsive,
-                          description: "Moderate Rain",
+                          description:
+                              weatherData!["rainfall"] != null &&
+                                  weatherData!["rainfall"] > 0
+                              ? "Rain"
+                              : "No Rain",
                         ),
                         _buildEnhancedWeatherCard(
                           icon: Icons.thermostat,
                           iconColor: Colors.orange,
                           label: "Temperature",
-                          value: "29",
+                          value: weatherData!["temperature"].toString(),
                           unit: "°C",
                           responsive: responsive,
-                          description: "Warm",
+                          description: weatherData!["description"] ?? "-",
                         ),
                         _buildEnhancedWeatherCard(
                           icon: Icons.water_drop,
                           iconColor: Colors.cyan,
                           label: "Humidity",
-                          value: "78",
+                          value: weatherData!["humidity"].toString(),
                           unit: "%",
                           responsive: responsive,
                           description: "High Moisture",
@@ -634,10 +692,14 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           icon: Icons.air,
                           iconColor: Colors.teal,
                           label: "Wind Speed",
-                          value: "12",
+                          value: weatherData!["windSpeed"].toString(),
                           unit: "km/h",
                           responsive: responsive,
-                          description: "Light Breeze",
+                          description:
+                              weatherData!["windSpeed"] != null &&
+                                  weatherData!["windSpeed"] > 0
+                              ? "Breezy"
+                              : "Calm",
                         ),
                       ],
                     ),
@@ -665,7 +727,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              "Good conditions for crop growth. Expect moderate rainfall with warm temperatures.",
+                              "${weatherData!["description"] ?? "Weather data loaded."}",
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize - 1.5,
                                 color: Colors.blue.shade800,

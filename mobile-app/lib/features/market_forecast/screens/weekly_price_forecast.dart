@@ -61,7 +61,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     'Ratnapura',
   ];
   final List<String> pepperTypes = ['Black', 'White'];
-  final List<String> grades = ['Grade 1', 'Grade 2', 'Grade 3'];
+  final List<String> grades = ['Grade 1', 'Grade 2'];
 
   // Month names for mapping
   final List<String> months = [
@@ -88,26 +88,35 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
   void _calculateNextWeek() {
     DateTime today = DateTime.now();
     DateTime nextWeek = today.add(const Duration(days: 7));
+    // Get the Monday of the next week (start of week)
+    DateTime nextWeekMonday = nextWeek.subtract(
+      Duration(days: nextWeek.weekday - 1),
+    );
 
     // Get month name
-    nextWeekMonth = months[nextWeek.month - 1];
+    nextWeekMonth = months[nextWeekMonday.month - 1];
 
-    // Calculate week number
-    nextWeekNumber = _getWeekNumber(nextWeek);
+    // Calculate week number using the Monday of the week
+    nextWeekNumber = _getWeekNumber(nextWeekMonday);
 
-    // Get year
-    nextWeekYear = nextWeek.year.toString();
+    // Get year (ISO year for the Monday)
+    nextWeekYear = nextWeekMonday.year.toString();
 
     // Calculate date range
-    weekDateRange = _getWeekDateRange(nextWeek);
+    weekDateRange = _getWeekDateRange(nextWeekMonday);
   }
 
   // Calculate ISO week number
   int _getWeekNumber(DateTime date) {
-    final dayOfWeek = date.weekday;
-    final ordinalDayOfYear =
-        date.difference(DateTime(date.year, 1, 1)).inDays + 1;
-    return ((ordinalDayOfYear - dayOfWeek + 10) / 7).floor();
+    // ISO week starts on Monday. Week 1 is the week with the first Thursday of the year.
+    // Adjust date to Thursday in current week (ISO)
+    DateTime thursday = date.add(Duration(days: 3 - ((date.weekday + 6) % 7)));
+    // The year that the Thursday falls in is the ISO year
+    int isoYear = thursday.year;
+    DateTime firstThursday = DateTime(isoYear, 1, 4);
+    int weekNumber =
+        1 + ((thursday.difference(firstThursday).inDays) / 7).floor();
+    return weekNumber;
   }
 
   @override
@@ -270,15 +279,24 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                 return; // stop navigation
                               }
 
-                              // All good → navigate with calculated week data
+                              // Navigate with calculated week data
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => WeeklyPrediction(
-                                    year: nextWeekYear,
-                                    month: nextWeekMonth,
-                                    week: weekDateRange,
-                                  ),
+                                  builder: (context) {
+                                    // Convert month name to month number (1-based)
+                                    int monthNumber =
+                                        months.indexOf(nextWeekMonth) + 1;
+                                    return WeeklyPrediction(
+                                      year: nextWeekYear,
+                                      month: monthNumber.toString(),
+                                      week: weekDateRange,
+                                      district: selectedDistrict!,
+                                      pepperType: selectedPepperType!,
+                                      grade: selectedGrade!,
+                                      weekNumber: nextWeekNumber,
+                                    );
+                                  },
                                 ),
                               );
                             },

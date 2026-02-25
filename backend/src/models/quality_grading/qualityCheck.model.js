@@ -61,6 +61,26 @@ const qualityCheckSchema = new mongoose.Schema(
       measuredAt: { type: Date, default: null },
     },
 
+    // Snapshot of farmer certificates at the time of grading
+    certificatesSnapshot: {
+      items: [
+        {
+          certId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Certification",
+          },
+          certificationType: { type: String, default: null },
+          certificateNumber: { type: String, default: null },
+          issuingBody: { type: String, default: null },
+          issueDate: { type: Date, default: null },
+          expiryDate: { type: Date, default: null },
+          attachmentUrl: { type: String, default: null },
+        },
+      ],
+      count: { type: Number, default: 0 },
+      capturedAt: { type: Date, default: null },
+    },
+
     // Later you will store only final results (not per image)
     results: {
       overallScore: { type: Number, default: null },

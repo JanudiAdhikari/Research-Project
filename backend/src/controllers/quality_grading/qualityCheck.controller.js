@@ -6,6 +6,7 @@ const User = require("../../models/user.models");
 const {
   EXPECTED_FIELDS,
 } = require("../../middleware/quality_grading/qualityUpload.middleware");
+const Certification = require("../../models/certification.models");
 
 // Step 1: Batch Information
 const toGrams = (kg, g) => {
@@ -158,6 +159,11 @@ exports.updateDensity = async (req, res) => {
 
 // Step 3
 // POST /api/quality-checks/:id/analyze
+const startOfToday = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
+
 exports.analyzeQualityImages = async (req, res) => {
   try {
     const firebaseUid = req.user?.uid;
@@ -247,6 +253,33 @@ exports.analyzeQualityImages = async (req, res) => {
       healthyVisualPct: Number(finalAvg.healthy_visual_pct ?? 0),
     };
 
+    // Capture certificate snapshot (verified + not expired) at grading time
+    const today = startOfToday();
+
+    const certs = await Certification.find({
+      firebaseUid: firebaseUid, // same firebaseUid from req.user.uid
+      status: "verified",
+      expiryDate: { $gte: today },
+    })
+      .sort({ createdAt: -1 })
+      .select(
+        "certificationType certificateNumber issuingBody issueDate expiryDate attachment",
+      );
+
+    qc.certificatesSnapshot = {
+      items: certs.map((c) => ({
+        certId: c._id,
+        certificationType: c.certificationType,
+        certificateNumber: c.certificateNumber,
+        issuingBody: c.issuingBody,
+        issueDate: c.issueDate,
+        expiryDate: c.expiryDate,
+        attachmentUrl: c.attachment?.url || null,
+      })),
+      count: certs.length,
+      capturedAt: new Date(),
+    };
+
     // Save only the final results (score/grade you will implement later)
     qc.results = {
       ...qc.results,
@@ -262,6 +295,7 @@ exports.analyzeQualityImages = async (req, res) => {
       qualityCheckId: qc._id,
       status: qc.status,
       factors: qc.results.factors,
+      certificatesSnapshot: qc.certificatesSnapshot,
     });
   } catch (err) {
     console.error(
@@ -277,11 +311,10 @@ exports.analyzeQualityImages = async (req, res) => {
         });
       }
     } catch (err) {
-      console.error("FASTAPI CALL FAILED");
-      console.error("code:", err.code);
-      console.error("message:", err.message);
-      console.error("status:", err.response?.status);
-      console.error("data:", err.response?.data);
+      console.error(
+        "analyzeQualityImages error:",
+        err?.response?.data || err.message,
+      );
 
       try {
         if (req.params?.id) {

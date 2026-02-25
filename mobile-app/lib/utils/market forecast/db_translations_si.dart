@@ -1,4 +1,4 @@
-// Helper translations for Market Forecast dynamic values (country, pepper types)
+// Helper translations for Market Forecast dynamic values 
 class MarketForecastSi {
   static const Map<String, String> countries = {
     'india': 'ඉන්දියාව',
@@ -12,10 +12,10 @@ class MarketForecastSi {
   };
 
   static const Map<String, String> pepperTypes = {
-    'ground pepper': 'ගම්මිරිස් කුඩු',
+    'ground pepper': 'ගම්මිරිස් කුඩු (Ground Pepper)',
     'whole pepper': 'පූර්ණ ගම්මිරිස් (Whole Pepper)',
-    'pepper oil': 'ගම්මිරිස් තෙල්',
-    'pepper oleoresin': 'ගම්මිරිස් ඔලියෝරෙසින්',
+    'pepper oil': 'ගම්මිරිස් තෙල් (Pepper Oil)',
+    'pepper oleoresin': 'ගම්මිරිස් ඔලියෝරෙසින් (Pepper Oleoresin)',
   };
 
   static String translateCountry(String? country) {

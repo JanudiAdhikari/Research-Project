@@ -97,8 +97,8 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Report'),
-        content: const Text('Are you sure you want to delete this report?'),
+        title: const Text('Delete Record'),
+        content: const Text('Are you sure you want to delete this record?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -120,7 +120,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Report deleted successfully'),
+              content: Text('Record deleted successfully'),
               backgroundColor: Colors.green,
             ),
           );
@@ -130,7 +130,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to delete report: $e'),
+              content: Text('Failed to delete record: $e'),
               backgroundColor: Colors.red,
             ),
           );

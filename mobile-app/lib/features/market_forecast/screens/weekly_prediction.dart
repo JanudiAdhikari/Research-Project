@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/market forecast/db_translations_si.dart';
+import '../../../utils/market forecast/weekly_prediction_si.dart';
 
 class PricePredictionService {
   final String apiUrl;
@@ -82,8 +85,8 @@ class WeeklyPrediction extends StatefulWidget {
   State<WeeklyPrediction> createState() => _WeeklyPredictionState();
 }
 
-//
 class _WeeklyPredictionState extends State<WeeklyPrediction> {
+  String _currentLanguage = 'en';
   double? predictedPrice;
   bool isLoading = true;
   String? errorMsg;
@@ -96,6 +99,10 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
   void initState() {
     super.initState();
     fetchPrediction();
+    // load language preference for translations
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
 
   @override
@@ -134,12 +141,22 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
 
   //  Recommendation rules
   String _actionTitleFromPrice(double p) {
+    if (_currentLanguage == 'si') {
+      if (p < 1300) return WeeklyPredictionSi.considerHolding;
+      if (p <= 1500) return WeeklyPredictionSi.sellPartially;
+      return WeeklyPredictionSi.goodTimeToSell;
+    }
     if (p < 1300) return "Consider holding";
     if (p <= 1500) return "Sell partially";
     return "Good time to sell";
   }
 
   String _actionReasonFromPrice(double p) {
+    if (_currentLanguage == 'si') {
+      if (p < 1300) return WeeklyPredictionSi.reasonHold;
+      if (p <= 1500) return WeeklyPredictionSi.reasonPartial;
+      return WeeklyPredictionSi.reasonSell;
+    }
     if (p < 1300) {
       return "The predicted price is relatively low. If storage is possible, waiting may help you get a better price.";
     } else if (p <= 1500) {
@@ -259,9 +276,14 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
   @override
   Widget build(BuildContext context) {
     final r = context.responsive;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Price Forecast Analysis'),
+        title: Text(
+          _currentLanguage == 'si'
+              ? WeeklyPredictionSi.screenTitle
+              : 'Price Forecast Analysis',
+        ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
       ),
@@ -354,7 +376,9 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                       child: Column(
                         children: [
                           Text(
-                            "Predicted Price",
+                            _currentLanguage == 'si'
+                                ? WeeklyPredictionSi.predictedPrice
+                                : "Predicted Price",
                             style: TextStyle(
                               fontSize: r.fontSize(
                                 mobile: 16,
@@ -376,8 +400,9 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                             text: TextSpan(
                               children: [
                                 TextSpan(
-                                  text:
-                                      'Rs. ${predictedPrice!.toStringAsFixed(0)} ',
+                                  text: (_currentLanguage == 'si'
+                                      ? '${WeeklyPredictionSi.currency} ${predictedPrice!.toStringAsFixed(0)} '
+                                      : 'Rs. ${predictedPrice!.toStringAsFixed(0)} '),
                                   style: TextStyle(
                                     fontSize: r.fontSize(
                                       mobile: 42,
@@ -389,8 +414,10 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                                     letterSpacing: 0.8,
                                   ),
                                 ),
-                                const TextSpan(
-                                  text: '/kg',
+                                TextSpan(
+                                  text: _currentLanguage == 'si'
+                                      ? '/${WeeklyPredictionSi.kg}'
+                                      : '/kg',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.black54,
@@ -408,7 +435,9 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                             ),
                           ),
                           Text(
-                            'Estimated average for the selected week',
+                            _currentLanguage == 'si'
+                                ? WeeklyPredictionSi.estimatedAverage
+                                : 'Estimated average for the selected week',
                             style: TextStyle(
                               fontSize: r.fontSize(
                                 mobile: 12.5,
@@ -454,8 +483,14 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                             icon: Icons.location_on,
                             iconBg: const Color(0xFFE8F5E9),
                             iconColor: const Color(0xFF388E3C),
-                            label: "District",
-                            value: widget.district,
+                            label: _currentLanguage == 'si'
+                                ? WeeklyPredictionSi.district
+                                : "District",
+                            value: _currentLanguage == 'si'
+                                ? MarketForecastSi.translateDistrict(
+                                    widget.district,
+                                  )
+                                : widget.district,
                           ),
                           SizedBox(
                             height: r.spacing(
@@ -477,8 +512,14 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                             icon: Icons.local_florist,
                             iconBg: const Color(0xFFFFF3E0),
                             iconColor: Colors.brown.shade700,
-                            label: "Pepper Type",
-                            value: widget.pepperType,
+                            label: _currentLanguage == 'si'
+                                ? WeeklyPredictionSi.pepperType
+                                : "Pepper Type",
+                            value: _currentLanguage == 'si'
+                                ? MarketForecastSi.translatePepperType(
+                                    widget.pepperType,
+                                  )
+                                : widget.pepperType,
                           ),
                           SizedBox(
                             height: r.spacing(
@@ -488,13 +529,24 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                             ),
                           ),
                           Divider(height: 1, color: Colors.grey.shade200),
+                          SizedBox(
+                            height: r.spacing(
+                              mobile: 10,
+                              tablet: 12,
+                              desktop: 14,
+                            ),
+                          ),
                           _infoRow(
                             context: context,
                             icon: Icons.grade,
                             iconBg: const Color(0xFFFFF8E1),
                             iconColor: Colors.amber.shade700,
-                            label: "Grade",
-                            value: widget.grade,
+                            label: _currentLanguage == 'si'
+                                ? WeeklyPredictionSi.grade
+                                : "Grade",
+                            value: _currentLanguage == 'si'
+                                ? MarketForecastSi.translateGrade(widget.grade)
+                                : widget.grade,
                           ),
                         ],
                       ),
@@ -532,7 +584,9 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                         size: r.iconSize(mobile: 20, tablet: 22, desktop: 24),
                       ),
                       label: Text(
-                        "Show Recommendations",
+                        _currentLanguage == 'si'
+                            ? WeeklyPredictionSi.showRecommendations
+                            : "Show Recommendations",
                         style: TextStyle(
                           color: Colors.green.shade700,
                           fontWeight: FontWeight.w700,
@@ -579,7 +633,9 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    "Recommendations",
+                                    _currentLanguage == 'si'
+                                        ? WeeklyPredictionSi.recommendations
+                                        : "Recommendations",
                                     style: TextStyle(
                                       fontSize: r.fontSize(
                                         mobile: 15,
@@ -706,7 +762,9 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
 
                             // Weight input + revenue
                             Text(
-                              "Estimate your revenue",
+                              _currentLanguage == 'si'
+                                  ? WeeklyPredictionSi.estimateYourRevenue
+                                  : "Estimate your revenue",
                               style: TextStyle(
                                 fontSize: r.fontSize(
                                   mobile: 14,
@@ -725,7 +783,9 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                               ),
                             ),
                             Text(
-                              "Enter your pepper weight (kg):",
+                              _currentLanguage == 'si'
+                                  ? WeeklyPredictionSi.enterWeight
+                                  : "Enter your pepper weight (kg):",
                               style: TextStyle(
                                 fontSize: r.fontSize(
                                   mobile: 12.5,
@@ -791,7 +851,10 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                "Estimated Revenue: Rs. ${estimatedRevenue.toStringAsFixed(0)}",
+                                (_currentLanguage == 'si'
+                                        ? '${WeeklyPredictionSi.estimatedRevenue}: ${WeeklyPredictionSi.currency} '
+                                        : 'Estimated Revenue: Rs. ') +
+                                    estimatedRevenue.toStringAsFixed(0),
                                 style: TextStyle(
                                   fontSize: r.fontSize(
                                     mobile: 14,
@@ -803,7 +866,6 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
                                 ),
                               ),
                             ),
-
                             SizedBox(
                               height: r.spacing(
                                 mobile: 12,

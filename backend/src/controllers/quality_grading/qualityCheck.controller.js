@@ -300,3 +300,36 @@ exports.analyzeQualityImages = async (req, res) => {
     }
   }
 };
+
+// Get quality checks for the authenticated user - Added by Ashika
+exports.getMyQualityChecks = async (req, res) => {
+  try {
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
+
+    const dbUser =
+      (await User.findOne({ firebaseUid })) ||
+      (await User.findOne({ uid: firebaseUid }));
+
+    if (!dbUser)
+      return res.status(404).json({ message: "User not found in DB" });
+
+    const checks = await QualityCheck.find({ userId: dbUser._id }).select(
+      "batchId batch results.grade",
+    );
+
+    const payload = checks.map((c) => ({
+      _id: c._id,
+      batchId: c.batchId,
+      batch: c.batch,
+      grade: c.results?.grade ?? null,
+    }));
+
+    return res.status(200).json(payload);
+  } catch (err) {
+    console.error(err && err.stack ? err.stack : err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err?.message });
+  }
+};

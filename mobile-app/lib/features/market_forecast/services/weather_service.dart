@@ -15,11 +15,9 @@ class WeatherService {
         '$baseUrl/weather?lat=$lat&lon=$lon&appid=$apiKey&units=metric',
       );
       if (district != null) {
-        print(
-          'Weather API URL: ' + url.toString() + ' | District: ' + district,
-        );
+        'Weather API URL: $url | District: $district';
       } else {
-        print('Weather API URL: ' + url.toString());
+        'Weather API URL: $url';
       }
       final response = await http.get(url);
       // print('Weather API Response Body: \\${response.body}');

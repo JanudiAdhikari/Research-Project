@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const QUALITY_STATUSES = [
-  "waiting_density",   // after step 1
-  "waiting_images",    // after density step
-  "processing",        // AI running
-  "completed",         // report ready
-  "failed",            // AI failed
+  "waiting_density", // after step 1
+  "waiting_images", // after density step
+  "processing", // AI running
+  "completed", // report ready
+  "failed", // AI failed
 ];
 
 const PEPPER_TYPES = ["black", "white"];
@@ -21,14 +21,17 @@ const PEPPER_VARIETIES = [
   "unknown",
 ];
 
-const DRYING_METHODS = [
-  "sun_dried",
-  "machine_dried",
-  "unknown",
-];
+const DRYING_METHODS = ["sun_dried", "machine_dried", "unknown"];
 
 const qualityCheckSchema = new mongoose.Schema(
   {
+    batchId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -37,7 +40,11 @@ const qualityCheckSchema = new mongoose.Schema(
     },
     firebaseUid: { type: String, required: true, index: true },
 
-    status: { type: String, enum: QUALITY_STATUSES, default: "waiting_density" },
+    status: {
+      type: String,
+      enum: QUALITY_STATUSES,
+      default: "waiting_density",
+    },
 
     batch: {
       pepperType: { type: String, enum: PEPPER_TYPES, required: true },
@@ -49,7 +56,7 @@ const qualityCheckSchema = new mongoose.Schema(
 
     // Step 2 will update this (bluetooth only, but we keep the field now)
     density: {
-      value: { type: Number, default: null },       // g/L
+      value: { type: Number, default: null }, // g/L
       source: { type: String, default: "bluetooth" },
       measuredAt: { type: Date, default: null },
     },
@@ -69,7 +76,7 @@ const qualityCheckSchema = new mongoose.Schema(
       processedAt: { type: Date, default: null },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("QualityCheck", qualityCheckSchema);

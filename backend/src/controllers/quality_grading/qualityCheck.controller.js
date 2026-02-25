@@ -16,6 +16,19 @@ const toGrams = (kg, g) => {
   return total > 0 ? total : null;
 };
 
+const generateBatchId = async () => {
+  const last = await QualityCheck.findOne()
+    .sort({ createdAt: -1 })
+    .select("batchId");
+
+  if (!last) return "BATCH-0001";
+
+  const lastNumber = parseInt(last.batchId.split("-")[1]);
+  const nextNumber = lastNumber + 1;
+
+  return `BATCH-${nextNumber.toString().padStart(4, "0")}`;
+};
+
 exports.createQualityCheck = async (req, res) => {
   try {
     // Firebase decoded token
@@ -58,7 +71,10 @@ exports.createQualityCheck = async (req, res) => {
       return res.status(400).json({ message: "Invalid harvest date" });
     }
 
+    const batchId = await generateBatchId();
+
     const qc = await QualityCheck.create({
+      batchId,
       userId: dbUser._id,
       firebaseUid,
       status: "waiting_density",
@@ -78,6 +94,7 @@ exports.createQualityCheck = async (req, res) => {
 
     return res.status(201).json({
       qualityCheckId: qc._id,
+      batchId: qc.batchId,
       status: qc.status,
     });
   } catch (err) {

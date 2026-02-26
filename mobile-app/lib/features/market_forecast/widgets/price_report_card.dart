@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/market forecast/actual_price_data_si.dart';
+import '../../../utils/market forecast/db_translations_si.dart';
 
 class PriceReportCard extends StatelessWidget {
   final Map<String, dynamic> report;
   final VoidCallback onUpdate;
   final VoidCallback onDelete;
+  final String language;
 
   const PriceReportCard({
     super.key,
     required this.report,
     required this.onUpdate,
     required this.onDelete,
+    required this.language,
   });
 
   @override
@@ -69,13 +73,14 @@ class PriceReportCard extends StatelessWidget {
               _buildNotesSection(responsive, notes),
             ],
             SizedBox(height: responsive.smallSpacing + 4),
-            _buildActionButtons(),
+            _buildActionButtons(context),
           ],
         ),
       ),
     );
   }
 
+  // Helper methods to build different sections of the card
   Widget _buildHeader(
     Responsive responsive,
     String saleDate,
@@ -83,6 +88,7 @@ class PriceReportCard extends StatelessWidget {
     Color priceColor,
     bool isInMarketplace,
   ) {
+    final status = (report['currentStatus'] ?? 'created').toString();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -103,6 +109,29 @@ class PriceReportCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            // Only display status badge if not N/A
+            if (status.toUpperCase() != 'N/A')
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _statusColor(status).withOpacity(0.13),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      status[0].toUpperCase() + status.substring(1),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _statusColor(status),
+                        fontSize: responsive.smallFontSize + 1,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 4),
             if (isInMarketplace) ...[
               Container(
                 padding: EdgeInsets.symmetric(
@@ -134,7 +163,9 @@ class PriceReportCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'In Marketplace',
+                      language == 'si'
+                          ? ActualPriceDataSi.inMarketplace
+                          : 'In Marketplace',
                       style: TextStyle(
                         fontSize: responsive.smallFontSize - 1,
                         color: Colors.white,
@@ -157,7 +188,8 @@ class PriceReportCard extends StatelessWidget {
                 border: Border.all(color: priceColor.withOpacity(0.3)),
               ),
               child: Text(
-                'LKR ${pricePerKg.toStringAsFixed(2)}',
+                (language == 'si' ? ActualPriceDataSi.currency : 'LKR ') +
+                    pricePerKg.toStringAsFixed(2),
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize,
                   fontWeight: FontWeight.w800,
@@ -171,6 +203,7 @@ class PriceReportCard extends StatelessWidget {
     );
   }
 
+  // Builds the main content section of the card with variety, grade, quantity, and district information
   Widget _buildContent(
     Responsive responsive,
     String variety,
@@ -179,6 +212,15 @@ class PriceReportCard extends StatelessWidget {
     double quantity,
     String district,
   ) {
+    final displayVariety = language == 'si'
+        ? MarketForecastSi.translatePepperType(variety)
+        : variety;
+    final displayGrade = language == 'si'
+        ? MarketForecastSi.translateGrade(grade)
+        : grade;
+    final displayDistrict = language == 'si'
+        ? MarketForecastSi.translateDistrict(district)
+        : district;
     return Row(
       children: [
         Expanded(
@@ -186,7 +228,7 @@ class PriceReportCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                variety,
+                displayVariety,
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize + 2,
                   fontWeight: FontWeight.w800,
@@ -222,7 +264,7 @@ class PriceReportCard extends StatelessWidget {
                         Icon(Icons.star_rounded, size: 14, color: Colors.white),
                         const SizedBox(width: 4),
                         Text(
-                          grade,
+                          displayGrade,
                           style: TextStyle(
                             fontSize: responsive.smallFontSize + 1,
                             color: Colors.white,
@@ -254,7 +296,7 @@ class PriceReportCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    district,
+                    displayDistrict,
                     style: TextStyle(
                       fontSize: responsive.smallFontSize,
                       color: Colors.black45,
@@ -269,6 +311,7 @@ class PriceReportCard extends StatelessWidget {
     );
   }
 
+  // Builds the notes section of the card, displayed only if there are notes provided by the user
   Widget _buildNotesSection(Responsive responsive, String notes) {
     return Container(
       padding: EdgeInsets.all(responsive.smallSpacing),
@@ -297,14 +340,15 @@ class PriceReportCard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons() {
+  // Builds the action buttons for updating and deleting the price report
+  Widget _buildActionButtons(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         OutlinedButton.icon(
           onPressed: onUpdate,
           icon: const Icon(Icons.edit_rounded, size: 16),
-          label: const Text('Update'),
+          label: Text(language == 'si' ? ActualPriceDataSi.update : 'Update'),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF2E7D32),
             side: const BorderSide(color: Color(0xFF2E7D32)),
@@ -315,7 +359,9 @@ class PriceReportCard extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onDelete,
           icon: const Icon(Icons.delete_rounded, size: 16),
-          label: const Text('Delete'),
+          label: Text(
+            language == 'si' ? ActualPriceDataSi.deleteBtn : 'Delete',
+          ),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.red,
             side: const BorderSide(color: Colors.red),
@@ -326,6 +372,7 @@ class PriceReportCard extends StatelessWidget {
     );
   }
 
+  // Format the date to readable format
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return 'N/A';
     try {
@@ -336,19 +383,33 @@ class PriceReportCard extends StatelessWidget {
     }
   }
 
+  // Colors based on the grade
   Color _gradeColor(String grade) {
     switch (grade) {
       case 'Grade 1':
         return const Color(0xFF1B5E20);
       case 'Grade 2':
         return const Color(0xFF0277BD);
-      case 'Grade 3':
-        return const Color(0xFFF57C00);
       default:
         return const Color(0xFF2E7D32);
     }
   }
 
+  // Colors based on the status
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'created':
+        return const Color(0xFFFFA000); // Amber;
+      case 'approved':
+        return const Color(0xFF0277BD); // Blue
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Format decimal values to remove unnecessary trailing zeros
   String _formatDecimal(double value) {
     if (value == value.toInt()) {
       return value.toInt().toString();

@@ -150,7 +150,7 @@ exports.updateDensity = async (req, res) => {
           status: "waiting_images",
         },
       },
-      { new: true }
+      { new: true },
     );
 
     if (!qc) {
@@ -200,7 +200,7 @@ exports.analyzeQualityImages = async (req, res) => {
     // Validate that all 9 required image fields are present
     const files = req.files || {};
     const missing = EXPECTED_FIELDS.filter(
-      (k) => !files[k] || files[k].length === 0
+      (k) => !files[k] || files[k].length === 0,
     );
     if (missing.length > 0) {
       return res.status(400).json({
@@ -235,7 +235,7 @@ exports.analyzeQualityImages = async (req, res) => {
           maxBodyLength: Infinity,
           maxContentLength: Infinity,
           timeout: 120_000, // 2 minutes
-        }
+        },
       );
     } catch (fastapiErr) {
       // FastAPI call itself failed — mark as failed and return 502
@@ -243,7 +243,7 @@ exports.analyzeQualityImages = async (req, res) => {
       await qc.save();
       console.error(
         "analyzeQualityImages — FastAPI error:",
-        fastapiErr?.response?.data || fastapiErr.message
+        fastapiErr?.response?.data || fastapiErr.message,
       );
       return res.status(502).json({
         message: "AI inference service error",
@@ -282,7 +282,7 @@ exports.analyzeQualityImages = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .select(
-        "certificationType certificateNumber issuingBody issueDate expiryDate attachment"
+        "certificationType certificateNumber issuingBody issueDate expiryDate attachment",
       );
 
     qc.certificatesSnapshot = {
@@ -341,7 +341,7 @@ exports.analyzeQualityImages = async (req, res) => {
     // Mark the quality check as failed so the client knows to retry.
     console.error(
       "analyzeQualityImages — unhandled error:",
-      err?.response?.data || err.message
+      err?.response?.data || err.message,
     );
     try {
       if (id) {
@@ -350,7 +350,7 @@ exports.analyzeQualityImages = async (req, res) => {
     } catch (markFailedErr) {
       console.error(
         "analyzeQualityImages — could not mark as failed:",
-        markFailedErr.message
+        markFailedErr.message,
       );
     }
 
@@ -359,7 +359,6 @@ exports.analyzeQualityImages = async (req, res) => {
       error: err.message,
     });
   }
-};
 };
 
 // Get quality checks for the authenticated user - Added by Ashika

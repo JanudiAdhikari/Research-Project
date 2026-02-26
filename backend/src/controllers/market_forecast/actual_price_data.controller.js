@@ -47,6 +47,7 @@ const createActualPriceData = async (req, res) => {
       quantity,
       notes,
       batchId,
+      currentStatus,
     } = req.body;
 
     const parsedDate = new Date(saleDate);
@@ -69,6 +70,13 @@ const createActualPriceData = async (req, res) => {
       return res.status(400).json({ message: "Invalid numeric fields" });
     }
 
+    // If marketplaceProductId is present, set status to 'N/A', else 'created'
+    let statusToSet = "created";
+    if (req.body.marketplaceProductId) {
+      statusToSet = "N/A";
+    } else if (currentStatus) {
+      statusToSet = currentStatus;
+    }
     const record = new ActualPriceData({
       userId: req.user?.uid,
       saleDate: parsedDate,
@@ -79,6 +87,8 @@ const createActualPriceData = async (req, res) => {
       quantity: parsedQuantity,
       notes: notes || undefined,
       batchId: batchId || undefined,
+      marketplaceProductId: req.body.marketplaceProductId || undefined,
+      currentStatus: statusToSet,
     });
 
     await record.save();
@@ -148,6 +158,8 @@ const updateActualPriceData = async (req, res) => {
 
     if (marketplaceProductId !== undefined) {
       record.marketplaceProductId = marketplaceProductId;
+      // Set status to 'N/A' if marketplaceProductId is present
+      record.currentStatus = "N/A";
     }
 
     await record.save();

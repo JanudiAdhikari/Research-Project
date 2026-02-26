@@ -1,6 +1,8 @@
 const router = require("express").Router();
 const auth = require("../../middleware/auth.middleware");
-const { uploadQualityImages } = require("../../middleware/quality_grading/qualityUpload.middleware");
+const {
+  uploadQualityImages,
+} = require("../../middleware/quality_grading/qualityUpload.middleware");
 
 const {
   createQualityCheck,

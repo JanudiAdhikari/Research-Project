@@ -478,7 +478,7 @@ function gradeBatch({
     improvements,
     // Transparency metadata — useful for displaying to farmer and for thesis defence
     meta: {
-      pipetineNote:
+      piperineNote:
         "Piperine score is a variety-based estimate from published literature, not a lab measurement. Results may vary within a variety depending on soil, climate, and post-harvest handling.",
       countVsMassNote:
         "Extraneous matter, mold, and adulteration percentages are count-based (from image detection), used as a proxy for IPC m/m% values. This approximation is valid at low contamination levels for near-spherical objects of similar size.",

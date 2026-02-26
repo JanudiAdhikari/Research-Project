@@ -7,6 +7,7 @@ const {
   EXPECTED_FIELDS,
 } = require("../../middleware/quality_grading/qualityUpload.middleware");
 const Certification = require("../../models/certification.models");
+const { gradeBatch } = require("./gradingEngine");
 
 // Step 1: Batch Information
 const toGrams = (kg, g) => {
@@ -280,10 +281,25 @@ exports.analyzeQualityImages = async (req, res) => {
       capturedAt: new Date(),
     };
 
+    // Compute final grade using IoT + AI + certificates snapshot
+    const grading = gradeBatch({
+      pepperType: qc.batch.pepperType,
+      pepperVariety: qc.batch.pepperVariety,
+      density: qc.density?.value,
+      factors: mappedFactors,
+      certSnapshotCount: qc.certificatesSnapshot?.count || 0,
+    });
+
     // Save only the final results (score/grade you will implement later)
     qc.results = {
       ...qc.results,
       factors: mappedFactors,
+      overallScore: grading.overallScore,
+      grade: grading.grade,
+      factorScores: grading.factorScores,
+      hardReject: grading.hardReject,
+      hardRejectReasons: grading.hardRejectReasons,
+      improvements: grading.improvements,
       processedAt: new Date(),
     };
 
@@ -296,6 +312,12 @@ exports.analyzeQualityImages = async (req, res) => {
       status: qc.status,
       factors: qc.results.factors,
       certificatesSnapshot: qc.certificatesSnapshot,
+      overallScore: qc.results.overallScore,
+      grade: qc.results.grade,
+      factorScores: qc.results.factorScores,
+      hardReject: qc.results.hardReject,
+      hardRejectReasons: qc.results.hardRejectReasons,
+      improvements: qc.results.improvements,
     });
   } catch (err) {
     console.error(

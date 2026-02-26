@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/market forecast/export_price_trends_si.dart';
 import 'export_details_by_country.dart';
 import '../../../services/auth_service.dart';
+import '../../../utils/language_prefs.dart';
 import '../../../services/market_forecast/past_export_price_service.dart';
 
 class ExportPriceTrends extends StatefulWidget {
@@ -25,6 +27,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
   bool isLoading = true;
   bool isLoadingData = true;
   String? errorMessage;
+  String _currentLanguage = 'en'; // default to English language
 
   List<String> years = [];
   final List<String> months = [
@@ -77,7 +80,13 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
 
   // Get label for selected month range
   String getDateRangeLabel() {
-    return '${months[selectedMonthFrom]} - ${months[selectedMonthTo]}';
+    final from = _currentLanguage == 'si'
+        ? ExportPriceTrendsSi.translateMonth(months[selectedMonthFrom])
+        : months[selectedMonthFrom];
+    final to = _currentLanguage == 'si'
+        ? ExportPriceTrendsSi.translateMonth(months[selectedMonthTo])
+        : months[selectedMonthTo];
+    return '$from - $to';
   }
 
   // Calculate peak, lowest, and average prices for the selected range
@@ -100,8 +109,13 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     super.initState();
     _loadUserRole();
     _loadYearsAndData();
+    // Load language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
 
+  //Load user role to determine if country navigation should be shown
   Future<void> _loadUserRole() async {
     final role = await _authService.storage.read(key: "role");
     setState(() {
@@ -208,7 +222,11 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Past Export Price Trends'),
+        title: Text(
+          _currentLanguage == 'si'
+              ? ExportPriceTrendsSi.pageTitle
+              : 'Past Export Price Trends',
+        ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
       ),
@@ -292,7 +310,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Historical Export Price Analysis',
+                  _currentLanguage == 'si'
+                      ? ExportPriceTrendsSi.headerTitle
+                      : 'Historical Export Price Analysis',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize + 2,
                     fontWeight: FontWeight.w800,
@@ -302,7 +322,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Filter data to view past export prices of black pepper in Sri Lanka. Analyze trends and make informed decisions.',
+                  _currentLanguage == 'si'
+                      ? ExportPriceTrendsSi.headerBody
+                      : 'Filter data to view past export prices of black pepper in Sri Lanka. Analyze trends and make informed decisions.',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize - 1,
                     color: Colors.black87,
@@ -354,7 +376,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Export Details by Country',
+                  _currentLanguage == 'si'
+                      ? ExportPriceTrendsSi.exportDetailsByCountry
+                      : 'Export Details by Country',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize + 3,
                     fontWeight: FontWeight.w800,
@@ -363,7 +387,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                 ),
                 SizedBox(height: responsive.smallSpacing / 2),
                 Text(
-                  'Tap to view country-wise volumes, prices, and trends.',
+                  _currentLanguage == 'si'
+                      ? ExportPriceTrendsSi.exportDetailsBody
+                      : 'Tap to view country-wise volumes, prices, and trends.',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize,
                     color: Colors.black54,
@@ -396,10 +422,13 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text('View', style: TextStyle(color: Colors.white)),
-                SizedBox(width: 8),
-                Icon(
+              children: [
+                Text(
+                  _currentLanguage == 'si' ? ExportPriceTrendsSi.view : 'View',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                const SizedBox(width: 8),
+                const Icon(
                   Icons.arrow_forward_rounded,
                   size: 18,
                   color: Colors.white,
@@ -432,7 +461,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Filter Data',
+            _currentLanguage == 'si'
+                ? ExportPriceTrendsSi.filterData
+                : 'Filter Data',
             style: TextStyle(
               fontSize: responsive.bodyFontSize,
               fontWeight: FontWeight.w600,
@@ -443,15 +474,20 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
           Row(
             children: [
               Expanded(
-                child: _customDropdown('Year', selectedYear, years, (value) {
-                  setState(() => selectedYear = value);
-                  _loadPriceData();
-                }),
+                child: _customDropdown(
+                  _currentLanguage == 'si' ? ExportPriceTrendsSi.year : 'Year',
+                  selectedYear,
+                  years,
+                  (value) {
+                    setState(() => selectedYear = value);
+                    _loadPriceData();
+                  },
+                ),
               ),
               SizedBox(width: responsive.smallSpacing),
               Expanded(
                 child: _customDropdown(
-                  'From',
+                  _currentLanguage == 'si' ? ExportPriceTrendsSi.from : 'From',
                   months[selectedMonthFrom],
                   months,
                   (value) {
@@ -465,15 +501,18 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
               ),
               SizedBox(width: responsive.smallSpacing),
               Expanded(
-                child: _customDropdown('To', months[selectedMonthTo], months, (
-                  value,
-                ) {
-                  final index = months.indexOf(value);
-                  if (index != -1 && index >= selectedMonthFrom) {
-                    setState(() => selectedMonthTo = index);
-                    _loadPriceData();
-                  }
-                }),
+                child: _customDropdown(
+                  _currentLanguage == 'si' ? ExportPriceTrendsSi.to : 'To',
+                  months[selectedMonthTo],
+                  months,
+                  (value) {
+                    final index = months.indexOf(value);
+                    if (index != -1 && index >= selectedMonthFrom) {
+                      setState(() => selectedMonthTo = index);
+                      _loadPriceData();
+                    }
+                  },
+                ),
               ),
             ],
           ),
@@ -533,7 +572,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                 children: [
                   Flexible(
                     child: Text(
-                      value,
+                      _currentLanguage == 'si'
+                          ? ExportPriceTrendsSi.translateMonth(value)
+                          : value,
                       style: TextStyle(
                         color: Colors.black87,
                         fontSize: responsive.bodyFontSize,
@@ -594,7 +635,11 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                     (item) => SizedBox(
                       height: itemHeight,
                       child: ListTile(
-                        title: Text(item),
+                        title: Text(
+                          _currentLanguage == 'si'
+                              ? ExportPriceTrendsSi.translateMonth(item)
+                              : item,
+                        ),
                         selectedTileColor: Colors.green.withOpacity(0.1),
                         selected: item == value,
                         onTap: () {
@@ -640,7 +685,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
               ),
             ),
             child: Text(
-              'Global Black Pepper Price Trends',
+              _currentLanguage == 'si'
+                  ? ExportPriceTrendsSi.globalTrends
+                  : 'Global Black Pepper Price Trends',
               style: TextStyle(
                 fontSize: responsive.titleFontSize,
                 fontWeight: FontWeight.bold,
@@ -665,7 +712,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                 : chartData.isEmpty
                 ? Center(
                     child: Text(
-                      'No data for the selected range',
+                      _currentLanguage == 'si'
+                          ? ExportPriceTrendsSi.noData
+                          : 'No data for the selected range',
                       style: TextStyle(
                         fontSize: responsive.bodyFontSize,
                         color: Colors.black54,
@@ -724,25 +773,27 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                               getTooltipColor: (touchedSpot) =>
                                   Colors.blueAccent,
                               tooltipRoundedRadius: 8,
-                              getTooltipItems:
-                                  (List<LineBarSpot> touchedSpots) {
-                                    return touchedSpots.map((spot) {
-                                      final monthIndex =
-                                          spot.x.toInt() + selectedMonthFrom;
-                                      final monthName =
-                                          monthIndex < months.length
-                                          ? months[monthIndex]
-                                          : '';
-                                      return LineTooltipItem(
-                                        '$monthName\nRs.${spot.y.toInt()}',
-                                        const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
+                              getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                                return touchedSpots.map((spot) {
+                                  final monthIndex =
+                                      spot.x.toInt() + selectedMonthFrom;
+                                  final monthName = monthIndex < months.length
+                                      ? (_currentLanguage == 'si'
+                                            ? ExportPriceTrendsSi.translateMonth(
+                                                months[monthIndex],
+                                              )
+                                            : months[monthIndex])
+                                      : '';
+                                  return LineTooltipItem(
+                                    '$monthName\n${_currentLanguage == 'si' ? ExportPriceTrendsSi.currency : 'Rs.'}${spot.y.toInt()}',
+                                    const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  );
+                                }).toList();
+                              },
                             ),
                           ),
                           titlesData: FlTitlesData(
@@ -759,7 +810,7 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                                 reservedSize: 50,
                                 getTitlesWidget: (value, meta) {
                                   return Text(
-                                    'Rs.${value.toInt()}',
+                                    '${_currentLanguage == 'si' ? ExportPriceTrendsSi.currency : 'Rs.'}${value.toInt()}',
                                     style: TextStyle(
                                       fontSize: responsive.smallFontSize - 1,
                                     ),
@@ -775,8 +826,13 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                                   final index =
                                       value.toInt() + selectedMonthFrom;
                                   if (index < months.length) {
+                                    final label = _currentLanguage == 'si'
+                                        ? ExportPriceTrendsSi.translateMonth(
+                                            months[index],
+                                          )
+                                        : months[index];
                                     return Text(
-                                      months[index],
+                                      label,
                                       style: TextStyle(
                                         fontSize: responsive.smallFontSize,
                                       ),
@@ -817,8 +873,10 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
       children: [
         Expanded(
           child: _statCard(
-            'Peak Price',
-            'Rs.${stats['peak']!.toInt()} /kg',
+            _currentLanguage == 'si'
+                ? ExportPriceTrendsSi.peakPrice
+                : 'Peak Price',
+            '${_currentLanguage == 'si' ? ExportPriceTrendsSi.currency : 'Rs.'}${stats['peak']!.toInt()} /kg',
             Icons.trending_up,
             const Color(0xFF43A047),
           ),
@@ -826,8 +884,10 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
         SizedBox(width: responsive.smallSpacing),
         Expanded(
           child: _statCard(
-            'Lowest Price',
-            'Rs.${stats['lowest']!.toInt()} /kg',
+            _currentLanguage == 'si'
+                ? ExportPriceTrendsSi.lowestPrice
+                : 'Lowest Price',
+            '${_currentLanguage == 'si' ? ExportPriceTrendsSi.currency : 'Rs.'}${stats['lowest']!.toInt()} /kg',
             Icons.trending_down,
             const Color(0xFFE53935),
           ),
@@ -835,8 +895,8 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
         SizedBox(width: responsive.smallSpacing),
         Expanded(
           child: _statCard(
-            'Average',
-            'Rs.${stats['average']!.toInt()} /kg',
+            _currentLanguage == 'si' ? ExportPriceTrendsSi.average : 'Average',
+            '${_currentLanguage == 'si' ? ExportPriceTrendsSi.currency : 'Rs.'}${stats['average']!.toInt()} /kg',
             Icons.show_chart,
             const Color(0xFF1565C0),
           ),
@@ -924,7 +984,9 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
               ),
             ),
             child: Text(
-              'Key Insights',
+              _currentLanguage == 'si'
+                  ? ExportPriceTrendsSi.keyInsights
+                  : 'Key Insights',
               style: TextStyle(
                 color: const Color(0xFF2E7D32),
                 fontWeight: FontWeight.w600,
@@ -949,33 +1011,53 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
                     icon: Icons.trending_up,
                     color: tileGreen,
                     title: isBullish
-                        ? 'Prices are trending upward'
-                        : 'Prices are trending downward',
+                        ? (_currentLanguage == 'si'
+                              ? ExportPriceTrendsSi.bullish
+                              : 'Prices are trending upward')
+                        : (_currentLanguage == 'si'
+                              ? ExportPriceTrendsSi.bearish
+                              : 'Prices are trending downward'),
                     subtitle: isBullish
-                        ? 'Recent months show gains driven by importer demand.'
-                        : 'Recent months show easing prices with improving supply.',
+                        ? (_currentLanguage == 'si'
+                              ? ExportPriceTrendsSi.bullishDetail
+                              : 'Recent months show gains driven by importer demand.')
+                        : (_currentLanguage == 'si'
+                              ? ExportPriceTrendsSi.bearishDetail
+                              : 'Recent months show easing prices with improving supply.'),
                   ),
                   _insightTile(
                     icon: Icons.attach_money,
                     color: tilePurple,
-                    title: 'Peak vs Average',
-                    subtitle:
-                        'Time exports near peaks; use average for pricing baseline.',
+                    title: _currentLanguage == 'si'
+                        ? ExportPriceTrendsSi.peakVsAverage
+                        : 'Peak vs Average',
+                    subtitle: _currentLanguage == 'si'
+                        ? ExportPriceTrendsSi.peakVsAverageDetail
+                        : 'Time exports near peaks; use average for pricing baseline.',
                   ),
                   _insightTile(
                     icon: Icons.timeline,
                     color: tileBlue,
-                    title: 'Momentum & Stability',
-                    subtitle:
-                        'Track monthly momentum; favor stable windows for bulk shipments.',
+                    title: _currentLanguage == 'si'
+                        ? ExportPriceTrendsSi.momentumStability
+                        : 'Momentum & Stability',
+                    subtitle: _currentLanguage == 'si'
+                        ? ExportPriceTrendsSi.momentumStabilityDetail
+                        : 'Track monthly momentum; favor stable windows for bulk shipments.',
                   ),
                   _insightTile(
                     icon: Icons.insights,
                     color: tileOrange,
-                    title: 'Recommendation',
+                    title: _currentLanguage == 'si'
+                        ? ExportPriceTrendsSi.recommendation
+                        : 'Recommendation',
                     subtitle: isBullish
-                        ? 'Stagger shipments to capitalize on upward momentum.'
-                        : 'Hedge and optimize turnover during softer pricing.',
+                        ? (_currentLanguage == 'si'
+                              ? ExportPriceTrendsSi.recommendationBullish
+                              : 'Stagger shipments to capitalize on upward momentum.')
+                        : (_currentLanguage == 'si'
+                              ? ExportPriceTrendsSi.recommendationBearish
+                              : 'Hedge and optimize turnover during softer pricing.'),
                   ),
                 ],
               );

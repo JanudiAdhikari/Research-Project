@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import 'summary_stat_item.dart';
+import '../../../utils/market forecast/actual_price_data_si.dart';
 
 class SummaryStatisticsCard extends StatelessWidget {
   final List<Map<String, dynamic>> reports;
+  final String language;
 
-  const SummaryStatisticsCard({super.key, required this.reports});
+  const SummaryStatisticsCard({
+    super.key,
+    required this.reports,
+    required this.language,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +72,9 @@ class SummaryStatisticsCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'My Submissions',
+                      language == 'si'
+                          ? ActualPriceDataSi.mySubmissions
+                          : 'My Submissions',
                       style: TextStyle(
                         fontSize: responsive.bodyFontSize + 2,
                         fontWeight: FontWeight.w800,
@@ -76,7 +84,9 @@ class SummaryStatisticsCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Track the historical price submissions',
+                      language == 'si'
+                          ? ActualPriceDataSi.trackHistorical
+                          : 'Track the historical price submissions',
                       style: TextStyle(
                         fontSize: responsive.bodyFontSize - 1,
                         color: Colors.black87,
@@ -92,7 +102,9 @@ class SummaryStatisticsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: SummaryStatItem(
-                  label: 'Total Records',
+                  label: language == 'si'
+                      ? ActualPriceDataSi.totalRecords
+                      : 'Total Records',
                   value: '$totalReports',
                   icon: Icons.list_alt_rounded,
                 ),
@@ -100,15 +112,21 @@ class SummaryStatisticsCard extends StatelessWidget {
               SizedBox(width: responsive.smallSpacing),
               Expanded(
                 child: SummaryStatItem(
-                  label: 'Avg Price',
-                  value: 'Rs. ${avgPrice.toStringAsFixed(0)}',
+                  label: language == 'si'
+                      ? ActualPriceDataSi.avgPrice
+                      : 'Avg Price',
+                  value:
+                      (language == 'si' ? 'රු.' : 'Rs.') +
+                      ' ${avgPrice.toStringAsFixed(0)}',
                   icon: Icons.attach_money_rounded,
                 ),
               ),
               SizedBox(width: responsive.smallSpacing),
               Expanded(
                 child: SummaryStatItem(
-                  label: 'Total Qty',
+                  label: language == 'si'
+                      ? ActualPriceDataSi.totalQty
+                      : 'Total Qty',
                   value: '${_formatDecimal(totalQuantity)} kg',
                   icon: Icons.scale_rounded,
                 ),

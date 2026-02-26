@@ -1,4 +1,3 @@
-// Helper translations for Market Forecast dynamic values
 class MarketForecastSi {
   static const Map<String, String> countries = {
     'india': 'ඉන්දියාව',
@@ -21,7 +20,7 @@ class MarketForecastSi {
     'kandy': 'මහනුවර',
     'kegalle': 'කෑගල්ල',
     'kurunegala': 'කුරුණෑගල',
-    'matale': 'මතලේ',
+    'matale': 'මාතලේ',
     'matara': 'මාතර',
     'monaragala': 'මොණරාගල',
     'nuwara eliya': 'නුවර එළිය',
@@ -38,8 +37,8 @@ class MarketForecastSi {
   };
 
   static const Map<String, String> grades = {
-    'grade 1': 'ශ්‍රේණිය 1',
-    'grade 2': 'ශ්‍රේණිය 2',
+    'grade 1': 'Grade 1',
+    'grade 2': 'Grade 2',
   };
 
   static String translateCountry(String? country) {

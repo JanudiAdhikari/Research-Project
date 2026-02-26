@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/market forecast/actual_price_data_si.dart';
+import '../../../utils/market forecast/db_translations_si.dart';
 import 'past_price_reports.dart';
 import '../../../services/market_forecast/actual_price_data_service.dart';
 import '../../../services/market_service.dart';
@@ -81,8 +84,21 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     super.initState();
     _loadReportData();
     _loadBatches();
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+        });
+        // Refresh displayed (translated) values after language is known
+        _refreshDisplayValues();
+      }
+    });
   }
 
+  String _currentLanguage = 'en';
+
+  //Load batch Ids
   Future<void> _loadBatches() async {
     try {
       final items = await _qualityCheckService.fetchMyQualityChecks();
@@ -106,8 +122,19 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       _notesController.text = report['notes'] as String? ?? '';
       _selectedVariety = report['pepperType'] as String?;
       _selectedGrade = report['grade'] as String?;
-      _varietyController.text = _selectedVariety ?? '';
-      _gradeController.text = _selectedGrade ?? '';
+      // Show translated values only for display; keep stored values English
+      _varietyController.text =
+          (_selectedVariety != null && _selectedVariety!.isNotEmpty)
+          ? (_currentLanguage == 'si'
+                ? MarketForecastSi.translatePepperType(_selectedVariety!)
+                : _selectedVariety!)
+          : '';
+      _gradeController.text =
+          (_selectedGrade != null && _selectedGrade!.isNotEmpty)
+          ? (_currentLanguage == 'si'
+                ? MarketForecastSi.translateGrade(_selectedGrade!)
+                : _selectedGrade!)
+          : '';
       _selectedDistrict = report['district'] as String?;
 
       final saleDateStr = report['saleDate'] as String?;
@@ -119,6 +146,28 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         }
       }
     }
+  }
+
+  // Refresh displayed controller values based on current language
+  void _refreshDisplayValues() {
+    if (!mounted) return;
+    setState(() {
+      if (_selectedVariety != null && _selectedVariety!.isNotEmpty) {
+        _varietyController.text = _currentLanguage == 'si'
+            ? MarketForecastSi.translatePepperType(_selectedVariety!)
+            : _selectedVariety!;
+      } else {
+        _varietyController.text = '';
+      }
+
+      if (_selectedGrade != null && _selectedGrade!.isNotEmpty) {
+        _gradeController.text = _currentLanguage == 'si'
+            ? MarketForecastSi.translateGrade(_selectedGrade!)
+            : _selectedGrade!;
+      } else {
+        _gradeController.text = '';
+      }
+    });
   }
 
   @override
@@ -140,13 +189,21 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          _isEditMode ? 'Update Price Details' : 'Real Price Details',
+          _isEditMode
+              ? (_currentLanguage == 'si'
+                    ? ActualPriceDataSi.updatePriceDetails
+                    : 'Update Price Details')
+              : (_currentLanguage == 'si'
+                    ? ActualPriceDataSi.realPriceDetails
+                    : 'Real Price Details'),
         ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: 'Reset',
+            tooltip: _currentLanguage == 'si'
+                ? ActualPriceDataSi.reset
+                : 'Reset',
             onPressed: _resetForm,
             icon: const Icon(Icons.refresh),
           ),
@@ -159,9 +216,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const DescriptionInfoCard(
-                title: 'Market Price Details',
-                description: 'Enter the price details of your pepper batch',
+              DescriptionInfoCard(
+                title: _currentLanguage == 'si'
+                    ? ActualPriceDataSi.marketPriceDetails
+                    : 'Market Price Details',
+                description: _currentLanguage == 'si'
+                    ? ActualPriceDataSi.enterPriceDetails
+                    : 'Enter the price details of your pepper batch',
                 icon: Icons.edit_note_rounded,
               ),
               SizedBox(height: responsive.mediumSpacing),
@@ -178,6 +239,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
+  // "View Past Reports" button
   Widget _buildViewPastReportsButton(Responsive responsive) {
     return SizedBox(
       width: double.infinity,
@@ -192,7 +254,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         },
         icon: const Icon(Icons.history_rounded, size: 20),
         label: Text(
-          'View My Past Records',
+          _currentLanguage == 'si'
+              ? ActualPriceDataSi.viewPastRecords
+              : 'View My Past Records',
           style: TextStyle(
             fontSize: responsive.bodyFontSize,
             fontWeight: FontWeight.w600,
@@ -210,6 +274,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
+  // Build form section
   Widget _buildFormSection(Responsive responsive) {
     return Container(
       padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -228,7 +293,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Price Details',
+            _currentLanguage == 'si'
+                ? ActualPriceDataSi.priceDetails
+                : 'Price Details',
             style: TextStyle(
               fontSize: responsive.bodyFontSize + 3,
               fontWeight: FontWeight.w700,
@@ -241,11 +308,15 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             SizedBox(height: responsive.smallSpacing),
             _buildDropdownField(
               responsive,
-              label: 'Batch ID',
+              label: _currentLanguage == 'si'
+                  ? ActualPriceDataSi.batchId
+                  : 'Batch ID',
               icon: Icons.inventory_2_rounded,
               value: _selectedBatchId,
               items: _batches.map((b) => b['batchId'] as String).toList(),
-              hint: 'Select Batch ID',
+              hint: _currentLanguage == 'si'
+                  ? ActualPriceDataSi.selectBatchId
+                  : 'Select Batch ID',
               readOnly: _isEditMode,
               onChanged: (value) {
                 setState(() {
@@ -264,13 +335,26 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                     final pepperType =
                         (batchInfo['pepperType'] as String?) ?? '';
 
-                    _selectedVariety = pepperType.isNotEmpty
-                        ? (pepperType.toLowerCase() == 'black'
-                              ? 'Black Pepper'
-                              : 'White Pepper')
-                        : null;
-
-                    _varietyController.text = _selectedVariety ?? '';
+                    if (pepperType.isNotEmpty) {
+                      // Always store the original value (English)
+                      final key = pepperType.trim().toLowerCase();
+                      if (key.contains('black')) {
+                        _selectedVariety = 'Black Pepper';
+                      } else if (key.contains('white')) {
+                        _selectedVariety = 'White Pepper';
+                      } else {
+                        _selectedVariety = pepperType;
+                      }
+                      // Update display value for controller
+                      _varietyController.text = (_currentLanguage == 'si')
+                          ? MarketForecastSi.translatePepperType(
+                              _selectedVariety!,
+                            )
+                          : _selectedVariety!;
+                    } else {
+                      _selectedVariety = null;
+                      _varietyController.text = '';
+                    }
 
                     final gradeVal = batch['grade'] as String?;
                     _selectedGrade = gradeVal;
@@ -290,7 +374,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           ],
 
           DatePickerField(
-            label: 'Sale Date',
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.saleDate
+                : 'Sale Date',
             selectedDate: _selectedDate,
             onDateChanged: (date) => setState(() => _selectedDate = date),
           ),
@@ -298,7 +384,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
 
           CustomTextField(
             controller: _varietyController,
-            label: 'Pepper Variety',
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.pepperVariety
+                : 'Pepper Variety',
             hint: '',
             keyboardType: TextInputType.text,
             readOnly: true,
@@ -307,7 +395,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
 
           CustomTextField(
             controller: _gradeController,
-            label: 'Grade',
+            label: _currentLanguage == 'si' ? ActualPriceDataSi.grade : 'Grade',
             hint: '',
             keyboardType: TextInputType.text,
             readOnly: true,
@@ -316,8 +404,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
 
           CustomTextField(
             controller: _priceController,
-            label: 'Price per kg (LKR)',
-            hint: 'Enter price per kg',
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.pricePerKg
+                : 'Price per kg (LKR)',
+            hint: _currentLanguage == 'si'
+                ? ActualPriceDataSi.enterPricePerKg
+                : 'Enter price per kg',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             validator: (_) => null,
           ),
@@ -325,7 +417,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
 
           CustomTextField(
             controller: _quantityController,
-            label: 'Quantity (kg)',
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.quantityKg
+                : 'Quantity (kg)',
             hint: '',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             readOnly: true,
@@ -335,16 +429,23 @@ class _ActualPriceDataState extends State<ActualPriceData> {
 
           _buildCustomDropdownField(
             responsive,
-            title: 'District',
+            title: _currentLanguage == 'si'
+                ? ActualPriceDataSi.district
+                : 'District',
             value: _selectedDistrict,
             items: _districts,
+            isDistrict: true,
           ),
           SizedBox(height: responsive.mediumSpacing),
 
           CustomTextField(
             controller: _notesController,
-            label: 'Additional Notes (Optional)',
-            hint: 'Any additional information...',
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.additionalNotes
+                : 'Additional Notes (Optional)',
+            hint: _currentLanguage == 'si'
+                ? ActualPriceDataSi.anyAdditionalInfo
+                : 'Any additional information...',
             keyboardType: TextInputType.multiline,
             maxLines: 3,
           ),
@@ -353,6 +454,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
+  // Dropdown fields
   Widget _buildDropdownField(
     Responsive responsive, {
     required String label,
@@ -437,6 +539,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     required String title,
     required String? value,
     required List<String> items,
+    bool isDistrict = false,
   }) {
     final key = GlobalKey();
     final double horizontalPadding = responsive.smallSpacing + 8;
@@ -457,11 +560,21 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           link: _layerLink,
           child: GestureDetector(
             key: key,
-            onTap: () => _toggleDropdown(key, items, value, (newValue) {
-              setState(() {
-                _selectedDistrict = newValue;
-              });
-            }),
+            onTap: () {
+              if (isDistrict) {
+                _toggleDistrictDropdown(key, items, value, (newValue) {
+                  setState(() {
+                    _selectedDistrict = newValue;
+                  });
+                });
+              } else {
+                _toggleDropdown(key, items, value, (newValue) {
+                  setState(() {
+                    _selectedDistrict = newValue;
+                  });
+                });
+              }
+            },
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: horizontalPadding,
@@ -485,7 +598,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    value ?? 'Select $title',
+                    // Only translate for display, never store translated value
+                    (value != null && isDistrict && _currentLanguage == 'si')
+                        ? MarketForecastSi.translateDistrict(value)
+                        : (value ??
+                              (_currentLanguage == 'si'
+                                  ? '$title ${ActualPriceDataSi.selectPrefix}'
+                                  : 'Select $title')),
                     style: TextStyle(
                       fontSize: responsive.bodyFontSize,
                       fontWeight: FontWeight.w600,
@@ -565,6 +684,69 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     Overlay.of(context).insert(_overlayEntry!);
   }
 
+  void _toggleDistrictDropdown(
+    GlobalKey key,
+    List<String> items,
+    String? value,
+    ValueChanged<String?> onChanged,
+  ) {
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+      return;
+    }
+
+    const double itemHeight = 48.0;
+    final double dropdownHeight = items.length > 3
+        ? itemHeight * 3
+        : itemHeight * items.length;
+
+    final renderBox = key.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: offset.dx,
+        top: offset.dy + size.height,
+        width: size.width,
+        child: Material(
+          elevation: 5,
+          borderRadius: BorderRadius.circular(12),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: dropdownHeight),
+            child: ListView(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              children: items
+                  .map(
+                    (item) => SizedBox(
+                      height: itemHeight,
+                      child: ListTile(
+                        title: Text(
+                          _currentLanguage == 'si'
+                              ? MarketForecastSi.translateDistrict(item)
+                              : item,
+                        ),
+                        onTap: () {
+                          onChanged(item);
+                          _overlayEntry!.remove();
+                          _overlayEntry = null;
+                        },
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  // Submit button
   Widget _buildSubmitButton(Responsive responsive) {
     return SizedBox(
       width: double.infinity,
@@ -597,7 +779,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _isEditMode ? 'Update Price Data' : 'Submit Price Data',
+                    _isEditMode
+                        ? (_currentLanguage == 'si'
+                              ? ActualPriceDataSi.updatePriceData
+                              : 'Update Price Data')
+                        : (_currentLanguage == 'si'
+                              ? ActualPriceDataSi.submitPriceData
+                              : 'Submit Price Data'),
                     style: TextStyle(
                       fontSize: responsive.bodyFontSize + 1,
                       fontWeight: FontWeight.w700,
@@ -610,7 +798,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
-  // Simple validation — show friendly message if the user submits an empty form
+  // Show friendly message if the user submits an empty form
   Future<void> _handleSubmit() async {
     if (_isSubmitting) return;
 
@@ -637,9 +825,15 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         districtEmpty &&
         batchEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('please fill the form')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _currentLanguage == 'si'
+                ? ActualPriceDataSi.pleaseFillTheForm
+                : 'please fill the form',
+          ),
+        ),
+      );
       return;
     }
 
@@ -709,7 +903,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             debugPrint('Failed to update marketplace product: $e');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Marketplace update failed: $e')),
+                SnackBar(
+                  content: Text(
+                    _currentLanguage == 'si'
+                        ? '${ActualPriceDataSi.marketplaceUpdateFailed}: $e'
+                        : 'Marketplace update failed: $e',
+                  ),
+                ),
               );
             }
           }
@@ -742,20 +942,28 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                   size: 28,
                 ),
                 const SizedBox(width: 8),
-                const Text(
-                  'Success',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                Text(
+                  _currentLanguage == 'si'
+                      ? ActualPriceDataSi.success
+                      : 'Success',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
-            content: const Text('Record updated successfully.'),
+            content: Text(
+              _currentLanguage == 'si'
+                  ? ActualPriceDataSi.recordUpdated
+                  : 'Record updated successfully.',
+            ),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   Navigator.pop(context, true);
                 },
-                child: const Text('OK'),
+                child: Text(
+                  _currentLanguage == 'si' ? ActualPriceDataSi.ok : 'OK',
+                ),
               ),
             ],
           ),
@@ -768,7 +976,11 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isEditMode ? 'Update failed: $e' : 'Create failed: $e',
+            _currentLanguage == 'si'
+                ? (_isEditMode
+                      ? '${ActualPriceDataSi.updateFailed}: $e'
+                      : '${ActualPriceDataSi.createFailed}: $e')
+                : (_isEditMode ? 'Update failed: $e' : 'Create failed: $e'),
           ),
         ),
       );
@@ -781,6 +993,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     }
   }
 
+  // Function to show the marketplace prompt
   void _showMarketplacePrompt() {
     showDialog(
       context: context,
@@ -794,20 +1007,28 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           Navigator.pop(context);
           _handleAddToMarketplace();
         },
+        language: _currentLanguage,
       ),
     );
   }
 
+  // Function to handle adding the product to the marketplace
   Future<void> _handleAddToMarketplace() async {
     if (_lastSubmittedData == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
-            children: const [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(child: Text('No data available to add to marketplace')),
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _currentLanguage == 'si'
+                      ? ActualPriceDataSi.noDataToAddMarketplace
+                      : 'No data available to add to marketplace',
+                ),
+              ),
             ],
           ),
           backgroundColor: Colors.red.shade700,
@@ -866,10 +1087,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ),
               ),
               const SizedBox(height: 28),
-              const Text(
-                'Adding to Marketplace',
+              Text(
+                _currentLanguage == 'si'
+                    ? ActualPriceDataSi.addingToMarketplace
+                    : 'Adding to Marketplace',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: Colors.black87,
@@ -877,10 +1100,12 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Your product is being processed...',
+              Text(
+                _currentLanguage == 'si'
+                    ? ActualPriceDataSi.productProcessing
+                    : 'Your product is being processed...',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black54,
                   height: 1.4,
@@ -899,13 +1124,17 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 child: Column(
                   children: [
                     _buildProgressStep(
-                      'Validating Information',
+                      _currentLanguage == 'si'
+                          ? ActualPriceDataSi.validatingInformation
+                          : 'Validating Information',
                       true,
                       Icons.check_circle,
                     ),
                     const SizedBox(height: 12),
                     _buildProgressStep(
-                      'Adding the Product',
+                      _currentLanguage == 'si'
+                          ? ActualPriceDataSi.addingTheProduct
+                          : 'Adding the Product',
                       false,
                       Icons.publish,
                     ),
@@ -914,7 +1143,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Please wait while we upload your product',
+                _currentLanguage == 'si'
+                    ? ActualPriceDataSi.pleaseWaitUploading
+                    : 'Please wait while we upload your product',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -971,19 +1202,23 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Successfully Added!',
-                  style: TextStyle(
+                Text(
+                  _currentLanguage == 'si'
+                      ? ActualPriceDataSi.successfullyAdded
+                      : 'Successfully Added!',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Your product has been added to the marketplace.',
+                Text(
+                  _currentLanguage == 'si'
+                      ? ActualPriceDataSi.productAddedToMarketplace
+                      : 'Your product has been added to the marketplace.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -1000,9 +1235,11 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(
+                    child: Text(
+                      _currentLanguage == 'si'
+                          ? ActualPriceDataSi.done
+                          : 'Done',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -1025,7 +1262,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             children: [
               const Icon(Icons.error_outline, color: Colors.white),
               const SizedBox(width: 8),
-              Expanded(child: Text('Failed to add to marketplace: $e')),
+              Expanded(
+                child: Text(
+                  _currentLanguage == 'si'
+                      ? '${ActualPriceDataSi.failedToAddMarketplace}: $e'
+                      : 'Failed to add to marketplace: $e',
+                ),
+              ),
             ],
           ),
           backgroundColor: Colors.red.shade700,
@@ -1040,6 +1283,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     }
   }
 
+  // Clear form fields
   void _clearFormFieldsPreserveSubmission() {
     _formKey.currentState?.reset();
     _priceController.clear();
@@ -1054,6 +1298,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     });
   }
 
+  // Reset form
   void _resetForm() {
     _formKey.currentState?.reset();
     _priceController.clear();

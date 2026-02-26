@@ -88,6 +88,7 @@ class PriceReportCard extends StatelessWidget {
     Color priceColor,
     bool isInMarketplace,
   ) {
+    final status = (report['currentStatus'] ?? 'created').toString();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -108,6 +109,29 @@ class PriceReportCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            // Only display status badge if not N/A
+            if (status.toUpperCase() != 'N/A')
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _statusColor(status).withOpacity(0.13),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      status[0].toUpperCase() + status.substring(1),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _statusColor(status),
+                        fontSize: responsive.smallFontSize + 1,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 4),
             if (isInMarketplace) ...[
               Container(
                 padding: EdgeInsets.symmetric(
@@ -368,6 +392,20 @@ class PriceReportCard extends StatelessWidget {
         return const Color(0xFF0277BD);
       default:
         return const Color(0xFF2E7D32);
+    }
+  }
+
+  // Colors based on the status
+  Color _statusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'created':
+        return const Color(0xFFFFA000); // Amber;
+      case 'approved':
+        return const Color(0xFF0277BD); // Blue
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
     }
   }
 

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/market forecast/export_details_by_country_si.dart';
+import '../../../utils/market forecast/db_translations_si.dart';
 import '../../../services/market_forecast/export_details_by_country_service.dart';
 
 class ExportDetailsByCountry extends StatefulWidget {
@@ -28,7 +31,17 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
   void initState() {
     super.initState();
     _loadCountries();
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+        });
+      }
+    });
   }
+
+  String _currentLanguage = 'en';
 
   // Load list of countries
   Future<void> _loadCountries() async {
@@ -86,7 +99,11 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
       return Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text('Export Details by Country'),
+          title: Text(
+            _currentLanguage == 'si'
+                ? ExportDetailsByCountrySi.title
+                : 'Export Details by Country',
+          ),
           backgroundColor: const Color(0xFF2E7D32),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -97,7 +114,11 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
       return Scaffold(
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
-          title: const Text('Export Details by Country'),
+          title: Text(
+            _currentLanguage == 'si'
+                ? ExportDetailsByCountrySi.title
+                : 'Export Details by Country',
+          ),
           backgroundColor: const Color(0xFF2E7D32),
         ),
         body: Center(
@@ -109,14 +130,21 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
-                  'Error loading countries: $errorMessage',
+                  (_currentLanguage == 'si'
+                          ? ExportDetailsByCountrySi.errorLoadingCountries
+                          : 'Error loading countries: ') +
+                      '$errorMessage',
                   textAlign: TextAlign.center,
                 ),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadCountries,
-                child: const Text('Retry'),
+                child: Text(
+                  _currentLanguage == 'si'
+                      ? ExportDetailsByCountrySi.retry
+                      : 'Retry',
+                ),
               ),
             ],
           ),
@@ -127,7 +155,11 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Export Details by Country'),
+        title: Text(
+          _currentLanguage == 'si'
+              ? ExportDetailsByCountrySi.title
+              : 'Export Details by Country',
+        ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
         leading: selectedCountry == null
@@ -220,7 +252,9 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Sri Lanka\'s Major Export Markets',
+                  _currentLanguage == 'si'
+                      ? ExportDetailsByCountrySi.descriptionTitle
+                      : 'Sri Lanka\'s Major Export Markets',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize + 2,
                     fontWeight: FontWeight.w800,
@@ -230,7 +264,9 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Track export volumes and pricing trends across key international markets',
+                  _currentLanguage == 'si'
+                      ? ExportDetailsByCountrySi.descriptionBody
+                      : 'Track export volumes and pricing trends across key international markets',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize - 1,
                     color: Colors.black87,
@@ -306,7 +342,9 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
             ),
             SizedBox(height: responsive.smallSpacing),
             Text(
-              country,
+              _currentLanguage == 'si'
+                  ? MarketForecastSi.translateCountry(country)
+                  : country,
               style: TextStyle(
                 fontSize: responsive.bodyFontSize + 1,
                 fontWeight: FontWeight.w700,
@@ -331,7 +369,11 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
           color: Colors.yellow.shade50,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Text('No data available for this country'),
+        child: Text(
+          _currentLanguage == 'si'
+              ? ExportDetailsByCountrySi.noDataForCountry
+              : 'No data available for this country',
+        ),
       );
     }
 
@@ -357,7 +399,12 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
               color: Colors.red.shade50,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Text('Error loading details: ${snapshot.error}'),
+            child: Text(
+              (_currentLanguage == 'si'
+                      ? ExportDetailsByCountrySi.errorLoadingDetails
+                      : 'Error loading details: ') +
+                  '${snapshot.error}',
+            ),
           );
         }
 
@@ -369,7 +416,11 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
               color: Colors.yellow.shade50,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Text('No data available for this selection'),
+            child: Text(
+              _currentLanguage == 'si'
+                  ? ExportDetailsByCountrySi.noDataForSelection
+                  : 'No data available for this selection',
+            ),
           );
         }
 
@@ -434,7 +485,9 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              country,
+                              _currentLanguage == 'si'
+                                  ? MarketForecastSi.translateCountry(country)
+                                  : country,
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize + 4,
                                 fontWeight: FontWeight.w800,
@@ -443,7 +496,7 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
                             ),
                             SizedBox(height: responsive.smallSpacing),
                             Text(
-                              'Year: $selectedYear',
+                              '${_currentLanguage == 'si' ? ExportDetailsByCountrySi.yearPrefix : 'Year'}: $selectedYear',
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize,
                                 color: Colors.black54,
@@ -531,7 +584,9 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
     Responsive responsive,
   ) {
     final icon = _iconForPepperType(pepperType);
-    final title = pepperType.toLowerCase();
+    final displayType = _currentLanguage == 'si'
+        ? MarketForecastSi.translatePepperType(pepperType)
+        : pepperType;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -563,7 +618,7 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
               SizedBox(width: responsive.smallSpacing),
               Expanded(
                 child: Text(
-                  'Pepper Type: $title',
+                  '${_currentLanguage == 'si' ? ExportDetailsByCountrySi.pepperType : 'Pepper Type'}: $displayType',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize + 1,
                     fontWeight: FontWeight.w800,
@@ -574,9 +629,21 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
             ],
           ),
           SizedBox(height: responsive.smallSpacing),
-          _buildDetailRow('Export Volume', exportVolume, responsive),
+          _buildDetailRow(
+            _currentLanguage == 'si'
+                ? ExportDetailsByCountrySi.exportVolume
+                : 'Export Volume',
+            exportVolume,
+            responsive,
+          ),
           SizedBox(height: responsive.smallSpacing),
-          _buildDetailRow('Export Value', exportValue, responsive),
+          _buildDetailRow(
+            _currentLanguage == 'si'
+                ? ExportDetailsByCountrySi.exportValue
+                : 'Export Value',
+            exportValue,
+            responsive,
+          ),
         ],
       ),
     );
@@ -650,7 +717,9 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Select Year',
+                _currentLanguage == 'si'
+                    ? ExportDetailsByCountrySi.selectYear
+                    : 'Select Year',
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize + 2,
                   fontWeight: FontWeight.w700,
@@ -666,7 +735,9 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
                   });
                 },
                 child: Text(
-                  'Back',
+                  _currentLanguage == 'si'
+                      ? ExportDetailsByCountrySi.back
+                      : 'Back',
                   style: TextStyle(
                     color: const Color(0xFF2E7D32),
                     fontWeight: FontWeight.w600,
@@ -678,7 +749,11 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
           ),
           SizedBox(height: responsive.mediumSpacing),
           if (years.isEmpty)
-            const Text('No years available')
+            Text(
+              _currentLanguage == 'si'
+                  ? ExportDetailsByCountrySi.noYearsAvailable
+                  : 'No years available',
+            )
           else
             Wrap(
               spacing: responsive.smallSpacing,

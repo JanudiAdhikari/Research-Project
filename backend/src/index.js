@@ -32,7 +32,10 @@ app.use("/api/market", marketRoutes);
 app.use("/api/certifications", certificationRoutes);
 
 // Routes for Market Forecast
-app.use("/api/market-forecast/export-details-by-country", exportDetailsByCountryRoutes);
+app.use(
+  "/api/market-forecast/export-details-by-country",
+  exportDetailsByCountryRoutes,
+);
 app.use("/api/market-forecast/past-export-prices", pastExportPriceRoutes);
 app.use("/api/market-forecast/actual-price-data", actualPriceDataRoutes);
 

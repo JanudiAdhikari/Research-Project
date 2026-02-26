@@ -261,20 +261,20 @@ class _HomeScreenState extends State<HomeScreen>
                       onTap: () => _navigateToComplaintManagement(context),
                     ),
 
-                    const SizedBox(height: 16),
+                   const SizedBox(height: 16),
 
-                    // Analyze Plants
-                    _buildNavigationCard(
-                      title: _translate('analyze_plants'),
-                      subtitle: _translate('analyze_plants_subtitle'),
-                      icon: Icons.eco_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF26A69A), Color(0xFF009688)],
-                      ),
-                      onTap: () => _navigateToAnalyzePlants(context),
-                    ),
+                    // // Analyze Plants
+                    // _buildNavigationCard(
+                    //   title: _translate('analyze_plants'),
+                    //   subtitle: _translate('analyze_plants_subtitle'),
+                    //   icon: Icons.eco_rounded,
+                    //   gradient: const LinearGradient(
+                    //     colors: [Color(0xFF26A69A), Color(0xFF009688)],
+                    //   ),
+                    //   onTap: () => _navigateToAnalyzePlants(context),
+                    // ),
 
-                    const SizedBox(height: 16),
+                    // const SizedBox(height: 16),
 
                     // Open Camera
                     _buildNavigationCard(

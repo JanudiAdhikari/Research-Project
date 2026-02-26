@@ -6,17 +6,21 @@ import tensorflow as tf
 from PIL import Image
 import io
 import json
-import os
 
 app = Flask(__name__)
 CORS(app)
 
-# Load the CNN model
+# Disable TensorFlow verbose output
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+tf.get_logger().setLevel('ERROR')
+
+# Load the CNN model once at startup
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "ml", "pepper_disease_classifier_final.keras")
 
-
+print(f"📦 Loading model from: {MODEL_PATH}")
 model = tf.keras.models.load_model(MODEL_PATH)
+print("✅ Model loaded successfully!")
 
 # Disease class mappings - CORRECTED BASED ON USER TESTING
 DISEASE_CLASSES = {
@@ -91,7 +95,12 @@ def preprocess_image(image_data):
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
-    return jsonify({'status': 'healthy', 'message': 'Disease Detection API is running'}), 200
+    return jsonify({'status': 'healthy', 'message': 'Disease Detection API is running', 'model': 'loaded'}), 200
+
+@app.route('/api/test', methods=['GET'])
+def test_endpoint():
+    """Quick test endpoint"""
+    return jsonify({'status': 'ok', 'backend': 'running', 'model_loaded': True}), 200
 
 @app.route('/api/detect-disease', methods=['POST'])
 def detect_disease():
@@ -100,38 +109,38 @@ def detect_disease():
     Expected: multipart/form-data with 'image' field
     """
     try:
+        print("\n" + "="*60)
+        print(f"📥 Received request from: {request.remote_addr}")
+        print(f"Content-Type: {request.content_type}")
+
         # Check if image file is present
         if 'image' not in request.files:
+            print("❌ No image file in request")
             return jsonify({'error': 'No image file provided'}), 400
 
         file = request.files['image']
+        print(f"📁 File name: {file.filename}")
 
         if file.filename == '':
+            print("❌ Empty filename")
             return jsonify({'error': 'No file selected'}), 400
 
         # Read image data
         image_data = file.read()
+        print(f"📊 File size: {len(image_data)} bytes")
 
         # Preprocess image
+        print("🔄 Preprocessing image...")
         processed_image = preprocess_image(image_data)
 
-        # Make prediction
+        # Make prediction (non-verbose)
+        print("🤖 Running ML model prediction...")
         predictions = model.predict(processed_image, verbose=0)
 
         # Get the predicted class and confidence
         predicted_class = np.argmax(predictions[0])
         confidence = float(predictions[0][predicted_class])
-
-        # DEBUG: Print to Flask console for troubleshooting
-        print(f"\n{'='*60}")
-        print(f"PREDICTION DEBUG INFO")
-        print(f"{'='*60}")
-        print(f"Predicted class index: {predicted_class}")
-        print(f"Confidence: {confidence:.4f}")
-        print(f"All predictions: {predictions[0]}")
-        for i, pred in enumerate(predictions[0]):
-            print(f"  Index {i}: {pred:.4f}")
-        print(f"{'='*60}\n")
+        print(f"✅ Prediction: Class {predicted_class}, Confidence: {confidence:.4f}")
 
         # Get disease information
         disease_info = DISEASE_CLASSES.get(predicted_class, {
@@ -140,6 +149,8 @@ def detect_disease():
             'treatment': 'Consult with a plant pathologist.',
             'severity': 'Unknown'
         })
+
+        print(f"🌾 Disease identified: {disease_info['name']}")
 
         # Prepare response
         response = {
@@ -156,11 +167,18 @@ def detect_disease():
             }
         }
 
+        print(f"📤 Sending response: {disease_info['name']}")
+        print("="*60 + "\n")
+
         return jsonify(response), 200
 
     except ValueError as ve:
+        print(f"❌ ValueError: {ve}")
         return jsonify({'error': str(ve)}), 400
     except Exception as e:
+        print(f"❌ Exception: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': f'Disease detection failed: {str(e)}'}), 500
 
 @app.route('/api/disease-info/<disease_name>', methods=['GET'])
@@ -184,5 +202,16 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    print("\n" + "="*60)
+    print("🚀 DISEASE DETECTION API STARTING")
+    print("="*60)
+    print(f"✅ Model: {MODEL_PATH}")
+    print(f"✅ Diseases: {len(DISEASE_CLASSES)} classes")
+    print(f"✅ Listening on: http://0.0.0.0:5001")
+    print(f"✅ API endpoints:")
+    print(f"   - GET  /health")
+    print(f"   - GET  /api/test")
+    print(f"   - POST /api/detect-disease")
+    print("="*60 + "\n")
+    app.run(debug=False, host='0.0.0.0', port=5001)
 

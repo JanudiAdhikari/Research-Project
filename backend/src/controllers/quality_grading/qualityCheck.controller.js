@@ -360,7 +360,6 @@ exports.analyzeQualityImages = async (req, res) => {
     });
   }
 };
-};
 
 // Get quality checks for the authenticated user - Added by Ashika
 exports.getMyQualityChecks = async (req, res) => {

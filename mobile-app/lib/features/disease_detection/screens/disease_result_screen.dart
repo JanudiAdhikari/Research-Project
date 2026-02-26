@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/disease_detection_service.dart';
+import '../../../utils/localization.dart';
+import '../../../utils/language_prefs.dart';
 
 class DiseaseResultScreen extends StatefulWidget {
   final File imageFile;
@@ -16,21 +19,57 @@ class DiseaseResultScreen extends StatefulWidget {
   State<DiseaseResultScreen> createState() => _DiseaseResultScreenState();
 }
 
-class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
+class _DiseaseResultScreenState extends State<DiseaseResultScreen>
+    with TickerProviderStateMixin {
   late DiseaseDetectionResult? _result;
   bool _isLoading = true;
   String? _errorMessage;
+  late AnimationController _slideController;
+  late AnimationController _fadeController;
+  String _currentLanguage = 'en';
+
+  String _translate(String key) {
+    return AppLocalizations.translate(_currentLanguage, key);
+  }
 
   @override
   void initState() {
     super.initState();
     _result = widget.result;
 
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    // Load language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+        });
+      }
+    });
+
     if (_result == null) {
       _detectDisease();
     } else {
       _isLoading = false;
+      _slideController.forward();
+      _fadeController.forward();
     }
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    _fadeController.dispose();
+    super.dispose();
   }
 
   Future<void> _detectDisease() async {
@@ -47,6 +86,8 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
           _result = result;
           _isLoading = false;
         });
+        _slideController.forward();
+        _fadeController.forward();
       }
     } catch (e) {
       if (mounted) {
@@ -99,16 +140,16 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Disease Detection Result',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
+        title: Text(
+          _translate('disease_detection_result'),
+          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
         ),
       ),
       body: _isLoading
           ? _buildLoadingScreen()
           : _errorMessage != null
               ? _buildErrorScreen()
-              : _buildResultScreen(),
+              : (_result == null ? _buildErrorScreen() : _buildResultScreen()),
     );
   }
 
@@ -134,7 +175,7 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            'Analyzing Image...',
+            _translate('analyzing_image'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -143,7 +184,7 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Using CNN Model for disease detection',
+            _translate('using_cnn_model'),
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[600],
@@ -173,7 +214,7 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            'Detection Failed',
+            _translate('detection_failed'),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -202,9 +243,9 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
-              'Retry',
-              style: TextStyle(color: Colors.white, fontSize: 16),
+            child: Text(
+              _translate('retry'),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
             ),
           ),
         ],
@@ -213,46 +254,83 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
   }
 
   Widget _buildResultScreen() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image preview
-          _buildImagePreview(),
-          const SizedBox(height: 24),
+    return FadeTransition(
+      opacity: Tween(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image preview with animated entry
+            SlideTransition(
+              position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+                  .animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut)),
+              child: _buildImagePreview(),
+            ),
+            const SizedBox(height: 24),
 
-          // Disease card
-          _buildDiseaseCard(),
-          const SizedBox(height: 20),
-
-          // Confidence meter
-          _buildConfidenceMeter(),
-          const SizedBox(height: 20),
-
-          // Description
-          _buildDescriptionSection(),
-          const SizedBox(height: 20),
-
-          // Treatment
-          if (!_result!.isHealthy) ...[
-            _buildTreatmentSection(),
+            // Disease card with animated entry
+            SlideTransition(
+              position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+                  .animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut)),
+              child: _buildDiseaseCard(),
+            ),
             const SizedBox(height: 20),
-          ],
 
-          // Prevention
-          if (_result!.prevention.isNotEmpty) ...[
-            _buildPreventionSection(),
+            // Confidence meter
+            SlideTransition(
+              position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+                  .animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut)),
+              child: _buildConfidenceMeter(),
+            ),
             const SizedBox(height: 20),
+
+            // Description
+            SlideTransition(
+              position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+                  .animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut)),
+              child: _buildDescriptionSection(),
+            ),
+            const SizedBox(height: 20),
+
+            // Treatment
+            if (!_result!.isHealthy) ...[
+              SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+                    .animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut)),
+                child: _buildTreatmentSection(),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            // Prevention
+            if (_result!.prevention.isNotEmpty) ...[
+              SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+                    .animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut)),
+                child: _buildPreventionSection(),
+              ),
+              const SizedBox(height: 20),
+            ],
+
+            // All predictions
+            SlideTransition(
+              position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+                  .animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut)),
+              child: _buildPredictionsChart(),
+            ),
+            const SizedBox(height: 32),
+
+            // Action buttons
+            SlideTransition(
+              position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero)
+                  .animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut)),
+              child: _buildActionButtons(),
+            ),
           ],
-
-          // All predictions
-          _buildPredictionsChart(),
-          const SizedBox(height: 32),
-
-          // Action buttons
-          _buildActionButtons(),
-        ],
+        ),
       ),
     );
   }
@@ -265,17 +343,39 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Image.file(
-          widget.imageFile,
-          fit: BoxFit.cover,
+        child: Stack(
+          children: [
+            Image.file(
+              widget.imageFile,
+              fit: BoxFit.cover,
+            ),
+            // Add a subtle shine effect
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.1),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -298,11 +398,11 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: severityColor.withValues(alpha: 0.3)),
+        border: Border.all(color: severityColor.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: severityColor.withValues(alpha: 0.1),
-            blurRadius: 12,
+            color: severityColor.withValues(alpha: 0.12),
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
@@ -311,10 +411,17 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: severityColor.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: severityColor.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: severityColor.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Icon(
               severityIcon,
@@ -330,24 +437,33 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
                 Text(
                   _result!.disease,
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: Colors.black87,
+                    letterSpacing: -0.5,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: severityColor,
                     borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: severityColor.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Text(
                     _result!.severity.isEmpty ? 'None' : _result!.severity,
                     style: const TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
+                      letterSpacing: 0.3,
                     ),
                   ),
                 ),
@@ -360,41 +476,72 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
   }
 
   Widget _buildConfidenceMeter() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Confidence',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey[800],
-              ),
-            ),
-            Text(
-              '${_result!.confidence.toStringAsFixed(1)}%',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF2E7D32),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: _result!.confidence / 100,
-            minHeight: 8,
-            backgroundColor: Colors.grey[300],
-            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
           ),
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _translate('confidence_level'),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey[800],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${_result!.confidence.toStringAsFixed(1)}%',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2E7D32),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: _result!.confidence / 100,
+              minHeight: 10,
+              backgroundColor: Colors.grey[300],
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _translate('model_confidence'),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -402,96 +549,16 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Description',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[800],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: Text(
-            _result!.description,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-              height: 1.6,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTreatmentSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
         Row(
           children: [
             Icon(
-              Icons.medication_rounded,
-              color: const Color(0xFF2E7D32),
+              Icons.info_rounded,
+              color: Colors.blue.shade600,
               size: 20,
             ),
             const SizedBox(width: 8),
             Text(
-              'Treatment',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey[800],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF2E7D32).withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFF2E7D32).withValues(alpha: 0.2),
-            ),
-          ),
-          child: Text(
-            _result!.treatment,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-              height: 1.6,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPreventionSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              Icons.shield_rounded,
-              color: const Color(0xFF2E7D32),
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Prevention',
+              _translate('description'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -508,8 +575,120 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
             color: Colors.blue.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.blue.withValues(alpha: 0.2),
+              color: Colors.blue.withValues(alpha: 0.15),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.blue.withValues(alpha: 0.05),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          child: Text(
+            _result!.description,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[700],
+              height: 1.6,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTreatmentSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.medical_services_rounded,
+              color: Colors.red.shade600,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _translate('treatment'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.red.withValues(alpha: 0.15),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.red.withValues(alpha: 0.05),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          child: Text(
+            _result!.treatment,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[700],
+              height: 1.6,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreventionSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.shield_rounded,
+              color: Colors.orange.shade600,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _translate('prevention'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.orange.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.orange.withValues(alpha: 0.15),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.orange.withValues(alpha: 0.05),
+                blurRadius: 8,
+              ),
+            ],
           ),
           child: Text(
             _result!.prevention,
@@ -517,6 +696,7 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
               fontSize: 14,
               color: Colors.grey[700],
               height: 1.6,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
@@ -528,63 +708,101 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'All Predictions',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey[800],
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.analytics_rounded,
+              color: Colors.purple.shade600,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _translate('all_predictions'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
-        ..._result!.allPredictions.entries.map((entry) {
-          final disease = entry.key;
-          final probability = (entry.value as num).toDouble() * 100;
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.purple.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.purple.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Column(
+            children: _result!.allPredictions.entries.map((entry) {
+              final disease = entry.key;
+              final probability = (entry.value as num).toDouble() * 100;
+              final isHighest = disease == _result!.disease;
 
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      disease,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            disease,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isHighest ? FontWeight.w700 : FontWeight.w600,
+                              color: isHighest ? Colors.grey[900] : Colors.grey[700],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isHighest
+                              ? const Color(0xFF2E7D32).withValues(alpha: 0.15)
+                              : Colors.grey.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${probability.toStringAsFixed(1)}%',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isHighest
+                                ? const Color(0xFF2E7D32)
+                                : Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '${probability.toStringAsFixed(1)}%',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: probability / 100,
+                        minHeight: 6,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          isHighest
+                              ? const Color(0xFF2E7D32)
+                              : Colors.grey[400]!,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: probability / 100,
-                    minHeight: 6,
-                    backgroundColor: Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      disease == _result!.disease
-                          ? const Color(0xFF2E7D32)
-                          : Colors.grey[400]!,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }
@@ -601,17 +819,20 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF2E7D32),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+              elevation: 4,
+              shadowColor: const Color(0xFF2E7D32).withValues(alpha: 0.4),
             ),
-            child: const Text(
-              'Analyze Another Image',
-              style: TextStyle(
+            child: Text(
+              _translate('analyze_another_image'),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -624,18 +845,19 @@ class _DiseaseResultScreenState extends State<DiseaseResultScreen> {
               Navigator.pop(context);
             },
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF2E7D32)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+              padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              'Go Back',
+            child: Text(
+              _translate('go_back'),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF2E7D32),
+                letterSpacing: 0.5,
               ),
             ),
           ),

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../../utils/market forecast/actual_price_data_si.dart';
 
 class MarketplacePromptDialog extends StatelessWidget {
   final VoidCallback onNoThanks;
   final VoidCallback onYesAdd;
+  final String language;
 
   const MarketplacePromptDialog({
     super.key,
     required this.onNoThanks,
     required this.onYesAdd,
+    required this.language,
   });
 
   @override
@@ -58,7 +61,7 @@ class MarketplacePromptDialog extends StatelessWidget {
 
               // Success Message
               Text(
-                'Success!',
+                language == 'si' ? ActualPriceDataSi.success : 'Success!',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -68,7 +71,9 @@ class MarketplacePromptDialog extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Your price data has been submitted successfully.',
+                language == 'si'
+                    ? ActualPriceDataSi.priceDataSubmitted
+                    : 'Your price data has been submitted successfully.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -128,7 +133,9 @@ class MarketplacePromptDialog extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Add to Marketplace?',
+                            language == 'si'
+                                ? ActualPriceDataSi.addToMarketplace
+                                : 'Add to Marketplace?',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w800,
@@ -138,7 +145,9 @@ class MarketplacePromptDialog extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'List this product for sale in the marketplace',
+                            language == 'si'
+                                ? ActualPriceDataSi.listProductForSale
+                                : 'List this product for sale in the marketplace',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.black54,
@@ -168,7 +177,9 @@ class MarketplacePromptDialog extends StatelessWidget {
                         side: BorderSide(color: Colors.grey.shade400, width: 2),
                       ),
                       child: Text(
-                        'No, Thanks',
+                        language == 'si'
+                            ? ActualPriceDataSi.noThanks
+                            : 'No, Thanks',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -220,7 +231,9 @@ class MarketplacePromptDialog extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Yes, Add',
+                              language == 'si'
+                                  ? ActualPriceDataSi.yesAdd
+                                  : 'Yes, Add',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,

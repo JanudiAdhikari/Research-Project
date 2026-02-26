@@ -12,6 +12,8 @@ const exportDetailsByCountryRoutes = require("./routes/market_forecast/export_de
 const pastExportPriceRoutes = require("./routes/market_forecast/past_export_price.routes");
 const actualPriceDataRoutes = require("./routes/market_forecast/actual_price_data.routes");
 const certificationRoutes = require("./routes/certification.routes");
+const qualityCheckRoutes = require("./routes/quality_grading/qualityCheck.routes");
+
 connectDB();
 require("./config/firebaseAdmin");
 
@@ -30,9 +32,15 @@ app.use("/api/market", marketRoutes);
 app.use("/api/certifications", certificationRoutes);
 
 // Routes for Market Forecast
-app.use("/api/market-forecast/export-details-by-country", exportDetailsByCountryRoutes);
+app.use(
+  "/api/market-forecast/export-details-by-country",
+  exportDetailsByCountryRoutes,
+);
 app.use("/api/market-forecast/past-export-prices", pastExportPriceRoutes);
 app.use("/api/market-forecast/actual-price-data", actualPriceDataRoutes);
+
+// Routes for Quality Grading
+app.use("/api/quality-checks", qualityCheckRoutes);
 
 // app.listen(process.env.PORT || 5000, () => console.log("Server started"));
 app.listen(process.env.PORT || 5000, "0.0.0.0", () =>

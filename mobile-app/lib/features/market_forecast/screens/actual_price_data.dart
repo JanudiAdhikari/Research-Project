@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/market forecast/actual_price_data_si.dart';
+import '../../../utils/market forecast/db_translations_si.dart';
 import 'past_price_reports.dart';
 import '../../../services/market_forecast/actual_price_data_service.dart';
 import '../../../services/market_service.dart';
-import '../../../models/market_product.dart';
+import '../../../services/market_forecast/quality_check_service.dart';
 import '../widgets/description_info_card.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/date_picker_field.dart';
@@ -24,11 +27,14 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   final ActualPriceDataService _actualPriceDataService =
       ActualPriceDataService();
   final MarketService _marketService = MarketService();
+  final QualityCheckService _qualityCheckService = QualityCheckService();
 
   // Form controllers
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _varietyController = TextEditingController();
+  final TextEditingController _gradeController = TextEditingController();
 
   // Edit mode
   String? _reportId;
@@ -44,11 +50,6 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   String? _selectedGrade;
   String? _selectedDistrict;
   DateTime _selectedDate = DateTime.now();
-
-  // Dropdown options
-  final List<String> _varieties = ['Black Pepper', 'White Pepper'];
-
-  final List<String> _grades = ['Grade 1', 'Grade 2', 'Grade 3'];
 
   final List<String> _districts = [
     'Badulla',
@@ -68,18 +69,46 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   ];
 
   bool _isSubmitting = false;
+
   bool showErrors = false;
-  final String _requiredSuffix = 'is required';
-  final Color _errorColor = Colors.red.shade400;
+  final Color _errorColor = Colors.grey.shade300;
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
 
-  String _requiredMessageFor(String label) => '$label $_requiredSuffix';
+  // Quality check batches
+  List<Map<String, dynamic>> _batches = [];
+  String? _selectedBatchId;
 
   @override
   void initState() {
     super.initState();
     _loadReportData();
+    _loadBatches();
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+        });
+        // Refresh displayed (translated) values after language is known
+        _refreshDisplayValues();
+      }
+    });
+  }
+
+  String _currentLanguage = 'en';
+
+  //Load batch Ids
+  Future<void> _loadBatches() async {
+    try {
+      final items = await _qualityCheckService.fetchMyQualityChecks();
+      if (!mounted) return;
+      setState(() {
+        _batches = items;
+      });
+    } catch (e) {
+      debugPrint('Failed to load batches: $e');
+    }
   }
 
   // Load existing report data into form fields if in edit mode
@@ -87,22 +116,58 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     if (widget.reportData != null) {
       final report = widget.reportData!;
       _reportId = report['_id'] as String? ?? report['id'] as String?;
+      _selectedBatchId = report['batchId'] as String?;
       _priceController.text = (report['pricePerKg'] as num?)?.toString() ?? '';
       _quantityController.text = (report['quantity'] as num?)?.toString() ?? '';
       _notesController.text = report['notes'] as String? ?? '';
       _selectedVariety = report['pepperType'] as String?;
       _selectedGrade = report['grade'] as String?;
+      // Show translated values only for display; keep stored values English
+      _varietyController.text =
+          (_selectedVariety != null && _selectedVariety!.isNotEmpty)
+          ? (_currentLanguage == 'si'
+                ? MarketForecastSi.translatePepperType(_selectedVariety!)
+                : _selectedVariety!)
+          : '';
+      _gradeController.text =
+          (_selectedGrade != null && _selectedGrade!.isNotEmpty)
+          ? (_currentLanguage == 'si'
+                ? MarketForecastSi.translateGrade(_selectedGrade!)
+                : _selectedGrade!)
+          : '';
       _selectedDistrict = report['district'] as String?;
 
       final saleDateStr = report['saleDate'] as String?;
       if (saleDateStr != null && saleDateStr.isNotEmpty) {
         try {
           _selectedDate = DateTime.parse(saleDateStr);
-        } catch (e) {
+        } catch (_) {
           _selectedDate = DateTime.now();
         }
       }
     }
+  }
+
+  // Refresh displayed controller values based on current language
+  void _refreshDisplayValues() {
+    if (!mounted) return;
+    setState(() {
+      if (_selectedVariety != null && _selectedVariety!.isNotEmpty) {
+        _varietyController.text = _currentLanguage == 'si'
+            ? MarketForecastSi.translatePepperType(_selectedVariety!)
+            : _selectedVariety!;
+      } else {
+        _varietyController.text = '';
+      }
+
+      if (_selectedGrade != null && _selectedGrade!.isNotEmpty) {
+        _gradeController.text = _currentLanguage == 'si'
+            ? MarketForecastSi.translateGrade(_selectedGrade!)
+            : _selectedGrade!;
+      } else {
+        _gradeController.text = '';
+      }
+    });
   }
 
   @override
@@ -111,6 +176,8 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     _priceController.dispose();
     _quantityController.dispose();
     _notesController.dispose();
+    _varietyController.dispose();
+    _gradeController.dispose();
     super.dispose();
   }
 
@@ -122,10 +189,25 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          _isEditMode ? 'Update Price Details' : 'Real Price Details',
+          _isEditMode
+              ? (_currentLanguage == 'si'
+                    ? ActualPriceDataSi.updatePriceDetails
+                    : 'Update Price Details')
+              : (_currentLanguage == 'si'
+                    ? ActualPriceDataSi.realPriceDetails
+                    : 'Real Price Details'),
         ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: _currentLanguage == 'si'
+                ? ActualPriceDataSi.reset
+                : 'Reset',
+            onPressed: _resetForm,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -134,10 +216,13 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const DescriptionInfoCard(
-                title: 'Market Price Details',
-                description:
-                    'Enter the actual price details of your pepper batch',
+              DescriptionInfoCard(
+                title: _currentLanguage == 'si'
+                    ? ActualPriceDataSi.marketPriceDetails
+                    : 'Market Price Details',
+                description: _currentLanguage == 'si'
+                    ? ActualPriceDataSi.enterPriceDetails
+                    : 'Enter the price details of your pepper batch',
                 icon: Icons.edit_note_rounded,
               ),
               SizedBox(height: responsive.mediumSpacing),
@@ -154,7 +239,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
-  // Button to navigate to the Past Sales Reports
+  // "View Past Reports" button
   Widget _buildViewPastReportsButton(Responsive responsive) {
     return SizedBox(
       width: double.infinity,
@@ -169,7 +254,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         },
         icon: const Icon(Icons.history_rounded, size: 20),
         label: Text(
-          'View My Past Sales Details',
+          _currentLanguage == 'si'
+              ? ActualPriceDataSi.viewPastRecords
+              : 'View My Past Records',
           style: TextStyle(
             fontSize: responsive.bodyFontSize,
             fontWeight: FontWeight.w600,
@@ -187,7 +274,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
-  // Main form section with all input fields and dropdowns
+  // Build form section
   Widget _buildFormSection(Responsive responsive) {
     return Container(
       padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -206,7 +293,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Price Details',
+            _currentLanguage == 'si'
+                ? ActualPriceDataSi.priceDetails
+                : 'Price Details',
             style: TextStyle(
               fontSize: responsive.bodyFontSize + 3,
               fontWeight: FontWeight.w700,
@@ -215,107 +304,149 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           ),
           SizedBox(height: responsive.mediumSpacing),
 
-          // Date Picker
+          if (_batches.isNotEmpty) ...[
+            SizedBox(height: responsive.smallSpacing),
+            _buildDropdownField(
+              responsive,
+              label: _currentLanguage == 'si'
+                  ? ActualPriceDataSi.batchId
+                  : 'Batch ID',
+              icon: Icons.inventory_2_rounded,
+              value: _selectedBatchId,
+              items: _batches.map((b) => b['batchId'] as String).toList(),
+              hint: _currentLanguage == 'si'
+                  ? ActualPriceDataSi.selectBatchId
+                  : 'Select Batch ID',
+              readOnly: _isEditMode,
+              onChanged: (value) {
+                setState(() {
+                  _selectedBatchId = value;
+                  if (value == null) {
+                    _selectedVariety = null;
+                    _selectedGrade = null;
+                    _varietyController.text = '';
+                    _gradeController.text = '';
+                    _quantityController.text = '';
+                  } else {
+                    final batch = _batches.firstWhere(
+                      (b) => b['batchId'] == value,
+                    );
+                    final batchInfo = batch['batch'] ?? {};
+                    final pepperType =
+                        (batchInfo['pepperType'] as String?) ?? '';
+
+                    if (pepperType.isNotEmpty) {
+                      // Always store the original value (English)
+                      final key = pepperType.trim().toLowerCase();
+                      if (key.contains('black')) {
+                        _selectedVariety = 'Black Pepper';
+                      } else if (key.contains('white')) {
+                        _selectedVariety = 'White Pepper';
+                      } else {
+                        _selectedVariety = pepperType;
+                      }
+                      // Update display value for controller
+                      _varietyController.text = (_currentLanguage == 'si')
+                          ? MarketForecastSi.translatePepperType(
+                              _selectedVariety!,
+                            )
+                          : _selectedVariety!;
+                    } else {
+                      _selectedVariety = null;
+                      _varietyController.text = '';
+                    }
+
+                    final gradeVal = batch['grade'] as String?;
+                    _selectedGrade = gradeVal;
+                    _gradeController.text = _selectedGrade ?? '';
+
+                    final weightGrams = (batchInfo['batchWeightGrams'] as num?)
+                        ?.toDouble();
+                    if (weightGrams != null) {
+                      final kg = weightGrams / 1000.0;
+                      _quantityController.text = kg.toStringAsFixed(2);
+                    }
+                  }
+                });
+              },
+            ),
+            SizedBox(height: responsive.mediumSpacing),
+          ],
+
           DatePickerField(
-            label: 'Sale Date',
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.saleDate
+                : 'Sale Date',
             selectedDate: _selectedDate,
-            onDateChanged: (date) {
-              setState(() {
-                _selectedDate = date;
-              });
-            },
+            onDateChanged: (date) => setState(() => _selectedDate = date),
           ),
           SizedBox(height: responsive.mediumSpacing),
 
-          // Variety Dropdown
-          _buildDropdownField(
-            responsive,
-            label: 'Pepper Variety',
-            icon: Icons.grain_rounded,
-            value: _selectedVariety,
-            items: _varieties,
-            hint: 'Select pepper variety',
-            onChanged: (value) {
-              setState(() {
-                _selectedVariety = value;
-              });
-            },
+          CustomTextField(
+            controller: _varietyController,
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.pepperVariety
+                : 'Pepper Variety',
+            hint: '',
+            keyboardType: TextInputType.text,
+            readOnly: true,
           ),
           SizedBox(height: responsive.mediumSpacing),
 
-          // Grade Dropdown
-          _buildDropdownField(
-            responsive,
-            label: 'Grade',
-            icon: Icons.star_rounded,
-            value: _selectedGrade,
-            items: _grades,
-            hint: 'Select grade',
-            onChanged: (value) {
-              setState(() {
-                _selectedGrade = value;
-              });
-            },
+          CustomTextField(
+            controller: _gradeController,
+            label: _currentLanguage == 'si' ? ActualPriceDataSi.grade : 'Grade',
+            hint: '',
+            keyboardType: TextInputType.text,
+            readOnly: true,
           ),
           SizedBox(height: responsive.mediumSpacing),
 
-          // Price Input
           CustomTextField(
             controller: _priceController,
-            label: 'Price per kg (LKR)',
-            hint: 'Enter price per kg',
-            keyboardType: TextInputType.numberWithOptions(decimal: true),
-            showErrors: showErrors,
-            errorColor: _errorColor,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return _requiredMessageFor('Price per kg (LKR)');
-              }
-              if (double.tryParse(value) == null) {
-                return 'Please enter a valid number';
-              }
-              return null;
-            },
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.pricePerKg
+                : 'Price per kg (LKR)',
+            hint: _currentLanguage == 'si'
+                ? ActualPriceDataSi.enterPricePerKg
+                : 'Enter price per kg',
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            validator: (_) => null,
           ),
           SizedBox(height: responsive.mediumSpacing),
 
-          // Quantity Input (in kg)
           CustomTextField(
             controller: _quantityController,
-            label: 'Quantity (kg)',
-            hint: 'Enter quantity in kg',
-            keyboardType: TextInputType.numberWithOptions(decimal: true),
-            showErrors: showErrors,
-            errorColor: _errorColor,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return _requiredMessageFor('Quantity (kg)');
-              }
-              if (double.tryParse(value) == null) {
-                return 'Please enter a valid number';
-              }
-              return null;
-            },
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.quantityKg
+                : 'Quantity (kg)',
+            hint: '',
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            readOnly: true,
+            validator: (_) => null,
           ),
           SizedBox(height: responsive.mediumSpacing),
 
-          // District Dropdown
           _buildCustomDropdownField(
             responsive,
-            title: 'District',
+            title: _currentLanguage == 'si'
+                ? ActualPriceDataSi.district
+                : 'District',
             value: _selectedDistrict,
             items: _districts,
+            isDistrict: true,
           ),
           SizedBox(height: responsive.mediumSpacing),
 
-          // Notes Input (Optional)
           CustomTextField(
             controller: _notesController,
-            label: 'Additional Notes (Optional)',
-            hint: 'Any additional information...',
+            label: _currentLanguage == 'si'
+                ? ActualPriceDataSi.additionalNotes
+                : 'Additional Notes (Optional)',
+            hint: _currentLanguage == 'si'
+                ? ActualPriceDataSi.anyAdditionalInfo
+                : 'Any additional information...',
             keyboardType: TextInputType.multiline,
-            showErrors: showErrors,
-            errorColor: _errorColor,
             maxLines: 3,
           ),
         ],
@@ -323,7 +454,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
-  // Dropdown field builder
+  // Dropdown fields
   Widget _buildDropdownField(
     Responsive responsive, {
     required String label,
@@ -332,6 +463,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     required List<String> items,
     required String hint,
     required void Function(String?) onChanged,
+    bool readOnly = false,
   }) {
     final key = GlobalKey();
     final double horizontalPadding = responsive.smallSpacing + 8;
@@ -352,7 +484,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           link: _layerLink,
           child: GestureDetector(
             key: key,
-            onTap: () => _toggleDropdown(key, items, value, onChanged),
+            onTap: readOnly
+                ? null
+                : () => _toggleDropdown(key, items, value, onChanged),
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: horizontalPadding,
@@ -362,9 +496,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: (showErrors && value == null)
-                      ? _errorColor
-                      : Colors.grey.shade300,
+                  color: (value == null) ? _errorColor : Colors.grey.shade300,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -380,38 +512,34 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                   Text(
                     value ?? hint,
                     style: TextStyle(
+                      fontSize: responsive.bodyFontSize,
+                      fontWeight: FontWeight.w600,
                       color: value == null
                           ? Colors.grey.shade600
                           : Colors.black87,
                     ),
                   ),
-                  const Icon(
-                    Icons.arrow_drop_down_rounded,
-                    color: Colors.black87,
-                  ),
+                  readOnly
+                      ? const Icon(Icons.lock_outline, color: Colors.grey)
+                      : const Icon(
+                          Icons.arrow_drop_down_rounded,
+                          color: Colors.black87,
+                        ),
                 ],
               ),
             ),
           ),
         ),
-        if (showErrors && value == null)
-          Padding(
-            padding: EdgeInsets.only(top: 6, left: horizontalPadding),
-            child: Text(
-              _requiredMessageFor(label),
-              style: TextStyle(color: _errorColor, fontSize: 12),
-            ),
-          ),
       ],
     );
   }
 
-  // Custom dropdown field builder
   Widget _buildCustomDropdownField(
     Responsive responsive, {
     required String title,
     required String? value,
     required List<String> items,
+    bool isDistrict = false,
   }) {
     final key = GlobalKey();
     final double horizontalPadding = responsive.smallSpacing + 8;
@@ -432,11 +560,21 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           link: _layerLink,
           child: GestureDetector(
             key: key,
-            onTap: () => _toggleDropdown(key, items, value, (newValue) {
-              setState(() {
-                _selectedDistrict = newValue;
-              });
-            }),
+            onTap: () {
+              if (isDistrict) {
+                _toggleDistrictDropdown(key, items, value, (newValue) {
+                  setState(() {
+                    _selectedDistrict = newValue;
+                  });
+                });
+              } else {
+                _toggleDropdown(key, items, value, (newValue) {
+                  setState(() {
+                    _selectedDistrict = newValue;
+                  });
+                });
+              }
+            },
             child: Container(
               padding: EdgeInsets.symmetric(
                 horizontal: horizontalPadding,
@@ -446,9 +584,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: (showErrors && value == null)
-                      ? _errorColor
-                      : Colors.grey.shade300,
+                  color: (value == null) ? _errorColor : Colors.grey.shade300,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -462,8 +598,16 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    value ?? 'Select $title',
+                    // Only translate for display, never store translated value
+                    (value != null && isDistrict && _currentLanguage == 'si')
+                        ? MarketForecastSi.translateDistrict(value)
+                        : (value ??
+                              (_currentLanguage == 'si'
+                                  ? '$title ${ActualPriceDataSi.selectPrefix}'
+                                  : 'Select $title')),
                     style: TextStyle(
+                      fontSize: responsive.bodyFontSize,
+                      fontWeight: FontWeight.w600,
                       color: value == null
                           ? Colors.grey.shade600
                           : Colors.black87,
@@ -478,19 +622,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             ),
           ),
         ),
-        if (showErrors && value == null)
-          Padding(
-            padding: EdgeInsets.only(top: 6, left: horizontalPadding),
-            child: Text(
-              _requiredMessageFor(title),
-              style: TextStyle(color: _errorColor, fontSize: 12),
-            ),
-          ),
       ],
     );
   }
 
-  // Toggle dropdown overlay
   void _toggleDropdown(
     GlobalKey key,
     List<String> items,
@@ -503,9 +638,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       return;
     }
 
-    // Height of a single item
     const double itemHeight = 48.0;
-    // Show max 3 items; scroll if more
     final double dropdownHeight = items.length > 3
         ? itemHeight * 3
         : itemHeight * items.length;
@@ -551,7 +684,69 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     Overlay.of(context).insert(_overlayEntry!);
   }
 
-  // Submit button with loading state and success feedback
+  void _toggleDistrictDropdown(
+    GlobalKey key,
+    List<String> items,
+    String? value,
+    ValueChanged<String?> onChanged,
+  ) {
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+      return;
+    }
+
+    const double itemHeight = 48.0;
+    final double dropdownHeight = items.length > 3
+        ? itemHeight * 3
+        : itemHeight * items.length;
+
+    final renderBox = key.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        left: offset.dx,
+        top: offset.dy + size.height,
+        width: size.width,
+        child: Material(
+          elevation: 5,
+          borderRadius: BorderRadius.circular(12),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: dropdownHeight),
+            child: ListView(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              children: items
+                  .map(
+                    (item) => SizedBox(
+                      height: itemHeight,
+                      child: ListTile(
+                        title: Text(
+                          _currentLanguage == 'si'
+                              ? MarketForecastSi.translateDistrict(item)
+                              : item,
+                        ),
+                        onTap: () {
+                          onChanged(item);
+                          _overlayEntry!.remove();
+                          _overlayEntry = null;
+                        },
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  // Submit button
   Widget _buildSubmitButton(Responsive responsive) {
     return SizedBox(
       width: double.infinity,
@@ -566,7 +761,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           elevation: 0,
         ),
         child: _isSubmitting
-            ? SizedBox(
+            ? const SizedBox(
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
@@ -577,14 +772,20 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.check_circle_outline_rounded,
                     color: Colors.white,
                     size: 22,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _isEditMode ? 'Update Price Data' : 'Submit Price Data',
+                    _isEditMode
+                        ? (_currentLanguage == 'si'
+                              ? ActualPriceDataSi.updatePriceData
+                              : 'Update Price Data')
+                        : (_currentLanguage == 'si'
+                              ? ActualPriceDataSi.submitPriceData
+                              : 'Submit Price Data'),
                     style: TextStyle(
                       fontSize: responsive.bodyFontSize + 1,
                       fontWeight: FontWeight.w700,
@@ -597,153 +798,202 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
   }
 
-  // Handle form submission
-  void _handleSubmit() async {
+  // Show friendly message if the user submits an empty form
+  Future<void> _handleSubmit() async {
+    if (_isSubmitting) return;
+
+    // Check whether relevant inputs are empty / unset
+    final bool priceEmpty = _priceController.text.trim().isEmpty;
+    final bool quantityEmpty = _quantityController.text.trim().isEmpty;
+    final bool notesEmpty = _notesController.text.trim().isEmpty;
+    final bool varietyEmpty =
+        (_selectedVariety == null || _selectedVariety!.trim().isEmpty) &&
+        _varietyController.text.trim().isEmpty;
+    final bool gradeEmpty =
+        (_selectedGrade == null || _selectedGrade!.trim().isEmpty) &&
+        _gradeController.text.trim().isEmpty;
+    final bool districtEmpty =
+        _selectedDistrict == null || _selectedDistrict!.trim().isEmpty;
+    final bool batchEmpty =
+        _selectedBatchId == null || _selectedBatchId!.trim().isEmpty;
+
+    if (priceEmpty &&
+        quantityEmpty &&
+        notesEmpty &&
+        varietyEmpty &&
+        gradeEmpty &&
+        districtEmpty &&
+        batchEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _currentLanguage == 'si'
+                ? ActualPriceDataSi.pleaseFillTheForm
+                : 'please fill the form',
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
-      showErrors = true;
+      _isSubmitting = true;
     });
-    // Validate form
-    final isFormValid = _formKey.currentState?.validate() ?? false;
-    final hasDropdowns =
-        _selectedVariety != null &&
-        _selectedGrade != null &&
-        _selectedDistrict != null;
 
-    if (isFormValid && hasDropdowns) {
-      setState(() {
-        _isSubmitting = true;
-      });
-      final notes = _notesController.text.trim();
-      final payload = <String, dynamic>{
-        'saleDate': _selectedDate.toIso8601String(),
-        'pepperType': _selectedVariety,
-        'grade': _selectedGrade,
-        'district': _selectedDistrict,
-        'pricePerKg': double.parse(_priceController.text.trim()),
-        'quantity': double.parse(_quantityController.text.trim()),
-        if (notes.isNotEmpty) 'notes': notes,
-      };
+    // Determine final values for variety and grade
+    final gradeValue = (_selectedGrade != null && _selectedGrade!.isNotEmpty)
+        ? _selectedGrade
+        : (_gradeController.text.trim().isNotEmpty
+              ? _gradeController.text.trim()
+              : null);
 
-      try {
-        if (_isEditMode && _reportId != null) {
-          await _actualPriceDataService.updateActualPriceData(
-            _reportId!,
-            payload,
-          );
-          // Store submitted data for marketplace sync
-          _lastSubmittedData = Map<String, dynamic>.from(payload);
-          // Sync marketplace product with updated details
-          await _syncMarketplaceOnUpdate();
-        } else {
-          final createdReport = await _actualPriceDataService
-              .createActualPriceData(payload);
-          // Capture the newly created report ID for marketplace linking
-          _newlyCreatedReportId =
-              createdReport['_id'] as String? ?? createdReport['id'] as String?;
-          // Store submitted data for marketplace addition
-          _lastSubmittedData = Map<String, dynamic>.from(payload);
+    final pepperValue =
+        (_selectedVariety != null && _selectedVariety!.isNotEmpty)
+        ? _selectedVariety
+        : (_varietyController.text.trim().isNotEmpty
+              ? _varietyController.text.trim()
+              : null);
+
+    //  Parse price and quantity to double
+    final parsedPrice = double.tryParse(_priceController.text.trim());
+    final parsedQuantity = double.tryParse(_quantityController.text.trim());
+
+    final notes = _notesController.text.trim();
+    final districtValue =
+        (_selectedDistrict != null && _selectedDistrict!.trim().isNotEmpty)
+        ? _selectedDistrict!.trim()
+        : null;
+
+    // Payload to sent to backend
+    final payload = <String, dynamic>{
+      'saleDate': _selectedDate.toIso8601String(),
+      'pepperType': pepperValue,
+      'grade': gradeValue,
+      'district': districtValue,
+      'batchId': _selectedBatchId,
+      'pricePerKg': parsedPrice,
+      'quantity': parsedQuantity,
+      'notes': notes.isNotEmpty ? notes : null,
+    };
+
+    try {
+      if (_isEditMode && _reportId != null) {
+        final updatedReport = await _actualPriceDataService
+            .updateActualPriceData(_reportId!, payload);
+
+        _lastSubmittedData = Map<String, dynamic>.from(payload);
+
+        // If the record is already linked to a marketplace product, update it too
+        final marketplaceProductId =
+            updatedReport['marketplaceProductId'] ??
+            (widget.reportData != null
+                ? widget.reportData!['marketplaceProductId']
+                : null);
+
+        if (marketplaceProductId != null && parsedPrice != null) {
+          try {
+            await _marketService
+                .updateProduct(marketplaceProductId.toString(), {
+                  'price': parsedPrice,
+                  'name': pepperValue ?? _lastSubmittedData!['pepperType'],
+                  'unit': 'kg',
+                });
+          } catch (e) {
+            debugPrint('Failed to update marketplace product: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    _currentLanguage == 'si'
+                        ? '${ActualPriceDataSi.marketplaceUpdateFailed}: $e'
+                        : 'Marketplace update failed: $e',
+                  ),
+                ),
+              );
+            }
+          }
         }
-        if (!mounted) return;
+      } else {
+        final createdReport = await _actualPriceDataService
+            .createActualPriceData(payload);
 
-        if (_isEditMode) {
-          // Simple success dialog for updates
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Row(
-                children: [
-                  Icon(
-                    Icons.check_circle_rounded,
-                    color: Colors.green.shade600,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Success',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ],
-              ),
-              content: Text('Record updated successfully.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pop(context, true); // Return to previous screen
-                  },
-                  child: const Text('OK'),
+        _newlyCreatedReportId =
+            createdReport['_id'] as String? ?? createdReport['id'] as String?;
+        _lastSubmittedData = Map<String, dynamic>.from(payload);
+      }
+
+      _clearFormFieldsPreserveSubmission();
+
+      if (!mounted) return;
+
+      if (_isEditMode) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.green.shade600,
+                  size: 28,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _currentLanguage == 'si'
+                      ? ActualPriceDataSi.success
+                      : 'Success',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
-          );
-        } else {
-          // Marketplace prompt for new submissions
-          _showMarketplacePrompt();
-        }
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
             content: Text(
-              _isEditMode ? 'Update failed: $e' : 'Create failed: $e',
+              _currentLanguage == 'si'
+                  ? ActualPriceDataSi.recordUpdated
+                  : 'Record updated successfully.',
             ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context, true);
+                },
+                child: Text(
+                  _currentLanguage == 'si' ? ActualPriceDataSi.ok : 'OK',
+                ),
+              ),
+            ],
           ),
         );
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isSubmitting = false;
-          });
-        }
-      }
-    }
-  }
-
-  // Syncs marketplace products with updated price details
-  Future<void> _syncMarketplaceOnUpdate() async {
-    try {
-      if (_lastSubmittedData == null || _selectedVariety == null) {
-        return; // No data to sync
-      }
-
-      // Fetch all marketplace products
-      final products = await _marketService.fetchProducts();
-
-      // Find product with matching pepper variety name
-      MarketProduct? marketProduct;
-      try {
-        marketProduct = products.firstWhere(
-          (p) => p.name.toLowerCase() == _selectedVariety?.toLowerCase(),
-        );
-      } catch (e) {
-        // Product not found in marketplace, which is fine
-        marketProduct = null;
-      }
-
-      if (marketProduct != null && marketProduct.id.isNotEmpty) {
-        // Update the marketplace product with new price and details
-        final updatedData = <String, dynamic>{
-          'name': _lastSubmittedData!['pepperType'],
-          'price': _lastSubmittedData!['pricePerKg'],
-          'unit': 'kg',
-          // Include additional details
-          'quantity': _lastSubmittedData!['quantity'],
-          'grade': _lastSubmittedData!['grade'],
-          'district': _lastSubmittedData!['district'],
-        };
-
-        await _marketService.updateProduct(marketProduct.id, updatedData);
+      } else {
+        _showMarketplacePrompt();
       }
     } catch (e) {
-      // Log error without blocking the update process
-      print('Marketplace sync error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _currentLanguage == 'si'
+                ? (_isEditMode
+                      ? '${ActualPriceDataSi.updateFailed}: $e'
+                      : '${ActualPriceDataSi.createFailed}: $e')
+                : (_isEditMode ? 'Update failed: $e' : 'Create failed: $e'),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
-  // Show marketplace prompt after successful submission
+  // Function to show the marketplace prompt
   void _showMarketplacePrompt() {
     showDialog(
       context: context,
@@ -757,34 +1007,38 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           Navigator.pop(context);
           _handleAddToMarketplace();
         },
+        language: _currentLanguage,
       ),
     );
   }
 
-  // Handle adding product to marketplace
+  // Function to handle adding the product to the marketplace
   Future<void> _handleAddToMarketplace() async {
     if (_lastSubmittedData == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.error_outline, color: Colors.white),
+              const Icon(Icons.error_outline, color: Colors.white),
               const SizedBox(width: 8),
-              Expanded(child: Text('No data available to add to marketplace')),
+              Expanded(
+                child: Text(
+                  _currentLanguage == 'si'
+                      ? ActualPriceDataSi.noDataToAddMarketplace
+                      : 'No data available to add to marketplace',
+                ),
+              ),
             ],
           ),
           backgroundColor: Colors.red.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
         ),
       );
       _resetForm();
       return;
     }
 
-    // Show loading indicator
+    // loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -804,7 +1058,6 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Animated loading icon
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -822,24 +1075,24 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                     width: 2,
                   ),
                 ),
-                child: SizedBox(
+                child: const SizedBox(
                   width: 60,
                   height: 60,
                   child: CircularProgressIndicator(
                     strokeWidth: 4,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      const Color(0xFF2E7D32),
+                      Color(0xFF2E7D32),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 28),
-
-              // Main text
               Text(
-                'Adding to Marketplace',
+                _currentLanguage == 'si'
+                    ? ActualPriceDataSi.addingToMarketplace
+                    : 'Adding to Marketplace',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: Colors.black87,
@@ -847,20 +1100,18 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // Subtitle
               Text(
-                'Your product is being processed...',
+                _currentLanguage == 'si'
+                    ? ActualPriceDataSi.productProcessing
+                    : 'Your product is being processed...',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black54,
                   height: 1.4,
                 ),
               ),
               const SizedBox(height: 28),
-
-              // Progress steps
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -873,13 +1124,17 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 child: Column(
                   children: [
                     _buildProgressStep(
-                      'Validating Information',
+                      _currentLanguage == 'si'
+                          ? ActualPriceDataSi.validatingInformation
+                          : 'Validating Information',
                       true,
                       Icons.check_circle,
                     ),
                     const SizedBox(height: 12),
                     _buildProgressStep(
-                      'Adding the Product',
+                      _currentLanguage == 'si'
+                          ? ActualPriceDataSi.addingTheProduct
+                          : 'Adding the Product',
                       false,
                       Icons.publish,
                     ),
@@ -887,10 +1142,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Hint text
               Text(
-                'Please wait while we upload your product',
+                _currentLanguage == 'si'
+                    ? ActualPriceDataSi.pleaseWaitUploading
+                    : 'Please wait while we upload your product',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -905,17 +1160,14 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     );
 
     try {
-      // Prepare marketplace product data
       final productData = <String, dynamic>{
         'name': _lastSubmittedData!['pepperType'],
         'price': _lastSubmittedData!['pricePerKg'],
         'unit': 'kg',
       };
 
-      // Create product in marketplace
       final createdProduct = await _marketService.createProduct(productData);
 
-      // Update report with marketplace product ID (use either existing report ID or newly created one)
       final reportIdToUpdate = _isEditMode ? _reportId : _newlyCreatedReportId;
       if (reportIdToUpdate != null && createdProduct.id.isNotEmpty) {
         await _actualPriceDataService.updateActualPriceData(reportIdToUpdate, {
@@ -923,12 +1175,9 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         });
       }
 
-      // Close loading dialog
       if (mounted) Navigator.pop(context);
-
       if (!mounted) return;
 
-      // Show success dialog
       showDialog(
         context: context,
         builder: (context) => Dialog(
@@ -954,8 +1203,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Successfully Added!',
-                  style: TextStyle(
+                  _currentLanguage == 'si'
+                      ? ActualPriceDataSi.successfullyAdded
+                      : 'Successfully Added!',
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: Colors.black87,
@@ -963,17 +1214,19 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Your product has been added to the marketplace.',
+                  _currentLanguage == 'si'
+                      ? ActualPriceDataSi.productAddedToMarketplace
+                      : 'Your product has been added to the marketplace.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context); // Close the success dialog
-                      _resetForm(); // Reset form to allow new entry
+                      Navigator.pop(context);
+                      _resetForm();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E7D32),
@@ -983,8 +1236,10 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                       ),
                     ),
                     child: Text(
-                      'Done',
-                      style: TextStyle(
+                      _currentLanguage == 'si'
+                          ? ActualPriceDataSi.done
+                          : 'Done',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -998,19 +1253,22 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         ),
       );
     } catch (e) {
-      // Close loading dialog
       if (mounted) Navigator.pop(context);
-
       if (!mounted) return;
 
-      // Show error snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.error_outline, color: Colors.white),
+              const Icon(Icons.error_outline, color: Colors.white),
               const SizedBox(width: 8),
-              Expanded(child: Text('Failed to add to marketplace: $e')),
+              Expanded(
+                child: Text(
+                  _currentLanguage == 'si'
+                      ? '${ActualPriceDataSi.failedToAddMarketplace}: $e'
+                      : 'Failed to add to marketplace: $e',
+                ),
+              ),
             ],
           ),
           backgroundColor: Colors.red.shade700,
@@ -1025,8 +1283,8 @@ class _ActualPriceDataState extends State<ActualPriceData> {
     }
   }
 
-  // Reset form
-  void _resetForm() {
+  // Clear form fields
+  void _clearFormFieldsPreserveSubmission() {
     _formKey.currentState?.reset();
     _priceController.clear();
     _quantityController.clear();
@@ -1037,12 +1295,31 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       _selectedDistrict = null;
       _selectedDate = DateTime.now();
       showErrors = false;
+    });
+  }
+
+  // Reset form
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    _priceController.clear();
+    _quantityController.clear();
+    _notesController.clear();
+    _varietyController.clear();
+    _gradeController.clear();
+    setState(() {
+      _selectedBatchId = null;
+      _varietyController.clear();
+      _gradeController.clear();
+      _selectedVariety = null;
+      _selectedGrade = null;
+      _selectedDistrict = null;
+      _selectedDate = DateTime.now();
       _newlyCreatedReportId = null;
       _lastSubmittedData = null;
     });
   }
 
-  // Build progress step
+  // Build progress steps
   Widget _buildProgressStep(String label, bool isCompleted, IconData icon) {
     return Row(
       children: [
@@ -1072,7 +1349,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           ),
         ),
         if (isCompleted)
-          Icon(Icons.done, size: 18, color: const Color(0xFF2E7D32))
+          const Icon(Icons.done, size: 18, color: Color(0xFF2E7D32))
         else
           SizedBox(
             width: 18,

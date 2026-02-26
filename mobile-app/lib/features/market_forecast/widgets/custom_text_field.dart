@@ -10,6 +10,7 @@ class CustomTextField extends StatelessWidget {
   final int maxLines;
   final bool showErrors;
   final Color errorColor;
+  final bool readOnly;
 
   const CustomTextField({
     super.key,
@@ -21,6 +22,7 @@ class CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.showErrors = false,
     this.errorColor = Colors.red,
+    this.readOnly = false,
   });
 
   @override
@@ -41,6 +43,7 @@ class CustomTextField extends StatelessWidget {
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
+          readOnly: readOnly,
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
@@ -69,11 +72,11 @@ class CustomTextField extends StatelessWidget {
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: errorColor),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: errorColor, width: 2),
+              borderSide: BorderSide(color: const Color(0xFF2E7D32), width: 2),
             ),
             errorStyle: TextStyle(color: errorColor, fontSize: 12),
             contentPadding: EdgeInsets.symmetric(

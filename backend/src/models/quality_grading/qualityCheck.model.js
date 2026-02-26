@@ -1,11 +1,11 @@
 const mongoose = require("mongoose");
 
 const QUALITY_STATUSES = [
-  "waiting_density", // after step 1
-  "waiting_images", // after density step
-  "processing", // AI running
-  "completed", // report ready
-  "failed", // AI failed
+  "waiting_density",
+  "waiting_images",
+  "processing",
+  "completed",
+  "failed",
 ];
 
 const PEPPER_TYPES = ["black", "white"];
@@ -25,12 +25,7 @@ const DRYING_METHODS = ["sun_dried", "machine_dried", "unknown"];
 
 const qualityCheckSchema = new mongoose.Schema(
   {
-    batchId: {
-      type: String,
-      required: true,
-      unique: true,
-      index: true,
-    },
+    batchId: { type: String, required: true, unique: true, index: true },
 
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -54,17 +49,49 @@ const qualityCheckSchema = new mongoose.Schema(
       batchWeightGrams: { type: Number, required: true, min: 1 },
     },
 
-    // Step 2 will update this (bluetooth only, but we keep the field now)
     density: {
       value: { type: Number, default: null }, // g/L
       source: { type: String, default: "bluetooth" },
       measuredAt: { type: Date, default: null },
     },
 
-    // Later you will store only final results (not per image)
+    certificatesSnapshot: {
+      items: [
+        {
+          certId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Certification",
+          },
+          certificationType: { type: String, default: null },
+          certificateNumber: { type: String, default: null },
+          issuingBody: { type: String, default: null },
+          issueDate: { type: Date, default: null },
+          expiryDate: { type: Date, default: null },
+          attachmentUrl: { type: String, default: null },
+        },
+      ],
+      count: { type: Number, default: 0 },
+      capturedAt: { type: Date, default: null },
+    },
+
     results: {
       overallScore: { type: Number, default: null },
-      grade: { type: String, default: null }, // PREMIUM / A / B / C later
+      grade: { type: String, default: null },
+
+      factorScores: {
+        density: { type: Number, default: null },
+        adulteration: { type: Number, default: null },
+        mold: { type: Number, default: null },
+        extraneous: { type: Number, default: null },
+        broken: { type: Number, default: null },
+        varietyPiperine: { type: Number, default: null },
+        healthyVisual: { type: Number, default: null },
+        certBonus: { type: Number, default: null },
+      },
+
+      hardReject: { type: Boolean, default: false },
+      hardRejectReasons: { type: [String], default: [] },
+
       factors: {
         moldPct: { type: Number, default: null },
         abnormalTexturePct: { type: Number, default: null },
@@ -72,6 +99,7 @@ const qualityCheckSchema = new mongoose.Schema(
         adulterantPct: { type: Number, default: null },
         healthyVisualPct: { type: Number, default: null },
       },
+
       improvements: { type: [String], default: [] },
       processedAt: { type: Date, default: null },
     },

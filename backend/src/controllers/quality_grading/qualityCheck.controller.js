@@ -9,7 +9,9 @@ const {
 const Certification = require("../../models/certification.models");
 const { gradeBatch } = require("./gradingEngine");
 
-// Step 1: Batch Information
+// ─── Helpers ─────────────────────────────────────────────────────
+
+/** Convert kg + g fields to total grams. Returns null on invalid input. */
 const toGrams = (kg, g) => {
   const kgNum = Number(kg || 0);
   const gNum = Number(g || 0);
@@ -18,6 +20,7 @@ const toGrams = (kg, g) => {
   return total > 0 ? total : null;
 };
 
+/** Generate the next sequential batch ID (e.g. "BATCH-0042"). */
 const generateBatchId = async () => {
   const last = await QualityCheck.findOne()
     .sort({ createdAt: -1 })
@@ -25,33 +28,43 @@ const generateBatchId = async () => {
 
   if (!last) return "BATCH-0001";
 
-  const lastNumber = parseInt(last.batchId.split("-")[1]);
+  const lastNumber = parseInt(last.batchId.split("-")[1], 10);
   const nextNumber = lastNumber + 1;
-
   return `BATCH-${nextNumber.toString().padStart(4, "0")}`;
 };
 
+/** Midnight of today (used to filter non-expired certificates). */
+const startOfToday = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
+
+/**
+ * Find the MongoDB user by Firebase UID.
+ * Supports both 'firebaseUid' and 'uid' field names for safety.
+ */
+const findUserByFirebaseUid = async (firebaseUid) => {
+  return (
+    (await User.findOne({ firebaseUid })) ||
+    (await User.findOne({ uid: firebaseUid })) ||
+    null
+  );
+};
+
+// ─── Step 1: Create quality check (Batch Information) ────────────
+
 exports.createQualityCheck = async (req, res) => {
   try {
-    // Firebase decoded token
-    const decoded = req.user;
-    const firebaseUid = decoded?.uid; // THIS is the correct field from Firebase token
-
+    const firebaseUid = req.user?.uid;
     if (!firebaseUid) {
       return res.status(401).json({ message: "Unauthorized (missing uid)" });
     }
 
-    // Find your Mongo user by firebase uid
-    // Use the correct field name from your User schema:
-    // Common options: firebaseUid, uid, firebaseUID
-    const dbUser =
-      (await User.findOne({ firebaseUid })) ||
-      (await User.findOne({ uid: firebaseUid }));
-
+    const dbUser = await findUserByFirebaseUid(firebaseUid);
     if (!dbUser) {
-      return res.status(404).json({
-        message: "User not found in DB for this Firebase account",
-      });
+      return res
+        .status(404)
+        .json({ message: "User not found in DB for this Firebase account" });
     }
 
     const {
@@ -105,24 +118,21 @@ exports.createQualityCheck = async (req, res) => {
   }
 };
 
-// Step 2: update density
+// ─── Step 2: Update density (from IoT Bluetooth reading) ─────────
+
 exports.updateDensity = async (req, res) => {
   try {
     const firebaseUid = req.user?.uid;
-    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
+    if (!firebaseUid) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-    // Find DB user
-    const dbUser =
-      (await User.findOne({ firebaseUid })) ||
-      (await User.findOne({ uid: firebaseUid }));
-
+    const dbUser = await findUserByFirebaseUid(firebaseUid);
     if (!dbUser) {
       return res.status(404).json({ message: "User not found in DB" });
     }
 
     const { id } = req.params;
-
-    // For now accept the value from app (later your app will only send Bluetooth readings)
     const { value } = req.body;
 
     const densityValue = Number(value);
@@ -140,7 +150,7 @@ exports.updateDensity = async (req, res) => {
           status: "waiting_images",
         },
       },
-      { new: true },
+      { new: true }
     );
 
     if (!qc) {
@@ -158,45 +168,40 @@ exports.updateDensity = async (req, res) => {
   }
 };
 
-// Step 3
-// POST /api/quality-checks/:id/analyze
-const startOfToday = () => {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-};
+// ─── Step 3: Analyse images + compute grade ───────────────────────
 
 exports.analyzeQualityImages = async (req, res) => {
+  const { id } = req.params;
+
   try {
     const firebaseUid = req.user?.uid;
-    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
+    if (!firebaseUid) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-    const dbUser =
-      (await User.findOne({ firebaseUid })) ||
-      (await User.findOne({ uid: firebaseUid }));
-
-    if (!dbUser)
+    const dbUser = await findUserByFirebaseUid(firebaseUid);
+    if (!dbUser) {
       return res.status(404).json({ message: "User not found in DB" });
+    }
 
-    const { id } = req.params;
-
-    // Ensure quality check exists and belongs to user
+    // Load the quality check document
     const qc = await QualityCheck.findOne({ _id: id, userId: dbUser._id });
-    if (!qc)
+    if (!qc) {
       return res.status(404).json({ message: "Quality check not found" });
+    }
 
-    // Ensure density exists before analyzing
+    // Density must exist before images can be analysed
     if (!qc.density?.value) {
       return res
         .status(400)
-        .json({ message: "Density not found. Complete step 2 first." });
+        .json({ message: "Density not recorded. Complete Step 2 first." });
     }
 
-    // Validate 9 images exist in request
+    // Validate that all 9 required image fields are present
     const files = req.files || {};
     const missing = EXPECTED_FIELDS.filter(
-      (k) => !files[k] || files[k].length === 0,
+      (k) => !files[k] || files[k].length === 0
     );
-
     if (missing.length > 0) {
       return res.status(400).json({
         message: "Missing required images",
@@ -204,13 +209,12 @@ exports.analyzeQualityImages = async (req, res) => {
       });
     }
 
-    // Update status -> processing
+    // Mark as processing so the client can show a spinner
     qc.status = "processing";
     await qc.save();
 
-    // Build form-data to send to FastAPI
+    // ── Build multipart form for FastAPI ──
     const form = new FormData();
-
     for (const field of EXPECTED_FIELDS) {
       const f = files[field][0];
       form.append(field, f.buffer, {
@@ -218,34 +222,48 @@ exports.analyzeQualityImages = async (req, res) => {
         contentType: f.mimetype || "image/jpeg",
       });
     }
-
-    // optional toggle
     form.append("texture_first", "true");
 
-    const fastapiUrl = `${process.env.FASTAPI_BASE_URL}/infer/quality`;
+    // ── Call FastAPI inference endpoint ──
+    let fastapiResponse;
+    try {
+      fastapiResponse = await axios.post(
+        `${process.env.FASTAPI_BASE_URL}/infer/quality`,
+        form,
+        {
+          headers: { ...form.getHeaders() },
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+          timeout: 120_000, // 2 minutes
+        }
+      );
+    } catch (fastapiErr) {
+      // FastAPI call itself failed — mark as failed and return 502
+      qc.status = "failed";
+      await qc.save();
+      console.error(
+        "analyzeQualityImages — FastAPI error:",
+        fastapiErr?.response?.data || fastapiErr.message
+      );
+      return res.status(502).json({
+        message: "AI inference service error",
+        error: fastapiErr.message,
+        fastapiStatus: fastapiErr.response?.status,
+        fastapiData: fastapiErr.response?.data,
+      });
+    }
 
-    const response = await axios.post(fastapiUrl, form, {
-      headers: {
-        ...form.getHeaders(),
-      },
-      maxBodyLength: Infinity,
-      maxContentLength: Infinity,
-      timeout: 120000, // 120s
-    });
-
-    // FastAPI returns: { samples, final, details, meta }
-    // You want only final avg to save
-    const finalAvg = response.data?.final;
-
+    // Validate FastAPI response
+    const finalAvg = fastapiResponse.data?.final;
     if (!finalAvg) {
       qc.status = "failed";
       await qc.save();
       return res
         .status(502)
-        .json({ message: "FastAPI response missing final results" });
+        .json({ message: "FastAPI response missing 'final' results" });
     }
 
-    // Map FastAPI fields -> Mongo fields
+    // ── Map FastAPI field names → Mongo field names ──
     const mappedFactors = {
       adulterantPct: Number(finalAvg.adulterant_seed_pct ?? 0),
       extraneousPct: Number(finalAvg.extraneous_matter_pct ?? 0),
@@ -254,17 +272,17 @@ exports.analyzeQualityImages = async (req, res) => {
       healthyVisualPct: Number(finalAvg.healthy_visual_pct ?? 0),
     };
 
-    // Capture certificate snapshot (verified + not expired) at grading time
+    // ── Capture certificate snapshot at grading time ──
+    // Only verified certs that have not yet expired count.
     const today = startOfToday();
-
     const certs = await Certification.find({
-      firebaseUid: firebaseUid, // same firebaseUid from req.user.uid
+      firebaseUid,
       status: "verified",
       expiryDate: { $gte: today },
     })
       .sort({ createdAt: -1 })
       .select(
-        "certificationType certificateNumber issuingBody issueDate expiryDate attachment",
+        "certificationType certificateNumber issuingBody issueDate expiryDate attachment"
       );
 
     qc.certificatesSnapshot = {
@@ -281,77 +299,64 @@ exports.analyzeQualityImages = async (req, res) => {
       capturedAt: new Date(),
     };
 
-    // Compute final grade using IoT + AI + certificates snapshot
+    // ── Run grading engine ──
     const grading = gradeBatch({
       pepperType: qc.batch.pepperType,
       pepperVariety: qc.batch.pepperVariety,
-      density: qc.density?.value,
+      density: qc.density.value,
       factors: mappedFactors,
-      certSnapshotCount: qc.certificatesSnapshot?.count || 0,
+      certSnapshotCount: qc.certificatesSnapshot.count,
     });
 
-    // Save only the final results (score/grade you will implement later)
+    // ── Persist results ──
     qc.results = {
-      ...qc.results,
-      factors: mappedFactors,
       overallScore: grading.overallScore,
       grade: grading.grade,
       factorScores: grading.factorScores,
       hardReject: grading.hardReject,
       hardRejectReasons: grading.hardRejectReasons,
+      factors: mappedFactors,
       improvements: grading.improvements,
       processedAt: new Date(),
     };
-
-    // For now keep grade/score empty until your ISO logic is ready
     qc.status = "completed";
     await qc.save();
 
     return res.status(200).json({
       qualityCheckId: qc._id,
+      batchId: qc.batchId,
       status: qc.status,
-      factors: qc.results.factors,
-      certificatesSnapshot: qc.certificatesSnapshot,
       overallScore: qc.results.overallScore,
       grade: qc.results.grade,
-      factorScores: qc.results.factorScores,
       hardReject: qc.results.hardReject,
       hardRejectReasons: qc.results.hardRejectReasons,
+      factorScores: qc.results.factorScores,
+      factors: qc.results.factors,
+      certificatesSnapshot: qc.certificatesSnapshot,
       improvements: qc.results.improvements,
+      meta: grading.meta,
     });
   } catch (err) {
+    // ── Outer catch: any unhandled error ──
+    // Mark the quality check as failed so the client knows to retry.
     console.error(
-      "analyzeQualityImages error:",
-      err?.response?.data || err.message,
+      "analyzeQualityImages — unhandled error:",
+      err?.response?.data || err.message
     );
-
-    // Try to mark failed if we know the id
     try {
-      if (req.params?.id) {
-        await QualityCheck.findByIdAndUpdate(req.params.id, {
-          status: "failed",
-        });
+      if (id) {
+        await QualityCheck.findByIdAndUpdate(id, { status: "failed" });
       }
-    } catch (err) {
+    } catch (markFailedErr) {
       console.error(
-        "analyzeQualityImages error:",
-        err?.response?.data || err.message,
+        "analyzeQualityImages — could not mark as failed:",
+        markFailedErr.message
       );
-
-      try {
-        if (req.params?.id) {
-          await QualityCheck.findByIdAndUpdate(req.params.id, {
-            status: "failed",
-          });
-        }
-      } catch (_) {}
-
-      return res.status(500).json({
-        message: "Server error during image analysis",
-        error: err.message,
-        fastapiStatus: err.response?.status,
-        fastapiData: err.response?.data,
-      });
     }
+
+    return res.status(500).json({
+      message: "Server error during image analysis",
+      error: err.message,
+    });
   }
 };

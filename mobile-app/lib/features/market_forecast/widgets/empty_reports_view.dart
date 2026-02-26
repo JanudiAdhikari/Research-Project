@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/market forecast/actual_price_data_si.dart';
 
 class EmptyReportsView extends StatelessWidget {
-  const EmptyReportsView({super.key});
+  final String language;
+
+  const EmptyReportsView({super.key, this.language = 'en'});
 
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
 
+    final isSi = language == 'si';
     return Center(
       child: Padding(
         padding: EdgeInsets.all(responsive.mediumSpacing),
@@ -17,7 +21,7 @@ class EmptyReportsView extends StatelessWidget {
             Icon(Icons.inbox_rounded, size: 64, color: Colors.grey.shade400),
             SizedBox(height: responsive.mediumSpacing),
             Text(
-              'No reports found',
+              isSi ? ActualPriceDataSi.noReportsFound : 'No reports found',
               style: TextStyle(
                 fontSize: responsive.bodyFontSize + 2,
                 fontWeight: FontWeight.w600,
@@ -26,7 +30,9 @@ class EmptyReportsView extends StatelessWidget {
             ),
             SizedBox(height: responsive.smallSpacing),
             Text(
-              'Submit your first price report to see it here',
+              isSi
+                  ? ActualPriceDataSi.submitFirstReport
+                  : 'Submit your first price report to see it here',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: responsive.bodyFontSize,

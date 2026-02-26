@@ -84,7 +84,21 @@ const qualityCheckSchema = new mongoose.Schema(
     // Later you will store only final results (not per image)
     results: {
       overallScore: { type: Number, default: null },
-      grade: { type: String, default: null }, // PREMIUM / A / B / C later
+      grade: { type: String, default: null },
+
+      // optional transparency
+      factorScores: {
+        density: { type: Number, default: null },
+        adulteration: { type: Number, default: null },
+        extraneous: { type: Number, default: null },
+        mold: { type: Number, default: null },
+        brokenLike: { type: Number, default: null },
+        varietyPiperine: { type: Number, default: null },
+        certBonus: { type: Number, default: null },
+      },
+      hardReject: { type: Boolean, default: false },
+      hardRejectReasons: { type: [String], default: [] },
+
       factors: {
         moldPct: { type: Number, default: null },
         abnormalTexturePct: { type: Number, default: null },

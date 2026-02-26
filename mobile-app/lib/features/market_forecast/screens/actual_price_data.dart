@@ -865,7 +865,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         ? _selectedDistrict!.trim()
         : null;
 
-    // Payload to sent to backend
+    // Payload to send to backend (status will be set to 'created' unless changed after marketplace prompt)
     final payload = <String, dynamic>{
       'saleDate': _selectedDate.toIso8601String(),
       'pepperType': pepperValue,
@@ -875,6 +875,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       'pricePerKg': parsedPrice,
       'quantity': parsedQuantity,
       'notes': notes.isNotEmpty ? notes : null,
+      'currentStatus': 'created',
     };
 
     try {
@@ -1172,6 +1173,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
       if (reportIdToUpdate != null && createdProduct.id.isNotEmpty) {
         await _actualPriceDataService.updateActualPriceData(reportIdToUpdate, {
           'marketplaceProductId': createdProduct.id,
+          'currentStatus': 'N/A',
         });
       }
 

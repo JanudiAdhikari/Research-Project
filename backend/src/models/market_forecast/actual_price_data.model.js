@@ -12,6 +12,7 @@ const actualPriceDataSchema = new mongoose.Schema(
     quantity: { type: Number, required: true },
     notes: { type: String },
     marketplaceProductId: { type: String },
+    currentStatus: { type: String, index: true },
   },
   { timestamps: true },
 );

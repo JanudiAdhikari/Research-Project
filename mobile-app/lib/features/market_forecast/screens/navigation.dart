@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import '../../../../widgets/bottom_navigation.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/market forecast/navigation_si.dart';
 import 'weekly_price_forecast.dart';
 import 'export_price_trends.dart';
 import 'export_details_by_country.dart';
@@ -33,6 +35,14 @@ class _PriceNavigationState extends State<PriceNavigation>
     );
     // Start the animation
     _animationController.forward();
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+        });
+      }
+    });
   }
 
   @override
@@ -42,6 +52,7 @@ class _PriceNavigationState extends State<PriceNavigation>
   }
 
   final Color primary = const Color(0xFF2E7D32);
+  String _currentLanguage = 'en';
 
   @override
   Widget build(BuildContext context) {
@@ -59,9 +70,14 @@ class _PriceNavigationState extends State<PriceNavigation>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Market Forecast",
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          _currentLanguage == 'si'
+              ? NavigationSi.marketForecast
+              : 'Market Forecast',
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
       ),
       // Main body with fade transition animation
@@ -83,7 +99,9 @@ class _PriceNavigationState extends State<PriceNavigation>
 
                 // Section title for navigation options
                 Text(
-                  "Explore Market Data",
+                  _currentLanguage == 'si'
+                      ? NavigationSi.exploreMarketData
+                      : 'Explore Market Data',
                   style: TextStyle(
                     fontSize: responsive.titleFontSize,
                     fontWeight: FontWeight.w700,
@@ -97,8 +115,12 @@ class _PriceNavigationState extends State<PriceNavigation>
                 // First Navigation Card: Weekly Price Forecast
                 _buildNavigationCard(
                   responsive,
-                  title: "Weekly Local Price Forecast",
-                  subtitle: "View weekly predictions",
+                  title: _currentLanguage == 'si'
+                      ? NavigationSi.weeklyLocalPriceForecast
+                      : 'Weekly Local Price Forecast',
+                  subtitle: _currentLanguage == 'si'
+                      ? NavigationSi.viewWeeklyPredictions
+                      : 'View weekly predictions',
                   icon: Icons.trending_up_rounded,
                   gradient: LinearGradient(
                     colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
@@ -118,8 +140,12 @@ class _PriceNavigationState extends State<PriceNavigation>
                 // Second Navigation Card: Export Price Trends
                 _buildNavigationCard(
                   responsive,
-                  title: "Past Export Price Trends",
-                  subtitle: "Analyze trends",
+                  title: _currentLanguage == 'si'
+                      ? NavigationSi.pastExportPriceTrends
+                      : 'Past Export Price Trends',
+                  subtitle: _currentLanguage == 'si'
+                      ? NavigationSi.analyzeTrends
+                      : 'Analyze trends',
                   icon: Icons.assessment_rounded,
                   gradient: LinearGradient(
                     colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
@@ -139,8 +165,12 @@ class _PriceNavigationState extends State<PriceNavigation>
                 // Third Navigation Card: Export Details by Country
                 _buildNavigationCard(
                   responsive,
-                  title: "Export Details by Country",
-                  subtitle: "Track global exports",
+                  title: _currentLanguage == 'si'
+                      ? NavigationSi.exportDetailsByCountry
+                      : 'Export Details by Country',
+                  subtitle: _currentLanguage == 'si'
+                      ? NavigationSi.trackGlobalExports
+                      : 'Track global exports',
                   icon: Icons.public_rounded,
                   gradient: LinearGradient(
                     colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
@@ -160,8 +190,12 @@ class _PriceNavigationState extends State<PriceNavigation>
                 // Fourth Navigation Card: Real Price Data
                 _buildNavigationCard(
                   responsive,
-                  title: "Real Market Prices",
-                  subtitle: "Enter price details of your pepper batch",
+                  title: _currentLanguage == 'si'
+                      ? NavigationSi.realMarketPrices
+                      : 'Create the Pepper Batch',
+                  subtitle: _currentLanguage == 'si'
+                      ? NavigationSi.enterPriceDetails
+                      : 'Enter price details of your pepper batch',
                   icon: Icons.receipt_long_rounded,
                   gradient: LinearGradient(
                     colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
@@ -239,7 +273,9 @@ class _PriceNavigationState extends State<PriceNavigation>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Market Forecast',
+                  _currentLanguage == 'si'
+                      ? NavigationSi.descriptionTitle
+                      : 'Market Forecast',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize + 2,
                     fontWeight: FontWeight.w800,
@@ -249,7 +285,9 @@ class _PriceNavigationState extends State<PriceNavigation>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Explore weekly predictions, historical trends, and global export data to make informed trading decisions.',
+                  _currentLanguage == 'si'
+                      ? NavigationSi.descriptionBody
+                      : 'Explore weekly predictions, historical trends, and global export data to make informed trading decisions.',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize - 1,
                     color: Colors.black87,

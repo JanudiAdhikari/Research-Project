@@ -7,13 +7,14 @@ import '../../services/auth_service.dart';
 import '../../utils/responsive.dart';
 import '../../utils/localization.dart';
 import '../../utils/language_prefs.dart';
+import '../../utils/farmer_dashboard_si.dart';
 import '../auth/login_page.dart';
 import '../marketplace/marketplace_screen.dart';
 import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
 import 'package:flutter/services.dart';
-import '../../services/auth_service.dart';
+
 
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
@@ -111,37 +112,47 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   String _titleCase(String s) {
-  final parts = s.trim().split(RegExp(r'\s+'));
-  return parts.map((p) {
-    if (p.isEmpty) return '';
-    final lower = p.toLowerCase();
-    return lower.length == 1 ? lower.toUpperCase() : '${lower[0].toUpperCase()}${lower.substring(1)}';
-  }).where((p) => p.isNotEmpty).join(' ');
-}
-
-Future<void> _loadUserName() async {
-  try {
-    final user = await _authService.getCurrentUser();
-    if (user != null) {
-      final firstRaw = (user['firstName'] ?? user['first_name'] ?? user['name'] ?? '').toString();
-      final lastRaw = (user['lastName'] ?? user['last_name'] ?? '').toString();
-      final first = _titleCase(firstRaw);
-      final last = _titleCase(lastRaw);
-      final name = (first + (last.isNotEmpty ? ' $last' : '')).trim();
-      if (mounted && name.isNotEmpty) {
-        setState(() => _userName = name);
-        return;
-      }
-    }
-
-    final fb = _authService.currentUser;
-    if (fb != null && fb.displayName != null && fb.displayName!.trim().isNotEmpty) {
-      if (mounted) setState(() => _userName = _titleCase(fb.displayName!));
-    }
-  } catch (e) {
-    print("Failed to load user name: $e");
+    final parts = s.trim().split(RegExp(r'\s+'));
+    return parts
+        .map((p) {
+          if (p.isEmpty) return '';
+          final lower = p.toLowerCase();
+          return lower.length == 1
+              ? lower.toUpperCase()
+              : '${lower[0].toUpperCase()}${lower.substring(1)}';
+        })
+        .where((p) => p.isNotEmpty)
+        .join(' ');
   }
-}
+
+  Future<void> _loadUserName() async {
+    try {
+      final user = await _authService.getCurrentUser();
+      if (user != null) {
+        final firstRaw =
+            (user['firstName'] ?? user['first_name'] ?? user['name'] ?? '')
+                .toString();
+        final lastRaw = (user['lastName'] ?? user['last_name'] ?? '')
+            .toString();
+        final first = _titleCase(firstRaw);
+        final last = _titleCase(lastRaw);
+        final name = (first + (last.isNotEmpty ? ' $last' : '')).trim();
+        if (mounted && name.isNotEmpty) {
+          setState(() => _userName = name);
+          return;
+        }
+      }
+
+      final fb = _authService.currentUser;
+      if (fb != null &&
+          fb.displayName != null &&
+          fb.displayName!.trim().isNotEmpty) {
+        if (mounted) setState(() => _userName = _titleCase(fb.displayName!));
+      }
+    } catch (e) {
+      print("Failed to load user name: $e");
+    }
+  }
 
   Future<void> _loadDashboardStats() async {
     // Simulate loading dashboard statistics
@@ -270,7 +281,9 @@ Future<void> _loadUserName() async {
                   _buildSectionTitle(
                     responsive,
                     primary,
-                    _translate('smart_farming_tools'),
+                    _currentLanguage == 'si'
+                        ? FarmerDashboardSi.smartFarmingTools
+                        : _translate('smart_farming_tools'),
                     Icons.agriculture_rounded,
                   ),
 
@@ -288,7 +301,9 @@ Future<void> _loadUserName() async {
                   _buildSectionTitle(
                     responsive,
                     primary,
-                    _translate('more_services'),
+                    _currentLanguage == 'si'
+                        ? FarmerDashboardSi.moreServices
+                        : _translate('more_services'),
                     Icons.dashboard_customize_rounded,
                   ),
 
@@ -303,7 +318,9 @@ Future<void> _loadUserName() async {
                   _buildSectionTitle(
                     responsive,
                     primary,
-                    _translate('farming_tips_insights'),
+                    _currentLanguage == 'si'
+                        ? FarmerDashboardSi.farmingTipsInsights
+                        : _translate('farming_tips_insights'),
                     Icons.lightbulb_rounded,
                     iconColor: Colors.amber[700],
                   ),
@@ -375,7 +392,9 @@ Future<void> _loadUserName() async {
                     ),
                     ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
                     Text(
-                      _translate('ceylon_pepper'),
+                      _currentLanguage == 'si'
+                          ? FarmerDashboardSi.ceylonPepper
+                          : _translate('ceylon_pepper'),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: responsive.fontSize(
@@ -481,7 +500,11 @@ Future<void> _loadUserName() async {
                           children: [
                             Icon(Icons.person_outline, size: 20),
                             SizedBox(width: 12),
-                            Text(_translate('profile')),
+                            Text(
+                              _currentLanguage == 'si'
+                                  ? FarmerDashboardSi.profile
+                                  : _translate('profile'),
+                            ),
                           ],
                         ),
                       ),
@@ -491,7 +514,11 @@ Future<void> _loadUserName() async {
                           children: [
                             Icon(Icons.settings_outlined, size: 20),
                             SizedBox(width: 12),
-                            Text(_translate('settings')),
+                            Text(
+                              _currentLanguage == 'si'
+                                  ? FarmerDashboardSi.settings
+                                  : _translate('settings'),
+                            ),
                           ],
                         ),
                       ),
@@ -503,7 +530,9 @@ Future<void> _loadUserName() async {
                             Icon(Icons.logout, color: Colors.red, size: 20),
                             SizedBox(width: 12),
                             Text(
-                              _translate('logout'),
+                              _currentLanguage == 'si'
+                                  ? FarmerDashboardSi.logout
+                                  : _translate('logout'),
                               style: TextStyle(color: Colors.red),
                             ),
                           ],
@@ -547,11 +576,7 @@ Future<void> _loadUserName() async {
                   Icon(
                     Icons.location_on_rounded,
                     color: Colors.white.withValues(alpha: 0.95),
-                    size: responsive.value(
-                      mobile: 18,
-                      tablet: 20,
-                      desktop: 22,
-                    ),
+                    size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
                   ),
                   ResponsiveSpacing.horizontal(
                     mobile: 8,
@@ -564,7 +589,9 @@ Future<void> _loadUserName() async {
                       children: [
                         Text(
                           _isLoadingWeather
-                              ? _translate('fetching_location')
+                              ? (_currentLanguage == 'si'
+                                    ? FarmerDashboardSi.fetchingLocation
+                                    : _translate('fetching_location'))
                               : _locationName,
                           style: TextStyle(
                             color: colorWithOpacity(Colors.white, 0.95),
@@ -579,7 +606,9 @@ Future<void> _loadUserName() async {
                         ),
                         if (!_isLoadingWeather)
                           Text(
-                            _translate('tap_to_refresh'),
+                            _currentLanguage == 'si'
+                                ? FarmerDashboardSi.tapToRefresh
+                                : _translate('tap_to_refresh'),
                             style: TextStyle(
                               color: colorWithOpacity(Colors.white, 0.7),
                               fontSize: responsive.fontSize(
@@ -693,11 +722,7 @@ Future<void> _loadUserName() async {
   Widget _buildQuickStats(Responsive responsive, Color primary) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: responsive.value(
-          mobile: 16,
-          tablet: 24,
-          desktop: 32,
-        ),
+        horizontal: responsive.value(mobile: 16, tablet: 24, desktop: 32),
       ),
       child: ResponsiveBuilder(
         mobile: _buildStatsRow(responsive, primary),
@@ -713,7 +738,9 @@ Future<void> _loadUserName() async {
         Expanded(
           child: _buildStatCard(
             responsive,
-            _translate('total_crops'),
+            _currentLanguage == 'si'
+                ? FarmerDashboardSi.totalCrops
+                : _translate('total_crops'),
             _totalCrops.toString(),
             iconPath: "assets/images/icons/crops.png",
           ),
@@ -722,7 +749,9 @@ Future<void> _loadUserName() async {
         Expanded(
           child: _buildStatCard(
             responsive,
-            _translate('active_alerts'),
+            _currentLanguage == 'si'
+                ? FarmerDashboardSi.activeAlerts
+                : _translate('active_alerts'),
             _activeAlerts.toString(),
             iconPath: "assets/images/icons/notification.png",
           ),
@@ -731,7 +760,9 @@ Future<void> _loadUserName() async {
         Expanded(
           child: _buildStatCard(
             responsive,
-            _translate('avg_quality'),
+            _currentLanguage == 'si'
+                ? FarmerDashboardSi.avgQuality
+                : _translate('avg_quality'),
             "${_avgQuality.toStringAsFixed(1)}%",
             iconPath: "assets/images/icons/quality.png",
           ),
@@ -831,11 +862,7 @@ Future<void> _loadUserName() async {
   }) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: responsive.value(
-          mobile: 16,
-          tablet: 24,
-          desktop: 32,
-        ),
+        horizontal: responsive.value(mobile: 16, tablet: 24, desktop: 32),
       ),
       child: Row(
         children: [
@@ -865,11 +892,7 @@ Future<void> _loadUserName() async {
           Icon(
             icon,
             color: iconColor ?? primary,
-            size: responsive.value(
-              mobile: 22,
-              tablet: 24,
-              desktop: 26,
-            ),
+            size: responsive.value(mobile: 22, tablet: 24, desktop: 26),
           ),
         ],
       ),
@@ -883,19 +906,27 @@ Future<void> _loadUserName() async {
   ) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: responsive.value(
-          mobile: 16,
-          tablet: 24,
-          desktop: 32,
-        ),
+        horizontal: responsive.value(mobile: 16, tablet: 24, desktop: 32),
       ),
       child: ResponsiveBuilder(
         mobile: GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
-          crossAxisSpacing: responsive.value(mobile: 12, tablet: 16, desktop: 20),
-          mainAxisSpacing: responsive.value(mobile: 12, tablet: 16, desktop: 20),
-          childAspectRatio: responsive.value(mobile: 1.05, tablet: 1.1, desktop: 1.15),
+          crossAxisSpacing: responsive.value(
+            mobile: 12,
+            tablet: 16,
+            desktop: 20,
+          ),
+          mainAxisSpacing: responsive.value(
+            mobile: 12,
+            tablet: 16,
+            desktop: 20,
+          ),
+          childAspectRatio: responsive.value(
+            mobile: 1.05,
+            tablet: 1.1,
+            desktop: 1.15,
+          ),
           physics: const NeverScrollableScrollPhysics(),
           children: _buildMainFeatureCards(context, responsive),
         ),
@@ -929,8 +960,12 @@ Future<void> _loadUserName() async {
       _featureCard(
         context,
         responsive,
-        title: _translate('yield_prediction'),
-        subtitle: _translate('forecast_harvest'),
+        title: _currentLanguage == 'si'
+            ? FarmerDashboardSi.yieldPrediction
+            : _translate('yield_prediction'),
+        subtitle: _currentLanguage == 'si'
+            ? FarmerDashboardSi.forecastHarvest
+            : _translate('forecast_harvest'),
         iconPath: "assets/images/icons/analysis.png",
         gradient: LinearGradient(
           colors: [
@@ -950,8 +985,12 @@ Future<void> _loadUserName() async {
       _featureCard(
         context,
         responsive,
-        title: _translate('disease_detection'),
-        subtitle: _translate('ai_diagnosis'),
+        title: _currentLanguage == 'si'
+            ? FarmerDashboardSi.diseaseDetection
+            : _translate('disease_detection'),
+        subtitle: _currentLanguage == 'si'
+            ? FarmerDashboardSi.aiDiagnosis
+            : _translate('ai_diagnosis'),
         iconPath: "assets/images/icons/test.png",
         gradient: LinearGradient(
           colors: [
@@ -969,8 +1008,12 @@ Future<void> _loadUserName() async {
       _featureCard(
         context,
         responsive,
-        title: _translate('quality_grading'),
-        subtitle: _translate('iso_standards'),
+        title: _currentLanguage == 'si'
+            ? FarmerDashboardSi.qualityGrading
+            : _translate('quality_grading'),
+        subtitle: _currentLanguage == 'si'
+            ? FarmerDashboardSi.isoStandards
+            : _translate('iso_standards'),
         iconPath: "assets/images/icons/check.png",
 
         gradient: LinearGradient(
@@ -989,8 +1032,12 @@ Future<void> _loadUserName() async {
       _featureCard(
         context,
         responsive,
-        title: _translate('market_forecast'),
-        subtitle: _translate('price_trends'),
+        title: _currentLanguage == 'si'
+            ? FarmerDashboardSi.marketForecast
+            : _translate('market_forecast'),
+        subtitle: _currentLanguage == 'si'
+            ? FarmerDashboardSi.priceTrends
+            : _translate('price_trends'),
         iconPath: "assets/images/icons/trend.png",
         gradient: LinearGradient(
           colors: [
@@ -1015,11 +1062,7 @@ Future<void> _loadUserName() async {
   ) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: responsive.value(
-          mobile: 16,
-          tablet: 24,
-          desktop: 32,
-        ),
+        horizontal: responsive.value(mobile: 16, tablet: 24, desktop: 32),
       ),
       child: Column(
         children: [
@@ -1030,7 +1073,9 @@ Future<void> _loadUserName() async {
                 child: _secondaryFeatureCard(
                   context,
                   responsive,
-                  _translate('ai_assistant'),
+                  _currentLanguage == 'si'
+                      ? FarmerDashboardSi.aiAssistant
+                      : _translate('ai_assistant'),
                   Icons.smart_toy_rounded,
                   Color(0xFF43A047),
                   Color(0xFFE8F5E9),
@@ -1048,7 +1093,9 @@ Future<void> _loadUserName() async {
                 child: _secondaryFeatureCard(
                   context,
                   responsive,
-                  _translate('marketplace'),
+                  _currentLanguage == 'si'
+                      ? FarmerDashboardSi.marketplace
+                      : _translate('marketplace'),
                   Icons.store_rounded,
                   Color(0xFF2E7D32),
                   Color(0xFFE8F5E9),
@@ -1116,11 +1163,7 @@ Future<void> _loadUserName() async {
                 child: Icon(
                   icon,
                   color: iconColor,
-                  size: responsive.value(
-                    mobile: 22,
-                    tablet: 24,
-                    desktop: 26,
-                  ),
+                  size: responsive.value(mobile: 22, tablet: 24, desktop: 26),
                 ),
               ),
               ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
@@ -1149,7 +1192,9 @@ Future<void> _loadUserName() async {
                       children: [
                         Flexible(
                           child: Text(
-                            _translate('explore'),
+                            _currentLanguage == 'si'
+                                ? FarmerDashboardSi.explore
+                                : _translate('explore'),
                             style: TextStyle(
                               fontSize: responsive.fontSize(
                                 mobile: 11,
@@ -1243,11 +1288,21 @@ Future<void> _loadUserName() async {
                       ),
                       child: Image.asset(
                         iconPath,
-                        width: responsive.value(mobile: 32, tablet: 42, desktop: 48),
-                        height: responsive.value(mobile: 32, tablet: 42, desktop: 48),
+                        width: responsive.value(
+                          mobile: 32,
+                          tablet: 42,
+                          desktop: 48,
+                        ),
+                        height: responsive.value(
+                          mobile: 32,
+                          tablet: 42,
+                          desktop: 48,
+                        ),
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
-                          debugPrint('Failed to load asset: $iconPath — $error');
+                          debugPrint(
+                            'Failed to load asset: $iconPath — $error',
+                          );
                           return Icon(
                             Icons.broken_image,
                             size: responsive.value(
@@ -1261,7 +1316,11 @@ Future<void> _loadUserName() async {
                       ),
                     ),
                     SizedBox(
-                      height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                      height: responsive.value(
+                        mobile: 8,
+                        tablet: 10,
+                        desktop: 12,
+                      ),
                     ),
                     Text(
                       title,
@@ -1279,7 +1338,11 @@ Future<void> _loadUserName() async {
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(
-                      height: responsive.value(mobile: 3, tablet: 4, desktop: 5),
+                      height: responsive.value(
+                        mobile: 3,
+                        tablet: 4,
+                        desktop: 5,
+                      ),
                     ),
                     Text(
                       subtitle,
@@ -1319,43 +1382,49 @@ Future<void> _loadUserName() async {
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.symmetric(
-          horizontal: responsive.value(
-            mobile: 16,
-            tablet: 24,
-            desktop: 32,
-          ),
+          horizontal: responsive.value(mobile: 16, tablet: 24, desktop: 32),
         ),
         children: [
           _tipCard(
-            _translate('monitor_soil_moisture'),
+            _currentLanguage == 'si'
+                ? FarmerDashboardSi.monitorSoilMoisture
+                : _translate('monitor_soil_moisture'),
             Icons.water_drop_rounded,
             Colors.blue.shade50,
             Colors.blue.shade700,
             responsive,
           ),
           _tipCard(
-            _translate('apply_organic_fertilizers'),
+            _currentLanguage == 'si'
+                ? FarmerDashboardSi.applyOrganicFertilizers
+                : _translate('apply_organic_fertilizers'),
             Icons.eco_rounded,
             Colors.green.shade50,
             Colors.green.shade700,
             responsive,
           ),
           _tipCard(
-            _translate('check_pest_damage'),
+            _currentLanguage == 'si'
+                ? FarmerDashboardSi.checkPestDamage
+                : _translate('check_pest_damage'),
             Icons.bug_report_rounded,
             Colors.red.shade50,
             Colors.red.shade700,
             responsive,
           ),
           _tipCard(
-            _translate('maintain_plant_spacing'),
+            _currentLanguage == 'si'
+                ? FarmerDashboardSi.maintainPlantSpacing
+                : _translate('maintain_plant_spacing'),
             Icons.space_dashboard_rounded,
             Colors.purple.shade50,
             Colors.purple.shade700,
             responsive,
           ),
           _tipCard(
-            _translate('harvest_optimal_maturity'),
+            _currentLanguage == 'si'
+                ? FarmerDashboardSi.harvestOptimalMaturity
+                : _translate('harvest_optimal_maturity'),
             Icons.calendar_today_rounded,
             Colors.orange.shade50,
             Colors.orange.shade700,
@@ -1420,11 +1489,7 @@ Future<void> _loadUserName() async {
             child: Icon(
               icon,
               color: iconColor,
-              size: responsive.value(
-                mobile: 22,
-                tablet: 24,
-                desktop: 26,
-              ),
+              size: responsive.value(mobile: 22, tablet: 24, desktop: 26),
             ),
           ),
           ResponsiveSpacing(mobile: 10, tablet: 12, desktop: 14),

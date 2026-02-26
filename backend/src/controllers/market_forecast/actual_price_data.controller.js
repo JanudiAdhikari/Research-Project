@@ -24,7 +24,7 @@ const getActualPriceData = async (req, res) => {
     const records = await query.exec();
     return res.json(records);
   } catch (err) {
-    console.error("getActualPriceData error:", err);
+    console.error("Error fetching data:", err);
     return res
       .status(500)
       .json({ message: "Server error", error: err.message });
@@ -46,38 +46,55 @@ const createActualPriceData = async (req, res) => {
       pricePerKg,
       quantity,
       notes,
+      batchId,
+      currentStatus,
     } = req.body;
-
-    if (!saleDate || !pepperType || !grade || !district) {
-      return res.status(400).json({ message: "Missing required fields" });
-    }
 
     const parsedDate = new Date(saleDate);
     if (Number.isNaN(parsedDate.getTime())) {
       return res.status(400).json({ message: "Invalid saleDate" });
     }
 
-    const parsedPrice = Number(pricePerKg);
-    const parsedQuantity = Number(quantity);
-    if (!Number.isFinite(parsedPrice) || !Number.isFinite(parsedQuantity)) {
-      return res.status(400).json({ message: "Invalid price or quantity" });
+    let parsedPrice;
+    let parsedQuantity;
+    const invalidNumeric = [];
+    if (pricePerKg !== undefined && pricePerKg !== null && pricePerKg !== "") {
+      parsedPrice = Number(pricePerKg);
+      if (!Number.isFinite(parsedPrice)) invalidNumeric.push("pricePerKg");
+    }
+    if (quantity !== undefined && quantity !== null && quantity !== "") {
+      parsedQuantity = Number(quantity);
+      if (!Number.isFinite(parsedQuantity)) invalidNumeric.push("quantity");
+    }
+    if (invalidNumeric.length > 0) {
+      return res.status(400).json({ message: "Invalid numeric fields" });
     }
 
+    // If marketplaceProductId is present, set status to 'N/A', else 'created'
+    let statusToSet = "created";
+    if (req.body.marketplaceProductId) {
+      statusToSet = "N/A";
+    } else if (currentStatus) {
+      statusToSet = currentStatus;
+    }
     const record = new ActualPriceData({
       userId: req.user?.uid,
       saleDate: parsedDate,
-      pepperType,
-      grade,
-      district,
+      pepperType: pepperType || undefined,
+      grade: grade || undefined,
+      district: district || undefined,
       pricePerKg: parsedPrice,
       quantity: parsedQuantity,
       notes: notes || undefined,
+      batchId: batchId || undefined,
+      marketplaceProductId: req.body.marketplaceProductId || undefined,
+      currentStatus: statusToSet,
     });
 
     await record.save();
     return res.status(201).json(record);
   } catch (err) {
-    console.error("createActualPriceData error:", err);
+    console.error("Error while saving data:", err);
     return res
       .status(500)
       .json({ message: "Server error", error: err.message });
@@ -115,45 +132,40 @@ const updateActualPriceData = async (req, res) => {
         .json({ message: "Not authorized to update this record" });
     }
 
-    // Validate and update fields
-    if (saleDate) {
-      const parsedDate = new Date(saleDate);
-      if (Number.isNaN(parsedDate.getTime())) {
-        return res.status(400).json({ message: "Invalid saleDate" });
-      }
-      record.saleDate = parsedDate;
-    }
-
     if (pepperType) record.pepperType = pepperType;
-    if (grade) record.grade = grade;
+    if (grade !== undefined) record.grade = grade;
     if (district) record.district = district;
 
+    // Validate numeric fields
+    const invalidUpdateNumeric = [];
     if (pricePerKg !== undefined) {
       const parsedPrice = Number(pricePerKg);
-      if (!Number.isFinite(parsedPrice)) {
-        return res.status(400).json({ message: "Invalid price" });
-      }
-      record.pricePerKg = parsedPrice;
+      if (!Number.isFinite(parsedPrice))
+        invalidUpdateNumeric.push("pricePerKg");
+      else record.pricePerKg = parsedPrice;
     }
-
     if (quantity !== undefined) {
       const parsedQuantity = Number(quantity);
-      if (!Number.isFinite(parsedQuantity)) {
-        return res.status(400).json({ message: "Invalid quantity" });
-      }
-      record.quantity = parsedQuantity;
+      if (!Number.isFinite(parsedQuantity))
+        invalidUpdateNumeric.push("quantity");
+      else record.quantity = parsedQuantity;
+    }
+    if (invalidUpdateNumeric.length > 0) {
+      return res.status(400).json({ message: "Invalid numeric fields" });
     }
 
     if (notes !== undefined) record.notes = notes;
 
     if (marketplaceProductId !== undefined) {
       record.marketplaceProductId = marketplaceProductId;
+      // Set status to 'N/A' if marketplaceProductId is present
+      record.currentStatus = "N/A";
     }
 
     await record.save();
     return res.json(record);
   } catch (err) {
-    console.error("updateActualPriceData error:", err);
+    console.error("Error while updating data:", err);
     return res
       .status(500)
       .json({ message: "Server error", error: err.message });
@@ -184,7 +196,7 @@ const deleteActualPriceData = async (req, res) => {
     await ActualPriceData.findByIdAndDelete(id);
     return res.json({ message: "Record deleted successfully" });
   } catch (err) {
-    console.error("deleteActualPriceData error:", err);
+    console.error("Error while deleting data:", err);
     return res
       .status(500)
       .json({ message: "Server error", error: err.message });

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/market forecast/db_translations_si.dart';
+import '../../../utils/market forecast/weekly_price_forecast_si.dart';
 import 'weekly_prediction.dart';
 import 'package:intl/intl.dart';
 import '../services/weather_service.dart';
@@ -39,6 +42,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
 
   // Auto-calculated next week values
   late String nextWeekMonth;
+  late int nextWeekMonthNumber;
   late int nextWeekNumber;
   late String nextWeekYear;
   late String weekDateRange;
@@ -78,6 +82,21 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     'November',
     'December',
   ];
+  // Sinhala month names
+  final List<String> sinhalaMonths = [
+    'ජනවාරි',
+    'පෙබරවාරි',
+    'මාර්තු',
+    'අප්‍රේල්',
+    'මැයි',
+    'ජූනි',
+    'ජූලි',
+    'අගෝස්තු',
+    'සැප්තැම්බර්',
+    'ඔක්තෝබර්',
+    'නොවැම්බර්',
+    'දෙසැම්බර්',
+  ];
 
   bool showErrors = false; // To control error message visibility
 
@@ -93,8 +112,10 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
       Duration(days: nextWeek.weekday - 1),
     );
 
-    // Get month name
-    nextWeekMonth = months[nextWeekMonday.month - 1];
+    // Get month name and number
+    final monthList = _currentLanguage == 'si' ? sinhalaMonths : months;
+    nextWeekMonth = monthList[nextWeekMonday.month - 1];
+    nextWeekMonthNumber = nextWeekMonday.month;
 
     // Calculate week number using the Monday of the week
     nextWeekNumber = _getWeekNumber(nextWeekMonday);
@@ -141,7 +162,19 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
         );
 
     _animationController.forward();
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+          // Recalculate week strings so month names reflect selected language
+          _calculateNextWeek();
+        });
+      }
+    });
   }
+
+  String _currentLanguage = 'en';
 
   @override
   void dispose() {
@@ -158,7 +191,11 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Weekly Price Forecast'),
+        title: Text(
+          _currentLanguage == 'si'
+              ? WeeklyPriceForecastSi.screenTitle
+              : 'Weekly Price Forecast',
+        ),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
         actions: [
@@ -284,9 +321,8 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) {
-                                    // Convert month name to month number (1-based)
-                                    int monthNumber =
-                                        months.indexOf(nextWeekMonth) + 1;
+                                    // Use precomputed month number (1-based)
+                                    int monthNumber = nextWeekMonthNumber;
                                     return WeeklyPrediction(
                                       year: nextWeekYear,
                                       month: monthNumber.toString(),
@@ -301,8 +337,10 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                               );
                             },
 
-                            child: const Text(
-                              'Predict the Price',
+                            child: Text(
+                              _currentLanguage == 'si'
+                                  ? WeeklyPriceForecastSi.predictPrice
+                                  : 'Predict the Price',
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.white,
@@ -366,7 +404,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Weekly Price Forecast',
+                  _currentLanguage == 'si'
+                      ? WeeklyPriceForecastSi.screenTitle
+                      : 'Weekly Price Forecast',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize + 2,
                     fontWeight: FontWeight.w800,
@@ -376,7 +416,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Predict price trends for the upcoming week. Select your district and pepper type to receive weekly price forecast.',
+                  _currentLanguage == 'si'
+                      ? WeeklyPriceForecastSi.description
+                      : 'Predict price trends for the upcoming week. Select your district and pepper type to receive weekly price forecast.',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize - 1,
                     color: Colors.black87,
@@ -414,7 +456,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Predicting Price For',
+            _currentLanguage == 'si'
+                ? WeeklyPriceForecastSi.predictingFor
+                : 'Predicting Price For',
             style: TextStyle(
               fontSize: responsive.bodyFontSize - 0.5,
               fontWeight: FontWeight.w600,
@@ -447,7 +491,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Get price predictions for this week period',
+                  _currentLanguage == 'si'
+                      ? WeeklyPriceForecastSi.getPredictionsNote
+                      : 'Get price predictions for this week period',
                   style: TextStyle(
                     fontSize: responsive.bodyFontSize - 1.5,
                     color: Colors.blue.shade600,
@@ -468,7 +514,16 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     // Get the Sunday of the week (end of week)
     DateTime sunday = monday.add(const Duration(days: 6));
 
-    // Format the date range
+    if (_currentLanguage == 'si') {
+      String two(int d) => d < 10 ? '0$d' : '$d';
+      final startMonth = sinhalaMonths[monday.month - 1];
+      final endMonth = sinhalaMonths[sunday.month - 1];
+      final start = '$startMonth ${two(monday.day)}';
+      final end = '$endMonth ${two(sunday.day)}, ${sunday.year}';
+      return '$start - $end';
+    }
+
+    // Default (English) formatting
     String startDate = DateFormat('MMM dd').format(monday);
     String endDate = DateFormat('MMM dd, yyyy').format(sunday);
 
@@ -490,6 +545,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
           foregroundColor: Colors.white,
           disabledBackgroundColor: color.withOpacity(0.6),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          minimumSize: const Size(140, 44),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(25),
           ),
@@ -506,7 +562,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
           child: isLoading
               ? SizedBox(
                   key: const ValueKey('loading'),
-                  width: 100,
+                  width: 140,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -516,9 +572,11 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                         child: CupertinoActivityIndicator(color: Colors.white),
                       ),
                       const SizedBox(width: 10),
-                      const Text(
-                        'Loading',
-                        style: TextStyle(
+                      Text(
+                        _currentLanguage == 'si'
+                            ? WeeklyPriceForecastSi.loading
+                            : 'Loading',
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -526,10 +584,15 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                     ],
                   ),
                 )
-              : const Text(
-                  key: ValueKey('fetch'),
-                  'Fetch Details',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              : Text(
+                  _currentLanguage == 'si'
+                      ? WeeklyPriceForecastSi.fetchDetails
+                      : 'Fetch Details',
+                  key: const ValueKey('fetch'),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
         ),
       ),
@@ -541,7 +604,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Week Details',
+          _currentLanguage == 'si'
+              ? WeeklyPriceForecastSi.weekDetails
+              : 'Week Details',
           style: TextStyle(
             fontSize: responsive.bodyFontSize - 0.5,
             fontWeight: FontWeight.w600,
@@ -579,7 +644,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Weather Conditions',
+            _currentLanguage == 'si'
+                ? WeeklyPriceForecastSi.weatherConditions
+                : 'Weather Conditions',
             style: TextStyle(
               fontSize: responsive.bodyFontSize - 0.5,
               fontWeight: FontWeight.w600,
@@ -660,46 +727,68 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                         _buildEnhancedWeatherCard(
                           icon: Icons.opacity,
                           iconColor: Colors.blue,
-                          label: "Rainfall",
+                          label: _currentLanguage == 'si'
+                              ? WeeklyPriceForecastSi.rainfall
+                              : "Rainfall",
                           value: weatherData!["rainfall"].toString(),
                           unit: "mm",
                           responsive: responsive,
                           description:
                               weatherData!["rainfall"] != null &&
                                   weatherData!["rainfall"] > 0
-                              ? "Rain"
-                              : "No Rain",
+                              ? (_currentLanguage == 'si'
+                                    ? WeeklyPriceForecastSi.rain
+                                    : "Rain")
+                              : (_currentLanguage == 'si'
+                                    ? WeeklyPriceForecastSi.noRain
+                                    : "No Rain"),
                         ),
                         _buildEnhancedWeatherCard(
                           icon: Icons.thermostat,
                           iconColor: Colors.orange,
-                          label: "Temperature",
+                          label: _currentLanguage == 'si'
+                              ? WeeklyPriceForecastSi.temperature
+                              : "Temperature",
                           value: weatherData!["temperature"].toString(),
                           unit: "°C",
                           responsive: responsive,
-                          description: weatherData!["description"] ?? "-",
+                          description: _currentLanguage == 'si'
+                              ? WeeklyPriceForecastSi.translateWeatherDescription(
+                                  weatherData!["description"],
+                                )
+                              : (weatherData!["description"] ?? "-"),
                         ),
                         _buildEnhancedWeatherCard(
                           icon: Icons.water_drop,
                           iconColor: Colors.cyan,
-                          label: "Humidity",
+                          label: _currentLanguage == 'si'
+                              ? WeeklyPriceForecastSi.humidity
+                              : "Humidity",
                           value: weatherData!["humidity"].toString(),
                           unit: "%",
                           responsive: responsive,
-                          description: "High Moisture",
+                          description: _currentLanguage == 'si'
+                              ? WeeklyPriceForecastSi.highMoisture
+                              : "High Moisture",
                         ),
                         _buildEnhancedWeatherCard(
                           icon: Icons.air,
                           iconColor: Colors.teal,
-                          label: "Wind Speed",
+                          label: _currentLanguage == 'si'
+                              ? WeeklyPriceForecastSi.windSpeed
+                              : "Wind Speed",
                           value: weatherData!["windSpeed"].toString(),
                           unit: "km/h",
                           responsive: responsive,
                           description:
                               weatherData!["windSpeed"] != null &&
                                   weatherData!["windSpeed"] > 0
-                              ? "Breezy"
-                              : "Calm",
+                              ? (_currentLanguage == 'si'
+                                    ? WeeklyPriceForecastSi.breezy
+                                    : "Breezy")
+                              : (_currentLanguage == 'si'
+                                    ? WeeklyPriceForecastSi.calm
+                                    : "Calm"),
                         ),
                       ],
                     ),
@@ -727,7 +816,21 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              "${weatherData!["description"] ?? "Weather data loaded."}",
+                              (_currentLanguage == 'si'
+                                          ? WeeklyPriceForecastSi.translateWeatherDescription(
+                                              weatherData!["description"],
+                                            )
+                                          : (weatherData!["description"] ?? ""))
+                                      .isNotEmpty
+                                  ? (_currentLanguage == 'si'
+                                        ? WeeklyPriceForecastSi.translateWeatherDescription(
+                                            weatherData!["description"],
+                                          )
+                                        : (weatherData!["description"] ?? ""))
+                                  : (_currentLanguage == 'si'
+                                        ? WeeklyPriceForecastSi
+                                              .weatherDataLoaded
+                                        : "Weather data loaded."),
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize - 1.5,
                                 color: Colors.blue.shade800,
@@ -756,13 +859,27 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     ValueChanged<String?> onChanged, {
     bool required = false,
   }) {
+    String _translateTitle(String t) {
+      if (_currentLanguage != 'si') return t;
+      switch (t) {
+        case 'District':
+          return WeeklyPriceForecastSi.district;
+        case 'Pepper Type':
+          return WeeklyPriceForecastSi.pepperType;
+        case 'Grade':
+          return WeeklyPriceForecastSi.grade;
+        default:
+          return t;
+      }
+    }
+
     final key = GlobalKey();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
+          _translateTitle(title),
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -775,7 +892,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
           link: _layerLink,
           child: GestureDetector(
             key: key,
-            onTap: () => _toggleDropdown(key, items, value, onChanged),
+            onTap: () => _toggleDropdown(key, items, value, onChanged, title),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               decoration: BoxDecoration(
@@ -798,7 +915,24 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    value ?? 'Select $title',
+                    // translate displayed selected value when Sinhala is active
+                    value == null
+                        ? (_currentLanguage == 'si'
+                              ? '${_translateTitle(title)} ${WeeklyPriceForecastSi.selectPrefix} '
+                              : 'Select $title')
+                        : (_currentLanguage == 'si'
+                              ? (title == 'District'
+                                    ? MarketForecastSi.translateDistrict(value)
+                                    : (title == 'Pepper Type'
+                                          ? MarketForecastSi.translatePepperType(
+                                              value,
+                                            )
+                                          : (title == 'Grade'
+                                                ? MarketForecastSi.translateGrade(
+                                                    value,
+                                                  )
+                                                : value)))
+                              : value),
                     style: TextStyle(
                       color: value == null
                           ? Colors.grey.shade600
@@ -816,7 +950,9 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              "$title is required",
+              _currentLanguage == 'si'
+                  ? '${_translateTitle(title)} ${WeeklyPriceForecastSi.isRequired}'
+                  : "$title is required",
               style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ),
@@ -945,6 +1081,7 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
     List<String> items,
     String? value,
     ValueChanged<String?> onChanged,
+    String title,
   ) {
     if (_overlayEntry != null) {
       _overlayEntry!.remove();
@@ -981,7 +1118,19 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
                     (item) => SizedBox(
                       height: itemHeight,
                       child: ListTile(
-                        title: Text(item),
+                        title: Text(
+                          title == 'District' && _currentLanguage == 'si'
+                              ? MarketForecastSi.translateDistrict(item)
+                              : (title == 'Pepper Type' &&
+                                        _currentLanguage == 'si'
+                                    ? MarketForecastSi.translatePepperType(item)
+                                    : (title == 'Grade' &&
+                                              _currentLanguage == 'si'
+                                          ? MarketForecastSi.translateGrade(
+                                              item,
+                                            )
+                                          : item)),
+                        ),
                         onTap: () {
                           onChanged(item);
                           _overlayEntry!.remove();

@@ -8,6 +8,7 @@ const {
   createQualityCheck,
   updateDensity,
   analyzeQualityImages,
+  getMyQualityChecks,
 } = require("../../controllers/quality_grading/qualityCheck.controller");
 
 const {
@@ -29,5 +30,7 @@ router.get("/:id/report", auth, getReport);
 
 // Step 4b: download PDF
 router.get("/:id/report/pdf", auth, getPdfReport);
+// Get quality checks for current user - Added by Ashika
+router.get("/batchdetails", auth, getMyQualityChecks);
 
 module.exports = router;

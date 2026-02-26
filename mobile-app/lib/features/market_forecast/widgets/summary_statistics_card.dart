@@ -92,7 +92,7 @@ class SummaryStatisticsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: SummaryStatItem(
-                  label: 'Total Reports',
+                  label: 'Total Records',
                   value: '$totalReports',
                   icon: Icons.list_alt_rounded,
                 ),

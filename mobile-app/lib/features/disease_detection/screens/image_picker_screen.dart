@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'disease_result_screen.dart';
+import '../../../utils/localization.dart';
+import '../../../utils/language_prefs.dart';
 
 class ImagePickerScreen extends StatefulWidget {
   const ImagePickerScreen({Key? key}) : super(key: key);
@@ -13,6 +16,24 @@ class ImagePickerScreen extends StatefulWidget {
 class _ImagePickerScreenState extends State<ImagePickerScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
+  String _currentLanguage = 'en';
+
+  String _translate(String key) {
+    return AppLocalizations.translate(_currentLanguage, key);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Load language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) {
+        setState(() {
+          _currentLanguage = lang;
+        });
+      }
+    });
+  }
 
   Future<void> _takePhoto() async {
     final XFile? image = await _picker.pickImage(
@@ -23,10 +44,17 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
     );
 
     if (image != null) {
-      setState(() {
-        _selectedImage = File(image.path);
-      });
-      Navigator.pop(context, _selectedImage);
+      final imageFile = File(image.path);
+
+      if (!mounted) return;
+
+      // Navigate to disease result screen for analysis (same as gallery)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DiseaseResultScreen(imageFile: imageFile),
+        ),
+      );
     }
   }
 
@@ -58,9 +86,9 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Add Photo',
-          style: TextStyle(
+        title: Text(
+          _translate('add_photo'),
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
@@ -95,9 +123,9 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'Choose Photo Source',
-                  style: TextStyle(
+                Text(
+                  _translate('choose_photo_source'),
+                  style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
@@ -105,7 +133,7 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Select how you want to add your photo',
+                  _translate('select_how_you_want_to_add_photo'),
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
@@ -161,17 +189,17 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
                             color: Colors.blue,
                           ),
                         ),
-                        title: const Text(
-                          'Take Photo',
-                          style: TextStyle(
+                        title: Text(
+                          _translate('take_photo'),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: Colors.black87,
                           ),
                         ),
-                        subtitle: const Text(
-                          'Capture a new photo using camera',
-                          style: TextStyle(
+                        subtitle: Text(
+                          _translate('take_photo_with_camera'),
+                          style: const TextStyle(
                             color: Colors.grey,
                           ),
                         ),
@@ -241,16 +269,16 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
                             color: Colors.purple,
                           ),
                         ),
-                        title: const Text(
-                          'Choose from Gallery',
-                          style: TextStyle(
+                        title: Text(
+                          _translate('pick_from_gallery'),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: Colors.black87,
                           ),
                         ),
-                        subtitle: const Text(
-                          'Select an existing photo from your gallery',
+                        subtitle: Text(
+                          _translate('select_existing_photo'),
                           style: TextStyle(
                             color: Colors.grey,
                           ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../utils/responsive.dart';
+import '../../../../utils/responsive.dart';
 
 class DetailedReportScreen extends StatefulWidget {
   const DetailedReportScreen({super.key});

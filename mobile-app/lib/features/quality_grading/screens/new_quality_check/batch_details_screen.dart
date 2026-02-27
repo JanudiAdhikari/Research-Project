@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../utils/responsive.dart';
-import '../services/quality_check_api.dart';
+import '../../../../utils/responsive.dart';
+import '../../services/quality_check_api.dart';
 import 'bulk_density_screen.dart';
 import 'bulk_density_screen2.dart';
 

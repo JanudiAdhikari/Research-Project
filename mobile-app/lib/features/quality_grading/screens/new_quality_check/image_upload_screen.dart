@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../utils/responsive.dart';
-import 'image_capture_guide_screen.dart';
+import '../../../../utils/responsive.dart';
+import '../image_capture_guide_screen.dart';
 import 'review_and_confirm_screen.dart';
 import 'review_and_confirm_screen.dart' show ImageStore;
 

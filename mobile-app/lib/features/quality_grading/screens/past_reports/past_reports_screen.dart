@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../utils/responsive.dart';
+import '../../services/quality_check_api.dart';
 import 'detailed_report_screen.dart';
 
 class PastReportsScreen extends StatefulWidget {
@@ -17,59 +18,10 @@ class _PastReportsScreenState extends State<PastReportsScreen>
   String _sortBy = 'Newest First';
   String _filterGrade = 'All Grades';
 
-  // Mock data - replace with actual data
-  List<Map<String, dynamic>> _allReports = [
-    {
-      'id': '001',
-      'date': '2025-01-12',
-      'pepperType': 'Black Pepper',
-      'variety': 'Ceylon Pepper',
-      'grade': 'Premium',
-      'score': 92,
-      'weight': '25 kg',
-      'density': '540 g/L',
-    },
-    {
-      'id': '002',
-      'date': '2024-12-28',
-      'pepperType': 'White Pepper',
-      'variety': 'Panniyur-1',
-      'grade': 'Standard',
-      'score': 78,
-      'weight': '18 kg',
-      'density': '520 g/L',
-    },
-    {
-      'id': '003',
-      'date': '2024-12-10',
-      'pepperType': 'Black Pepper',
-      'variety': 'Kuching',
-      'grade': 'Premium',
-      'score': 88,
-      'weight': '30 kg',
-      'density': '535 g/L',
-    },
-    {
-      'id': '004',
-      'date': '2024-11-22',
-      'pepperType': 'Black Pepper',
-      'variety': 'Ceylon Pepper',
-      'grade': 'Good',
-      'score': 82,
-      'weight': '22 kg',
-      'density': '525 g/L',
-    },
-    {
-      'id': '005',
-      'date': '2024-11-08',
-      'pepperType': 'Black Pepper',
-      'variety': 'Malabar',
-      'grade': 'Standard',
-      'score': 75,
-      'weight': '20 kg',
-      'density': '510 g/L',
-    },
-  ];
+  final QualityCheckApi _api = QualityCheckApi();
+  List<Map<String, dynamic>> _allReports = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -81,7 +33,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    _animationController.forward();
+    _fetchReports();
   }
 
   @override
@@ -90,40 +42,144 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     super.dispose();
   }
 
+  Future<void> _fetchReports() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      // Uses GET /api/quality-checks/batchdetails
+      // Returns: [{ _id, batchId, batch, grade }]
+      final rawList = await _api.getMyQualityChecks();
+
+      // For each item, fetch the full report to get all details
+      // GET /api/quality-checks/:id
+      final List<Map<String, dynamic>> enriched = [];
+      for (final item in rawList) {
+        try {
+          final id = item['_id']?.toString() ?? '';
+          if (id.isEmpty) continue;
+
+          final full = await _api.getQualityCheckById(qualityCheckId: id);
+
+          // Only show completed checks in the reports list
+          if (full['status'] == 'completed') {
+            enriched.add(full);
+          }
+        } catch (_) {
+          // Skip items that fail to load
+        }
+      }
+
+      setState(() {
+        _allReports = enriched;
+        _isLoading = false;
+      });
+      _animationController.forward();
+    } catch (e) {
+      setState(() {
+        _error = e.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
+
+  // ─── Helpers to extract fields from backend shape ───────────────
+
+  /// e.g. "Grade 4 - Basic"  →  "Basic"  (for filter chips)
+  String _shortGrade(String? fullGrade) {
+    if (fullGrade == null || fullGrade.isEmpty) return 'Unknown';
+    final parts = fullGrade.split(' - ');
+    return parts.length >= 2 ? parts.last : fullGrade;
+  }
+
+  String _displayGrade(Map<String, dynamic> report) =>
+      report['results']?['grade'] as String? ?? 'Unknown';
+
+  int _score(Map<String, dynamic> report) =>
+      ((report['results']?['overallScore'] as num?)?.round()) ?? 0;
+
+  String _variety(Map<String, dynamic> report) {
+    final raw = report['batch']?['pepperVariety'] as String? ?? '';
+    return raw
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) {
+          if (w.isEmpty) return w;
+          return w[0].toUpperCase() + w.substring(1);
+        })
+        .join(' ');
+  }
+
+  String _pepperType(Map<String, dynamic> report) {
+    final raw = report['batch']?['pepperType'] as String? ?? '';
+    return raw.isEmpty ? '' : raw[0].toUpperCase() + raw.substring(1);
+  }
+
+  String _dateString(Map<String, dynamic> report) {
+    final raw = report['createdAt'] as String?;
+    if (raw == null) return '';
+    return raw.split('T').first; // yyyy-MM-dd
+  }
+
+  String _density(Map<String, dynamic> report) {
+    final val = report['density']?['value'];
+    if (val == null) return '—';
+    return '${val.toString()} g/L';
+  }
+
+  String _weight(Map<String, dynamic> report) {
+    final grams = report['batch']?['batchWeightGrams'] as num?;
+    if (grams == null) return '—';
+    final kg = grams / 1000;
+    return '${kg.toStringAsFixed(2)} kg';
+  }
+
+  // ─── Filtering & sorting ─────────────────────────────────────────
+
   List<Map<String, dynamic>> get _filteredReports {
     var reports = List<Map<String, dynamic>>.from(_allReports);
 
-    // Apply grade filter
     if (_filterGrade != 'All Grades') {
-      reports = reports.where((r) => r['grade'] == _filterGrade).toList();
+      reports = reports.where((r) {
+        return _shortGrade(_displayGrade(r)) == _filterGrade;
+      }).toList();
     }
 
-    // Apply sorting
     switch (_sortBy) {
       case 'Newest First':
-        reports.sort((a, b) => b['date'].compareTo(a['date']));
+        reports.sort((a, b) => _dateString(b).compareTo(_dateString(a)));
         break;
       case 'Oldest First':
-        reports.sort((a, b) => a['date'].compareTo(b['date']));
+        reports.sort((a, b) => _dateString(a).compareTo(_dateString(b)));
         break;
       case 'Highest Score':
-        reports.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+        reports.sort((a, b) => _score(b).compareTo(_score(a)));
         break;
       case 'Lowest Score':
-        reports.sort((a, b) => (a['score'] as int).compareTo(b['score'] as int));
+        reports.sort((a, b) => _score(a).compareTo(_score(b)));
         break;
     }
 
     return reports;
   }
 
-  // Calculate statistics
+  // ─── Stats ───────────────────────────────────────────────────────
+
   int get _totalReports => _allReports.length;
-  int get _premiumCount => _allReports.where((r) => r['grade'] == 'Premium').length;
+
+  int get _premiumCount => _allReports
+      .where((r) => _shortGrade(_displayGrade(r)) == 'Premium')
+      .length;
+
   double get _avgScore {
     if (_allReports.isEmpty) return 0;
-    return _allReports.map((r) => r['score'] as int).reduce((a, b) => a + b) / _allReports.length;
+    final total = _allReports.map((r) => _score(r)).reduce((a, b) => a + b);
+    return total / _allReports.length;
   }
+
+  // ─── Build ───────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -136,121 +192,215 @@ class _PastReportsScreenState extends State<PastReportsScreen>
         backgroundColor: primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Quality Reports',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
         ),
+        actions: [
+          // Refresh button
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+            onPressed: _fetchReports,
+            tooltip: 'Refresh',
+          ),
+        ],
       ),
-      body: _allReports.isEmpty
+      body: _isLoading
+          ? _loadingState()
+          : _error != null
+          ? _errorState(responsive, primary)
+          : _allReports.isEmpty
           ? _emptyState(responsive)
           : FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-
-              // Statistics Cards
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.pagePadding,
-                ),
-                child: _buildStatsGrid(responsive),
-              ),
-
-              ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-              // Filters & Sort Section
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.pagePadding,
-                ),
-                child: Row(
+              opacity: _fadeAnimation,
+              child: SingleChildScrollView(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: _buildFilterChip(
-                        responsive,
-                        primary,
-                        'Filter',
-                        Icons.filter_list_rounded,
-                        _filterGrade,
-                            () => _showFilterDialog(context, responsive, primary),
+                    ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
+
+                    // Statistics Cards
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: responsive.pagePadding,
+                      ),
+                      child: _buildStatsGrid(responsive),
+                    ),
+
+                    ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+
+                    // Filters & Sort Section
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: responsive.pagePadding,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildFilterChip(
+                              responsive,
+                              primary,
+                              'Filter',
+                              Icons.filter_list_rounded,
+                              _filterGrade,
+                              () => _showFilterDialog(
+                                context,
+                                responsive,
+                                primary,
+                              ),
+                            ),
+                          ),
+                          ResponsiveSpacing.horizontal(
+                            mobile: 10,
+                            tablet: 12,
+                            desktop: 14,
+                          ),
+                          Expanded(
+                            child: _buildFilterChip(
+                              responsive,
+                              primary,
+                              'Sort',
+                              Icons.sort_rounded,
+                              _sortBy,
+                              () =>
+                                  _showSortDialog(context, responsive, primary),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    ResponsiveSpacing.horizontal(
-                      mobile: 10,
-                      tablet: 12,
-                      desktop: 14,
-                    ),
-                    Expanded(
-                      child: _buildFilterChip(
-                        responsive,
-                        primary,
-                        'Sort',
-                        Icons.sort_rounded,
-                        _sortBy,
-                            () => _showSortDialog(context, responsive, primary),
+
+                    ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+
+                    // Results count
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: responsive.pagePadding,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            '${_filteredReports.length} ${_filteredReports.length == 1 ? 'Report' : 'Reports'}',
+                            style: TextStyle(
+                              fontSize: responsive.bodyFontSize,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+
+                    ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+
+                    // Reports List
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: responsive.pagePadding,
+                      ),
+                      itemCount: _filteredReports.length,
+                      itemBuilder: (context, index) {
+                        final report = _filteredReports[index];
+                        return _reportCard(
+                          context,
+                          responsive,
+                          primary,
+                          report,
+                        );
+                      },
+                    ),
+
+                    ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
                   ],
                 ),
               ),
+            ),
+    );
+  }
 
-              ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
+  // ─── Loading State ───────────────────────────────────────────────
 
-              // Results count
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.pagePadding,
+  Widget _loadingState() {
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+      ),
+    );
+  }
+
+  // ─── Error State ─────────────────────────────────────────────────
+
+  Widget _errorState(Responsive responsive, Color primary) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(responsive.pagePadding),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(
+                responsive.value(mobile: 24, tablet: 28, desktop: 32),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                size: responsive.value(mobile: 56, tablet: 64, desktop: 72),
+                color: Colors.red.shade400,
+              ),
+            ),
+            ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
+            Text(
+              'Failed to Load Reports',
+              style: TextStyle(
+                fontSize: responsive.headingFontSize,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+            ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
+            Text(
+              _error ?? 'An unexpected error occurred.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: responsive.bodyFontSize,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+            ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+            ElevatedButton.icon(
+              onPressed: _fetchReports,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
                 ),
-                child: Row(
-                  children: [
-                    Text(
-                      '${_filteredReports.length} ${_filteredReports.length == 1 ? 'Report' : 'Reports'}',
-                      style: TextStyle(
-                        fontSize: responsive.bodyFontSize,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  ],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-
-              ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-
-              // Reports List
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.pagePadding,
-                ),
-                itemCount: _filteredReports.length,
-                itemBuilder: (context, index) {
-                  final report = _filteredReports[index];
-                  return _reportCard(
-                    context,
-                    responsive,
-                    primary,
-                    report,
-                  );
-                },
-              ),
-
-              ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  // ─── Stats Grid ──────────────────────────────────────────────────
 
   Widget _buildStatsGrid(Responsive responsive) {
     return Row(
@@ -289,12 +439,12 @@ class _PastReportsScreenState extends State<PastReportsScreen>
   }
 
   Widget _statCard(
-      Responsive responsive,
-      String label,
-      String value,
-      IconData icon,
-      Color color,
-      ) {
+    Responsive responsive,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: responsive.padding(
         mobile: const EdgeInsets.all(12),
@@ -332,7 +482,11 @@ class _PastReportsScreenState extends State<PastReportsScreen>
           Text(
             value,
             style: TextStyle(
-              fontSize: responsive.fontSize(mobile: 18, tablet: 20, desktop: 22),
+              fontSize: responsive.fontSize(
+                mobile: 18,
+                tablet: 20,
+                desktop: 22,
+              ),
               fontWeight: FontWeight.w800,
               color: Colors.grey[800],
             ),
@@ -341,7 +495,11 @@ class _PastReportsScreenState extends State<PastReportsScreen>
           Text(
             label,
             style: TextStyle(
-              fontSize: responsive.fontSize(mobile: 10, tablet: 11, desktop: 12),
+              fontSize: responsive.fontSize(
+                mobile: 10,
+                tablet: 11,
+                desktop: 12,
+              ),
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
@@ -354,14 +512,16 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     );
   }
 
+  // ─── Filter Chip ─────────────────────────────────────────────────
+
   Widget _buildFilterChip(
-      Responsive responsive,
-      Color primary,
-      String label,
-      IconData icon,
-      String value,
-      VoidCallback onTap,
-      ) {
+    Responsive responsive,
+    Color primary,
+    String label,
+    IconData icon,
+    String value,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -399,7 +559,11 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
+                      fontSize: responsive.fontSize(
+                        mobile: 11,
+                        tablet: 12,
+                        desktop: 13,
+                      ),
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w500,
                     ),
@@ -407,7 +571,11 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                   Text(
                     value,
                     style: TextStyle(
-                      fontSize: responsive.fontSize(mobile: 12, tablet: 13, desktop: 14),
+                      fontSize: responsive.fontSize(
+                        mobile: 12,
+                        tablet: 13,
+                        desktop: 14,
+                      ),
                       fontWeight: FontWeight.w700,
                       color: Colors.grey[800],
                     ),
@@ -428,21 +596,29 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     );
   }
 
+  // ─── Report Card ─────────────────────────────────────────────────
+
   Widget _reportCard(
-      BuildContext context,
-      Responsive responsive,
-      Color primary,
-      Map<String, dynamic> report,
-      ) {
-    final gradeColor = _getGradeColor(report['grade']);
-    final score = report['score'] as int;
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+    Map<String, dynamic> report,
+  ) {
+    final fullGrade = _displayGrade(report);
+    final gradeColor = _getGradeColor(fullGrade);
+    final score = _score(report);
+    final qualityCheckId =
+        report['qualityCheckId']?.toString() ?? report['_id']?.toString() ?? '';
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const DetailedReportScreen(),
+            builder: (_) => DetailedReportScreen(
+              qualityCheckId: qualityCheckId,
+              reportData: report, // pass full data so detail screen can use it
+            ),
           ),
         );
       },
@@ -485,10 +661,18 @@ class _PastReportsScreenState extends State<PastReportsScreen>
               ),
               child: Row(
                 children: [
-                  // Grade Badge
+                  // Score Badge
                   Container(
-                    width: responsive.value(mobile: 56, tablet: 60, desktop: 64),
-                    height: responsive.value(mobile: 56, tablet: 60, desktop: 64),
+                    width: responsive.value(
+                      mobile: 56,
+                      tablet: 60,
+                      desktop: 64,
+                    ),
+                    height: responsive.value(
+                      mobile: 56,
+                      tablet: 60,
+                      desktop: 64,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [gradeColor, gradeColor.withOpacity(0.8)],
@@ -544,6 +728,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Grade badge  (short label)
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: responsive.value(
@@ -562,7 +747,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            report['grade'],
+                            _shortGrade(fullGrade),
                             style: TextStyle(
                               fontSize: responsive.fontSize(
                                 mobile: 11,
@@ -576,8 +761,9 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                           ),
                         ),
                         ResponsiveSpacing(mobile: 6, tablet: 7, desktop: 8),
+                        // Variety
                         Text(
-                          report['variety'],
+                          _variety(report),
                           style: TextStyle(
                             fontSize: responsive.titleFontSize,
                             fontWeight: FontWeight.w700,
@@ -585,6 +771,45 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                           ),
                         ),
                         ResponsiveSpacing(mobile: 2, tablet: 3, desktop: 4),
+                        // Pepper type + batch ID
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.grass_rounded,
+                              size: responsive.value(
+                                mobile: 12,
+                                tablet: 13,
+                                desktop: 14,
+                              ),
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${_pepperType(report)} Pepper',
+                              style: TextStyle(
+                                fontSize: responsive.bodyFontSize - 2,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '·',
+                              style: TextStyle(color: Colors.grey[400]),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              report['batchId']?.toString() ?? '',
+                              style: TextStyle(
+                                fontSize: responsive.bodyFontSize - 2,
+                                color: Colors.grey[500],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        ResponsiveSpacing(mobile: 2, tablet: 3, desktop: 4),
+                        // Date
                         Row(
                           children: [
                             Icon(
@@ -598,7 +823,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              _formatDate(report['date']),
+                              _formatDate(_dateString(report)),
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize - 2,
                                 color: Colors.grey[600],
@@ -618,11 +843,63 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                 ],
               ),
             ),
+
+            // Footer row: weight + density
+            Padding(
+              padding: responsive.padding(
+                mobile: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                tablet: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                desktop: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+              ),
+              child: Row(
+                children: [
+                  _infoChip(responsive, Icons.scale_rounded, _weight(report)),
+                  const SizedBox(width: 10),
+                  _infoChip(
+                    responsive,
+                    Icons.compress_rounded,
+                    _density(report),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+
+  Widget _infoChip(Responsive responsive, IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: responsive.value(mobile: 13, tablet: 14, desktop: 15),
+          color: Colors.grey[500],
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Empty State ─────────────────────────────────────────────────
 
   Widget _emptyState(Responsive responsive) {
     return Center(
@@ -670,14 +947,22 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     );
   }
 
-  void _showSortDialog(BuildContext context, Responsive responsive, Color primary) {
+  // ─── Sort / Filter dialogs ───────────────────────────────────────
+
+  void _showSortDialog(
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
-        padding: EdgeInsets.all(responsive.value(mobile: 20, tablet: 24, desktop: 28)),
+        padding: EdgeInsets.all(
+          responsive.value(mobile: 20, tablet: 24, desktop: 28),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -701,30 +986,44 @@ class _PastReportsScreenState extends State<PastReportsScreen>
               'Oldest First',
               'Highest Score',
               'Lowest Score',
-            ].map((option) => RadioListTile<String>(
-              title: Text(option),
-              value: option,
-              groupValue: _sortBy,
-              activeColor: primary,
-              onChanged: (value) {
-                setState(() => _sortBy = value!);
-                Navigator.pop(context);
-              },
-            )),
+            ].map(
+              (option) => RadioListTile<String>(
+                title: Text(option),
+                value: option,
+                groupValue: _sortBy,
+                activeColor: primary,
+                onChanged: (value) {
+                  setState(() => _sortBy = value!);
+                  Navigator.pop(context);
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  void _showFilterDialog(BuildContext context, Responsive responsive, Color primary) {
+  void _showFilterDialog(
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
+    // Dynamically build grade options from actual data
+    final grades = {
+      'All Grades',
+      ...(_allReports.map((r) => _shortGrade(_displayGrade(r)))),
+    }.toList();
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
-        padding: EdgeInsets.all(responsive.value(mobile: 20, tablet: 24, desktop: 28)),
+        padding: EdgeInsets.all(
+          responsive.value(mobile: 20, tablet: 24, desktop: 28),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -743,46 +1042,65 @@ class _PastReportsScreenState extends State<PastReportsScreen>
               ],
             ),
             const SizedBox(height: 20),
-            ...[
-              'All Grades',
-              'Premium',
-              'Good',
-              'Standard',
-            ].map((option) => RadioListTile<String>(
-              title: Text(option),
-              value: option,
-              groupValue: _filterGrade,
-              activeColor: primary,
-              onChanged: (value) {
-                setState(() => _filterGrade = value!);
-                Navigator.pop(context);
-              },
-            )),
+            ...grades.map(
+              (option) => RadioListTile<String>(
+                title: Text(option),
+                value: option,
+                groupValue: _filterGrade,
+                activeColor: primary,
+                onChanged: (value) {
+                  setState(() => _filterGrade = value!);
+                  Navigator.pop(context);
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Color _getGradeColor(String grade) {
-    switch (grade) {
-      case 'Premium':
-        return Colors.green.shade600;
-      case 'Good':
-        return Colors.blue.shade600;
-      case 'Standard':
-        return Colors.orange.shade600;
-      default:
-        return Colors.grey.shade600;
+  // ─── Utilities ───────────────────────────────────────────────────
+
+  /// Map full grade string (e.g. "Grade 1 - Premium") to a color
+  Color _getGradeColor(String fullGrade) {
+    final lower = fullGrade.toLowerCase();
+    if (lower.contains('premium') || lower.contains('grade 1')) {
+      return Colors.green.shade600;
     }
+    if (lower.contains('gold') || lower.contains('grade 2')) {
+      return Colors.amber.shade700;
+    }
+    if (lower.contains('silver') || lower.contains('grade 3')) {
+      return Colors.blueGrey.shade600;
+    }
+    if (lower.contains('basic') || lower.contains('grade 4')) {
+      return Colors.orange.shade600;
+    }
+    if (lower.contains('reject')) {
+      return Colors.red.shade600;
+    }
+    return Colors.grey.shade600;
   }
 
   String _formatDate(String date) {
     final parts = date.split('-');
     if (parts.length != 3) return date;
 
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
 
     final month = months[int.parse(parts[1]) - 1];
     final day = parts[2];

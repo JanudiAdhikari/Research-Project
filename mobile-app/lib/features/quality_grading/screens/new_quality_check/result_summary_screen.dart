@@ -11,8 +11,8 @@ import 'package:flutter/material.dart';
 import '../../../../utils/responsive.dart';
 import 'batch_details_screen.dart';
 import '../how_it_works_screen.dart';
-import '../../../../utils/web_download.dart'
-    if (dart.library.io) '../../../utils/web_download_stub.dart';
+import '../../../../utils/web_download_stub.dart'
+    if (dart.library.html) '../../../../utils/web_download.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Grade colour theme

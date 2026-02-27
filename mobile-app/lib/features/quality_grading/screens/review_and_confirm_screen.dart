@@ -2,17 +2,23 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import 'processing_screen.dart';
+import '../services/quality_check_api.dart';
 
 class SummaryConfirmationScreen extends StatefulWidget {
   final Map<String, File?> images;
+  final String qualityCheckId;
+  final String batchId;
 
   const SummaryConfirmationScreen({
     super.key,
     required this.images,
+    required this.qualityCheckId,
+    required this.batchId,
   });
 
   @override
-  State<SummaryConfirmationScreen> createState() => _SummaryConfirmationScreenState();
+  State<SummaryConfirmationScreen> createState() =>
+      _SummaryConfirmationScreenState();
 }
 
 class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
@@ -34,12 +40,10 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -76,14 +80,14 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
             ),
           ),
         ),
-      
+
         body: FadeTransition(
           opacity: _fadeAnimation,
           child: SingleChildScrollView(
             child: Column(
               children: [
                 ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-      
+
                 // Content
                 SlideTransition(
                   position: _slideAnimation,
@@ -101,9 +105,9 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                           'Batch Information',
                           Icons.info_rounded,
                         ),
-      
+
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-      
+
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -150,9 +154,9 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                             ],
                           ),
                         ),
-      
+
                         ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-      
+
                         // Bulk Density Section
                         _buildSectionHeader(
                           responsive,
@@ -195,9 +199,9 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                             ],
                           ),
                         ),
-      
+
                         ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-      
+
                         // Certificates Section
                         _buildSectionHeader(
                           responsive,
@@ -205,14 +209,26 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                           'Certificates',
                           Icons.verified_rounded,
                         ),
-      
+
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-      
+
                         Wrap(
-                          spacing: responsive.value(mobile: 8, tablet: 10, desktop: 12),
-                          runSpacing: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                          spacing: responsive.value(
+                            mobile: 8,
+                            tablet: 10,
+                            desktop: 12,
+                          ),
+                          runSpacing: responsive.value(
+                            mobile: 8,
+                            tablet: 10,
+                            desktop: 12,
+                          ),
                           children: [
-                            _buildCertificateChip(responsive, 'GAP', Colors.blue),
+                            _buildCertificateChip(
+                              responsive,
+                              'GAP',
+                              Colors.blue,
+                            ),
                             _buildCertificateChip(
                               responsive,
                               'Quality Certificate',
@@ -220,9 +236,9 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                             ),
                           ],
                         ),
-      
+
                         ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-      
+
                         // Captured Images Section
                         _buildSectionHeader(
                           responsive,
@@ -230,9 +246,9 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                           'Captured Images',
                           Icons.photo_library_rounded,
                         ),
-      
+
                         ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-      
+
                         Container(
                           padding: responsive.padding(
                             mobile: const EdgeInsets.all(12),
@@ -275,14 +291,18 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                                   ),
                                 ],
                               ),
-                              ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+                              ResponsiveSpacing(
+                                mobile: 12,
+                                tablet: 14,
+                                desktop: 16,
+                              ),
                               _buildImageGrid(responsive),
                             ],
                           ),
                         ),
-      
+
                         ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-      
+
                         // Action Buttons
                         Row(
                           children: [
@@ -351,7 +371,11 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => const ProcessingScreen(),
+                                        builder: (_) => ProcessingScreen(
+                                          images: widget.images,
+                                          qualityCheckId: widget.qualityCheckId,
+                                          batchId: widget.batchId,
+                                        ),
                                       ),
                                     );
                                   },
@@ -386,7 +410,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                             ),
                           ],
                         ),
-      
+
                         ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
                       ],
                     ),
@@ -401,11 +425,11 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
   }
 
   Widget _buildSectionHeader(
-      Responsive responsive,
-      Color primary,
-      String title,
-      IconData icon,
-      ) {
+    Responsive responsive,
+    Color primary,
+    String title,
+    IconData icon,
+  ) {
     return Row(
       children: [
         Container(
@@ -436,12 +460,12 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
   }
 
   Widget _buildInfoRow(
-      Responsive responsive,
-      String label,
-      String value,
-      IconData icon, {
-        bool isLast = false,
-      }) {
+    Responsive responsive,
+    String label,
+    String value,
+    IconData icon, {
+    bool isLast = false,
+  }) {
     return Padding(
       padding: responsive.padding(
         mobile: EdgeInsets.fromLTRB(16, 14, 16, isLast ? 14 : 0),
@@ -450,11 +474,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: responsive.smallIconSize,
-            color: Colors.grey[600],
-          ),
+          Icon(icon, size: responsive.smallIconSize, color: Colors.grey[600]),
           ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
           Expanded(
             child: Text(
@@ -488,10 +508,10 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
   }
 
   Widget _buildCertificateChip(
-      Responsive responsive,
-      String text,
-      Color color,
-      ) {
+    Responsive responsive,
+    String text,
+    Color color,
+  ) {
     return Container(
       padding: responsive.padding(
         mobile: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

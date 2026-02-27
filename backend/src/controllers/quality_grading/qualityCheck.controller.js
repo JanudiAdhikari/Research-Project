@@ -394,6 +394,41 @@ exports.getMyQualityChecks = async (req, res) => {
   }
 };
 
+// GET /api/quality-checks/:id  — fetch a single quality check by ID
+exports.getQualityCheckById = async (req, res) => {
+  try {
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const dbUser = await findUserByFirebaseUid(firebaseUid);
+    if (!dbUser) {
+      return res.status(404).json({ message: "User not found in DB" });
+    }
+
+    const qc = await QualityCheck.findOne({
+      _id: req.params.id,
+      userId: dbUser._id,
+    });
+
+    if (!qc) {
+      return res.status(404).json({ message: "Quality check not found" });
+    }
+
+    return res.status(200).json({
+      qualityCheckId: qc._id,
+      batchId: qc.batchId,
+      status: qc.status,
+      createdAt: qc.createdAt,
+      batch: qc.batch,
+      density: qc.density,
+      certificatesSnapshot: qc.certificatesSnapshot,
+      results: qc.results,
+    });
+  } catch (err) {
+    console.error("getQualityCheckById error:", err);
+    return res.status(500).json({ message: "Server error" });
 // Get quality checks by batchId (no auth required) - Added by Ashika
 exports.getQualityChecksByBatch = async (req, res) => {
   try {

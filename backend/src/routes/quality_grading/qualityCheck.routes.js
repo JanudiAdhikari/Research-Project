@@ -9,6 +9,7 @@ const {
   updateDensity,
   analyzeQualityImages,
   getMyQualityChecks,
+  getQualityCheckById,
 } = require("../../controllers/quality_grading/qualityCheck.controller");
 
 const {
@@ -21,6 +22,8 @@ router.post("/", auth, createQualityCheck);
 
 // Get quality checks for current user - Added by Ashika
 router.get("/batchdetails", auth, getMyQualityChecks);
+
+router.get("/:id", auth, getQualityCheckById);
 
 // Step 2: IoT density
 router.put("/:id/density", auth, updateDensity);

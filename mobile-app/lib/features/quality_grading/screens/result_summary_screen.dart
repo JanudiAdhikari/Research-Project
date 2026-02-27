@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 
 import '../services/quality_check_api.dart';
 import 'package:CeylonPepper/features/quality_grading/screens/quality_grading_dashboard.dart';
@@ -35,6 +35,9 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  bool _loadingBatch = true;
+  String? _batchError;
+  Map<String, dynamic>? _qc;
 
   @override
   void initState() {
@@ -55,6 +58,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
         );
 
     _animationController.forward();
+    _loadQualityCheck();
   }
 
   @override
@@ -62,8 +66,6 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     _animationController.dispose();
     super.dispose();
   }
-
-  // COMPLETE IMPROVED VERSION - Replace entire build method content
 
   @override
   Widget build(BuildContext context) {
@@ -80,10 +82,55 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
         ? (widget.result["factorScores"] as Map).cast<String, dynamic>()
         : <String, dynamic>{};
 
+    String pepperTypeUi = "-";
+    String varietyUi = "-";
+    String dryingUi = "-";
+    String harvestDateUi = "-";
+    String weightUi = "-";
+    String densityUi = "-";
+    String certsUi = "-";
+
+    if (_qc != null) {
+      // Adjust keys based on your backend response shape.
+      // Here I assume qc has fields similar to your createQualityCheck body + density.
+      final pepperType = _qc!["pepperType"];
+      final pepperVariety = _qc!["pepperVariety"];
+      final dryingMethod = _qc!["dryingMethod"];
+      final harvestDate = _qc!["harvestDate"];
+      final bwKg = _qc!["batchWeightKg"];
+      final bwG = _qc!["batchWeightG"];
+
+      pepperTypeUi = _mapPepperTypeToUi(_asString(pepperType));
+      varietyUi = _mapVarietyToUi(_asString(pepperVariety));
+      dryingUi = _mapDryingToUi(_asString(dryingMethod));
+      harvestDateUi = _formatDate(harvestDate);
+      weightUi = _formatWeight(bwKg, bwG);
+
+      final densityObj = _qc!["density"];
+      if (densityObj is Map) {
+        final v = densityObj["value"];
+        if (v != null) densityUi = "${_asString(v)} g/L";
+      } else if (_qc!["densityValue"] != null) {
+        densityUi = "${_asString(_qc!["densityValue"])} g/L";
+      }
+
+      final certs = _qc!["certificatesUsed"];
+      if (certs is List) {
+        certsUi = certs.map((e) => e.toString()).join(", ");
+        if (certsUi.trim().isEmpty) certsUi = "-";
+      } else {
+        // fallback
+        certsUi = "-";
+      }
+    }
+
     return WillPopScope(
       onWillPop: () async {
-        // Navigate back to dashboard
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const QualityGradingDashboard()),
+          (route) => false,
+        );
         return false;
       },
       child: Scaffold(
@@ -94,11 +141,12 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
           leading: IconButton(
             icon: const Icon(Icons.close_rounded, color: Colors.white),
             onPressed: () {
-              Navigator.push(
+              Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
                   builder: (_) => const QualityGradingDashboard(),
                 ),
+                (route) => false,
               );
             },
           ),
@@ -324,73 +372,104 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
 
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
 
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.grey.shade200),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                        if (_loadingBatch)
+                          const Center(child: CircularProgressIndicator())
+                        else if (_batchError != null)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.red.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _batchError!,
+                                    style: TextStyle(
+                                      fontSize: responsive.bodyFontSize,
+                                      color: Colors.red.shade800,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                TextButton(
+                                  onPressed: _loadQualityCheck,
+                                  child: const Text("Retry"),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.grey.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                _buildInfoRow(
+                                  responsive,
+                                  'Pepper Type',
+                                  pepperTypeUi,
+                                  Icons.grass_rounded,
+                                ),
+                                _buildDivider(responsive),
+                                _buildInfoRow(
+                                  responsive,
+                                  'Pepper Variety',
+                                  varietyUi,
+                                  Icons.local_florist_rounded,
+                                ),
+                                _buildDivider(responsive),
+                                _buildInfoRow(
+                                  responsive,
+                                  'Drying Method',
+                                  dryingUi,
+                                  Icons.wb_sunny_rounded,
+                                ),
+                                _buildDivider(responsive),
+                                _buildInfoRow(
+                                  responsive,
+                                  'Harvest Date',
+                                  harvestDateUi,
+                                  Icons.calendar_today_rounded,
+                                ),
+                                _buildDivider(responsive),
+                                _buildInfoRow(
+                                  responsive,
+                                  'Batch Weight',
+                                  weightUi,
+                                  Icons.scale_rounded,
+                                ),
+                                _buildDivider(responsive),
+                                _buildInfoRow(
+                                  responsive,
+                                  'Bulk Density',
+                                  densityUi,
+                                  Icons.science_rounded,
+                                ),
+                                _buildDivider(responsive),
+                                _buildInfoRow(
+                                  responsive,
+                                  'Certificates',
+                                  certsUi,
+                                  Icons.verified_rounded,
+                                  isLast: true,
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Column(
-                            children: [
-                              _buildInfoRow(
-                                responsive,
-                                'Pepper Type',
-                                'Black Pepper',
-                                Icons.grass_rounded,
-                              ),
-                              _buildDivider(responsive),
-                              _buildInfoRow(
-                                responsive,
-                                'Pepper Variety',
-                                'Ceylon Pepper',
-                                Icons.local_florist_rounded,
-                              ),
-                              _buildDivider(responsive),
-                              _buildInfoRow(
-                                responsive,
-                                'Drying Method',
-                                'Sun Dried',
-                                Icons.wb_sunny_rounded,
-                              ),
-                              _buildDivider(responsive),
-                              _buildInfoRow(
-                                responsive,
-                                'Harvest Date',
-                                '12 Aug 2025',
-                                Icons.calendar_today_rounded,
-                              ),
-                              _buildDivider(responsive),
-                              _buildInfoRow(
-                                responsive,
-                                'Batch Weight',
-                                '25 kg',
-                                Icons.scale_rounded,
-                              ),
-                              _buildDivider(responsive),
-                              _buildInfoRow(
-                                responsive,
-                                'Bulk Density',
-                                '540 g/L',
-                                Icons.science_rounded,
-                              ),
-                              _buildDivider(responsive),
-                              _buildInfoRow(
-                                responsive,
-                                'Certificates',
-                                'GAP, Quality Certificate',
-                                Icons.verified_rounded,
-                                isLast: true,
-                              ),
-                            ],
-                          ),
-                        ),
 
                         ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
 
@@ -427,37 +506,37 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                               _buildScoreBar(
                                 responsive,
                                 'Density',
-                                (factorScores["density"] ?? 0).round(),
+                                _asIntScore(factorScores["density"]),
                                 Colors.green,
                               ),
                               _buildScoreBar(
                                 responsive,
                                 'Adulteration',
-                                (factorScores["adulteration"] ?? 0).round(),
+                                _asIntScore(factorScores["adulteration"]),
                                 Colors.teal,
                               ),
                               _buildScoreBar(
                                 responsive,
                                 'Mold',
-                                (factorScores["mold"] ?? 0).round(),
+                                _asIntScore(factorScores["mold"]),
                                 Colors.purple,
                               ),
                               _buildScoreBar(
                                 responsive,
                                 'Extraneous',
-                                (factorScores["extraneous"] ?? 0).round(),
+                                _asIntScore(factorScores["extraneous"]),
                                 Colors.orange,
                               ),
                               _buildScoreBar(
                                 responsive,
                                 'Broken',
-                                (factorScores["broken"] ?? 0).round(),
+                                _asIntScore(factorScores["broken"]),
                                 Colors.blue,
                               ),
                               _buildScoreBar(
                                 responsive,
                                 'Healthy Visual',
-                                (factorScores["healthyVisual"] ?? 0).round(),
+                                _asIntScore(factorScores["healthyVisual"]),
                                 Colors.indigo,
                                 isLast: true,
                               ),
@@ -495,25 +574,40 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                               ),
                             ],
                           ),
-                          child: Column(
-                            children: [
-                              _buildSuggestionItem(
-                                responsive,
-                                'Ensure uniform drying to improve color score',
-                                Icons.wb_sunny_rounded,
-                              ),
-                              ResponsiveSpacing(
-                                mobile: 16,
-                                tablet: 18,
-                                desktop: 20,
-                              ),
-                              _buildSuggestionItem(
-                                responsive,
-                                'Remove broken berries before packing',
-                                Icons.cleaning_services_rounded,
-                              ),
-                            ],
-                          ),
+                          child: improvements.isEmpty
+                              ? Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle_rounded,
+                                      color: Colors.green.shade700,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        "No improvements suggested. Your batch looks good.",
+                                        style: TextStyle(
+                                          fontSize: responsive.bodyFontSize,
+                                          color: Colors.green.shade800,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  children: improvements.map((t) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 14,
+                                      ),
+                                      child: _buildSuggestionItem(
+                                        responsive,
+                                        t,
+                                        Icons.lightbulb_rounded,
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
                         ),
 
                         ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
@@ -1072,5 +1166,110 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
         );
       }
     }
+  }
+
+  Future<void> _loadQualityCheck() async {
+    setState(() {
+      _loadingBatch = true;
+      _batchError = null;
+    });
+
+    try {
+      final api = QualityCheckApi();
+      final qc = await api.getQualityCheckById(
+        qualityCheckId: widget.qualityCheckId,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _qc = qc;
+        _loadingBatch = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _batchError = e.toString();
+        _loadingBatch = false;
+      });
+    }
+  }
+
+  int _asIntScore(dynamic v) {
+    if (v == null) return 0;
+    if (v is num) return v.round();
+    return int.tryParse(v.toString()) ?? 0;
+  }
+
+  String _asString(dynamic v, {String fallback = "-"}) {
+    if (v == null) return fallback;
+    final s = v.toString();
+    return s.isEmpty ? fallback : s;
+  }
+
+  String _formatDate(dynamic iso) {
+    if (iso == null) return "-";
+    try {
+      final d = DateTime.parse(iso.toString()).toLocal();
+      final dd = d.day.toString().padLeft(2, '0');
+      final mm = d.month.toString().padLeft(2, '0');
+      final yyyy = d.year.toString();
+      return "$dd/$mm/$yyyy";
+    } catch (_) {
+      return iso.toString();
+    }
+  }
+
+  String _mapPepperTypeToUi(String v) {
+    switch (v) {
+      case "black":
+        return "Black Pepper";
+      case "white":
+        return "White Pepper";
+      default:
+        return v;
+    }
+  }
+
+  String _mapVarietyToUi(String v) {
+    switch (v) {
+      case "ceylon_pepper":
+        return "Ceylon Pepper";
+      case "panniyur_1":
+        return "Panniyur-1";
+      case "kuching":
+        return "Kuching";
+      case "dingi_rala":
+        return "Dingi Rala";
+      case "kohukumbure_rala":
+        return "Kohukumbure Rala";
+      case "bootawe_rala":
+        return "Bootawe Rala";
+      case "malabar":
+        return "Malabar";
+      default:
+        return v;
+    }
+  }
+
+  String _mapDryingToUi(String v) {
+    switch (v) {
+      case "sun_dried":
+        return "Sun Dried";
+      case "machine_dried":
+        return "Machine Dried";
+      default:
+        return v;
+    }
+  }
+
+  String _formatWeight(dynamic kg, dynamic g) {
+    final k = (kg is num)
+        ? kg.toInt()
+        : int.tryParse(kg?.toString() ?? "") ?? 0;
+    final gg = (g is num) ? g.toInt() : int.tryParse(g?.toString() ?? "") ?? 0;
+    if (k == 0 && gg == 0) return "-";
+    if (gg == 0) return "$k kg";
+    if (k == 0) return "$gg g";
+    return "$k kg $gg g";
   }
 }

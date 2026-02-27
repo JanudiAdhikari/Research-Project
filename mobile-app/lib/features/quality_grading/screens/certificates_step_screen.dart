@@ -215,8 +215,7 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                                       ),
                                     );
 
-                                  _loadCerts();
-                                
+                                _loadCerts();
                               },
                             ),
                           ),

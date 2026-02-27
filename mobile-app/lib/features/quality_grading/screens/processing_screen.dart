@@ -60,18 +60,20 @@ class _ProcessingScreenState extends State<ProcessingScreen>
       vsync: this,
     )..repeat();
 
-    _rotateAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _rotateController, curve: Curves.linear),
-    );
+    _rotateAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _rotateController, curve: Curves.linear));
 
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeIn));
 
     _fadeController.forward();
     _updateSteps();
@@ -127,15 +129,42 @@ class _ProcessingScreenState extends State<ProcessingScreen>
     } catch (e) {
       if (!mounted) return;
 
-      // Show error, then go back to summary screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // Stop animations step timer if you want
+      _stepTimer?.cancel();
 
-      Navigator.pop(context);
+      // Show dialog with Retry / Back
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text("Analysis Failed"),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx); // close dialog
+                  Navigator.pop(context); // go back to previous screen (Review)
+                },
+                child: const Text("Back"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(ctx); // close dialog
+                  // restart analysis
+                  setState(() {
+                    _currentStep = 0;
+                  });
+                  _fadeController.forward();
+                  _updateSteps();
+                  _runAnalysis();
+                },
+                child: const Text("Retry"),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -349,14 +378,11 @@ class _ProcessingScreenState extends State<ProcessingScreen>
                                   color: isCompleted
                                       ? primary
                                       : isActive
-                                          ? primary.withOpacity(0.2)
-                                          : Colors.grey.shade200,
+                                      ? primary.withOpacity(0.2)
+                                      : Colors.grey.shade200,
                                   shape: BoxShape.circle,
                                   border: isActive
-                                      ? Border.all(
-                                          color: primary,
-                                          width: 2,
-                                        )
+                                      ? Border.all(color: primary, width: 2)
                                       : null,
                                 ),
                                 child: Center(
@@ -371,26 +397,26 @@ class _ProcessingScreenState extends State<ProcessingScreen>
                                           ),
                                         )
                                       : isActive
-                                          ? SizedBox(
-                                              width: responsive.value(
-                                                mobile: 16,
-                                                tablet: 18,
-                                                desktop: 20,
-                                              ),
-                                              height: responsive.value(
-                                                mobile: 16,
-                                                tablet: 18,
-                                                desktop: 20,
-                                              ),
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    const AlwaysStoppedAnimation<Color>(
-                                                  primary,
-                                                ),
-                                              ),
-                                            )
-                                          : null,
+                                      ? SizedBox(
+                                          width: responsive.value(
+                                            mobile: 16,
+                                            tablet: 18,
+                                            desktop: 20,
+                                          ),
+                                          height: responsive.value(
+                                            mobile: 16,
+                                            tablet: 18,
+                                            desktop: 20,
+                                          ),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                const AlwaysStoppedAnimation<
+                                                  Color
+                                                >(primary),
+                                          ),
+                                        )
+                                      : null,
                                 ),
                               ),
                               ResponsiveSpacing.horizontal(

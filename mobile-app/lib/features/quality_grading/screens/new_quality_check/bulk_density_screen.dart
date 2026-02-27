@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../utils/responsive.dart';
+import '../../../../utils/responsive.dart';
 import 'image_upload_screen.dart';
-import 'iot_device_setup_screen.dart';
+import '../iot_device_setup_screen.dart';
 
 class BulkDensityScreen extends StatefulWidget {
   final String qualityCheckId;

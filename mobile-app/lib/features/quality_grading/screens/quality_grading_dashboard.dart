@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import '../../../widgets/bottom_navigation.dart';
 import '../../certifications/screens/farmer_certifications_dashboard_screen.dart';
-import 'batch_details_screen.dart';
+import 'new_quality_check/batch_details_screen.dart';
 import 'how_it_works_screen.dart';
 import 'image_capture_guide_screen.dart';
 import 'iot_device_setup_screen.dart';
 import 'past_reports_screen.dart';
 import 'quality_tips_main_screen.dart';
-import 'image_upload_screen2.dart';
 
 class QualityGradingDashboard extends StatefulWidget {
   const QualityGradingDashboard({super.key});
@@ -473,12 +472,6 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
             MaterialPageRoute(builder: (_) => const BatchDetailsScreen()),
           );
         },
-        // onTap: () {
-        //   Navigator.push(
-        //     context,
-        //     MaterialPageRoute(builder: (_) => const ImageUploadScreen2()),
-        //   );
-        // },
       ),
       _actionCard(
         context,

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../utils/responsive.dart';
-import '../services/quality_check_api.dart';
+import '../../../../utils/responsive.dart';
+import '../../services/quality_check_api.dart';
 import 'result_summary_screen.dart';
 
 class ProcessingScreen extends StatefulWidget {

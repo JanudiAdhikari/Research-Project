@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_page.dart';
-import '../blockchain/screens/verify_batches.dart';
+import '../blockchain/screens/pepper_batches.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});

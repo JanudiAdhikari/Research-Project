@@ -1,45 +1,47 @@
 const crypto = require("crypto");
 const ActualPriceData = require("../../models/market_forecast/actual_price_data.model");
+const User = require("../../models/user.models");
 
+// Statuses
 const STATUSES = {
-  BATCH_CREATED: "BATCH_CREATED", // Block 1 (user)
-  MARKETPLACE_LISTED: "MARKETPLACE_LISTED", // Block 1 (user)
-  VERIFIED: "VERIFIED", // Block 2 (admin)
-  RECEIVED: "RECEIVED", // Block 3 (exporter)
+  BATCH_CREATED: "BATCH_CREATED",
+  MARKETPLACE_LISTED: "MARKETPLACE_LISTED",
+  VERIFIED: "VERIFIED",
+  RECEIVED: "RECEIVED",
 };
 
+// Roles
 const ROLES = {
-  USER: "USER",
+  FARMER: "FARMER",
   ADMIN: "ADMIN",
   EXPORTER: "EXPORTER",
 };
 
-// Helpers
+// Normalize status to ensure consistent comparisons (e.g. "verified" -> "VERIFIED")
 function normalizeStatus(s) {
   if (!s) return "";
   return String(s).trim().replaceAll(" ", "_").toUpperCase();
 }
 
+// For any role string, default to FARMER if not recognized
+function normalizeRole(r) {
+  if (!r) return ROLES.FARMER;
+  return String(r).trim().toUpperCase();
+}
+
+// Simple SHA-256 hashing function for block integrity
 function sha256(input) {
   return crypto.createHash("sha256").update(input).digest("hex");
 }
 
+// Get actor id and role
 function getActor(req) {
-  // ✅ Adjust these based on your auth middleware
-  // Must exist:
-  // req.user.uid
-  // req.user.role  (USER / ADMIN / EXPORTER)
   const actorId = req.user?.uid;
-  const actorRole = (req.user?.role || ROLES.USER).toUpperCase();
-
+  const actorRole = normalizeRole(req.user?.role);
   return { actorId, actorRole };
 }
 
-function lastBlock(record) {
-  const history = record.statusHistory || [];
-  return history.length ? history[history.length - 1] : null;
-}
-
+// Create a new block for the status change
 function makeBlock({
   recordId,
   nextIndex,
@@ -73,7 +75,7 @@ function makeBlock({
   };
 }
 
-// Every status change is a NEW block
+// Append a new status block to the record's history and update current status
 function appendStatusBlock(record, newStatus, actorId, actorRole) {
   const history = record.statusHistory || [];
   const prev = history.length ? history[history.length - 1] : null;
@@ -94,26 +96,18 @@ function appendStatusBlock(record, newStatus, actorId, actorRole) {
   record.currentStatus = newStatus;
 }
 
-// Transition + permission rules
+// Check if a transition is allowed
 function canTransition({ fromStatus, toStatus, actorRole }) {
-  // Create block 1
-  if (!fromStatus) {
-    return toStatus === STATUSES.BATCH_CREATED; // first block only
-  }
-
-  // After RECEIVED, lock everything
+  if (!fromStatus) return toStatus === STATUSES.BATCH_CREATED;
   if (fromStatus === STATUSES.RECEIVED) return false;
 
-  // Block 1 updates (USER)
   if (
     fromStatus === STATUSES.BATCH_CREATED &&
     toStatus === STATUSES.MARKETPLACE_LISTED
   ) {
-    return actorRole === ROLES.USER;
+    return actorRole === ROLES.FARMER;
   }
 
-  // Admin verify (Block 2)
-  // Allow admin to verify either from BATCH_CREATED or MARKETPLACE_LISTED
   if (
     (fromStatus === STATUSES.BATCH_CREATED ||
       fromStatus === STATUSES.MARKETPLACE_LISTED) &&
@@ -122,35 +116,47 @@ function canTransition({ fromStatus, toStatus, actorRole }) {
     return actorRole === ROLES.ADMIN;
   }
 
-  // Exporter received (Block 3)
   if (fromStatus === STATUSES.VERIFIED && toStatus === STATUSES.RECEIVED) {
     return actorRole === ROLES.EXPORTER || actorRole === ROLES.ADMIN;
   }
 
-  // Allow user to keep editing normal fields while not VERIFIED/RECEIVED?
-  // This function is ONLY for status changes, so return false for other status jumps
   return false;
 }
 
+// Check if a status is approved or locked
 function isApprovedLocked(status) {
-  // In your blockchain flow, VERIFIED is the “admin approved” stage.
-  // After VERIFIED, you can choose to lock edits or still allow some.
-  return (
-    normalizeStatus(status) === STATUSES.VERIFIED ||
-    normalizeStatus(status) === STATUSES.RECEIVED
-  );
+  const s = normalizeStatus(status);
+  return s === STATUSES.VERIFIED || s === STATUSES.RECEIVED;
 }
 
-// Controllers
+// Check if the record belongs to the actor
+function isOwner(record, actorId) {
+  // Handles ObjectId or string
+  return String(record.userId) === String(actorId);
+}
 
-// Get all records
+// -------------------- Controllers --------------------
+
+// Get records
+// FARMER can get only their own records
+// ADMIN can get all records
 const getActualPriceData = async (req, res) => {
   try {
     const { pepperType, grade, district, limit } = req.query;
-    const filter = { userId: req.user?.uid };
+    const filter = {};
+    const firebaseUid = req.user?.uid;
 
-    if (!filter.userId) {
+    if (!firebaseUid) {
       return res.status(401).json({ message: "No user id" });
+    }
+
+    // Fetch user role from users collection
+    const user = await User.findOne({ firebaseUid });
+    const userRole = user?.role || "farmer";
+
+    // Only 'admin' can view all records, others see their own
+    if (userRole !== "admin") {
+      filter.userId = firebaseUid;
     }
 
     if (pepperType) filter.pepperType = pepperType;
@@ -165,6 +171,31 @@ const getActualPriceData = async (req, res) => {
     }
 
     const records = await query.exec();
+
+    // Attach farmer name from users collection
+    if (records && records.length) {
+      const uids = Array.from(
+        new Set(records.map((r) => r.userId).filter(Boolean)),
+      );
+      if (uids.length) {
+        try {
+          const users = await User.find({ firebaseUid: { $in: uids } }).lean();
+          const userMap = {};
+          users.forEach((u) => {
+            const name = `${u.firstName || ""} ${u.lastName || ""}`.trim();
+            userMap[u.firebaseUid] = name || u.email || "";
+          });
+
+          // mutate records (they are plain objects due to .lean())
+          records.forEach((rec) => {
+            rec.farmerName = userMap[rec.userId] || "";
+          });
+        } catch (e) {
+          console.error("Failed to lookup users for actual price records:", e);
+        }
+      }
+    }
+
     return res.json(records);
   } catch (err) {
     console.error("Error fetching data:", err);
@@ -174,7 +205,7 @@ const getActualPriceData = async (req, res) => {
   }
 };
 
-// Create new record => ALWAYS creates Block #1 with BATCH_CREATED
+// Create record (Block #1)
 const createActualPriceData = async (req, res) => {
   try {
     const { actorId, actorRole } = getActor(req);
@@ -217,8 +248,8 @@ const createActualPriceData = async (req, res) => {
       statusHistory: [],
     });
 
-    // Block 1
-    appendStatusBlock(record, STATUSES.BATCH_CREATED, actorId, ROLES.USER);
+    // Block 1 created by the acting user (use actorRole from token/user)
+    appendStatusBlock(record, STATUSES.BATCH_CREATED, actorId, actorRole);
 
     await record.save();
     return res.status(201).json(record);
@@ -230,9 +261,7 @@ const createActualPriceData = async (req, res) => {
   }
 };
 
-// Update record:
-// - user can update fields until VERIFIED (you can change this rule if you want)
-// - status changes create NEW blocks (Option A)
+// Update record
 const updateActualPriceData = async (req, res) => {
   try {
     const { actorId, actorRole } = getActor(req);
@@ -243,20 +272,15 @@ const updateActualPriceData = async (req, res) => {
     const record = await ActualPriceData.findById(id);
     if (!record) return res.status(404).json({ message: "Record not found" });
 
-    // Ownership:
-    // - USER can update only own records
-    // - ADMIN/EXPORTER can update status (verify/receive) regardless of owner
-    const isOwner = record.userId === actorId;
+    const owner = isOwner(record, actorId);
 
     const existingStatus = normalizeStatus(record.currentStatus);
-    const incomingStatusRaw = req.body.currentStatus;
-    const incomingStatus = normalizeStatus(incomingStatusRaw);
-
+    const incomingStatus = normalizeStatus(req.body.currentStatus);
     const wantsStatusChange = Boolean(incomingStatus);
 
-    // ✅ If user (owner) edits fields: allow only while NOT VERIFIED/RECEIVED
+    // Field updates by FARMER only if owner + not locked
     if (!wantsStatusChange) {
-      if (actorRole === ROLES.USER && !isOwner) {
+      if (actorRole === ROLES.USER && !owner) {
         return res.status(403).json({ message: "Not authorized" });
       }
       if (actorRole === ROLES.USER && isApprovedLocked(existingStatus)) {
@@ -266,10 +290,9 @@ const updateActualPriceData = async (req, res) => {
       }
     }
 
-    // ✅ Status change path (blockchain)
+    // Status change path (admin/exporter can do even if not owner)
     if (wantsStatusChange) {
-      // Permission + transition check
-      if (actorRole === ROLES.USER && !isOwner) {
+      if (actorRole === ROLES.FARMER && !owner) {
         return res.status(403).json({ message: "Not authorized" });
       }
 
@@ -285,14 +308,12 @@ const updateActualPriceData = async (req, res) => {
         });
       }
 
-      // Append new block (Option A)
       appendStatusBlock(record, incomingStatus, actorId, actorRole);
-
       await record.save();
       return res.json(record);
     }
 
-    // ✅ Field updates (normal updates)
+    // Normal field updates
     const {
       saleDate,
       pepperType,
@@ -343,7 +364,8 @@ const updateActualPriceData = async (req, res) => {
   }
 };
 
-// Delete a record
+// Delete record
+// Farmer can delete only before VERIFIED
 const deleteActualPriceData = async (req, res) => {
   try {
     const { actorId, actorRole } = getActor(req);
@@ -354,16 +376,16 @@ const deleteActualPriceData = async (req, res) => {
     const record = await ActualPriceData.findById(id);
     if (!record) return res.status(404).json({ message: "Record not found" });
 
-    // Only owner can delete (recommended)
-    if (record.userId !== actorId) {
+    const owner = isOwner(record, actorId);
+
+    // Owner can delete
+    if (!owner) {
       return res
         .status(403)
         .json({ message: "Not authorized to delete this record" });
     }
 
     const existingStatus = normalizeStatus(record.currentStatus);
-
-    // After VERIFIED / RECEIVED, block delete
     if (isApprovedLocked(existingStatus)) {
       return res
         .status(400)

@@ -23,7 +23,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
   final TextEditingController _densityController = TextEditingController();
 
   bool _isSubmitting = false;
-  double? _savedDensity; // set after successful API update
+  double? _savedDensity;
 
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
@@ -60,8 +60,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
   double? _parseDensity(String s) {
     final cleaned = s.trim();
     if (cleaned.isEmpty) return null;
-    final v = double.tryParse(cleaned);
-    return v;
+    return double.tryParse(cleaned);
   }
 
   Future<void> _submitDensity() async {
@@ -136,7 +135,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // Header
+                // ── Header ──────────────────────────────────────────────────
                 Container(
                   width: double.infinity,
                   padding: responsive.padding(
@@ -148,7 +147,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Step indicator (4 steps) step2 active
+                      // Step indicator – 4 steps, step 2 active
                       Row(
                         children: [
                           _buildStepIndicator(1, true, primary, responsive),
@@ -175,7 +174,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                       ),
                       ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
                       Text(
-                        "For now, enter the bulk density manually (g/L). Later this will come from IoT.",
+                        "Enter the bulk density manually until the IoT device is available.",
                         style: TextStyle(
                           fontSize: responsive.bodyFontSize,
                           color: Colors.grey[600],
@@ -197,8 +196,166 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                     child: Form(
                       key: _formKey,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Card
+
+                          // ── Instructions Card (matches reference page) ────
+                          Container(
+                            padding: responsive.padding(
+                              mobile: const EdgeInsets.all(20),
+                              tablet: const EdgeInsets.all(24),
+                              desktop: const EdgeInsets.all(28),
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.grey.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Card header
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: EdgeInsets.all(
+                                        responsive.value(
+                                          mobile: 10,
+                                          tablet: 11,
+                                          desktop: 12,
+                                        ),
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade50,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.info_outline_rounded,
+                                        color: Colors.blue.shade700,
+                                        size: responsive.mediumIconSize,
+                                      ),
+                                    ),
+                                    ResponsiveSpacing.horizontal(
+                                      mobile: 12,
+                                      tablet: 14,
+                                      desktop: 16,
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        'Measurement Instructions',
+                                        style: TextStyle(
+                                          fontSize: responsive.titleFontSize,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                ResponsiveSpacing(
+                                  mobile: 16,
+                                  tablet: 18,
+                                  desktop: 20,
+                                ),
+
+                                // Instruction steps
+                                _buildInstructionStep(
+                                  number: '1',
+                                  text:
+                                      'Measure the bulk density of the pepper sample using a scale and measuring container.',
+                                  responsive: responsive,
+                                ),
+                                const SizedBox(height: 10),
+                                _buildInstructionStep(
+                                  number: '2',
+                                  text:
+                                      'Calculate the density in grams per litre (g/L).',
+                                  responsive: responsive,
+                                ),
+                                const SizedBox(height: 10),
+                                _buildInstructionStep(
+                                  number: '3',
+                                  text:
+                                      'Enter the value in the field below and tap "Save Density".',
+                                  responsive: responsive,
+                                ),
+                                const SizedBox(height: 10),
+                                _buildInstructionStep(
+                                  number: '4',
+                                  text:
+                                      'Accepted range is 200–900 g/L. Double-check before saving.',
+                                  responsive: responsive,
+                                ),
+
+                                ResponsiveSpacing(
+                                  mobile: 12,
+                                  tablet: 14,
+                                  desktop: 16,
+                                ),
+
+                                // IoT note chip
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: responsive.value(
+                                      mobile: 12,
+                                      tablet: 14,
+                                      desktop: 16,
+                                    ),
+                                    vertical: responsive.value(
+                                      mobile: 8,
+                                      tablet: 9,
+                                      desktop: 10,
+                                    ),
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: Colors.amber.shade200,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.sensors_rounded,
+                                        color: Colors.amber.shade800,
+                                        size: responsive.smallIconSize,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          'IoT integration coming soon – manual entry for now.',
+                                          style: TextStyle(
+                                            fontSize:
+                                                responsive.bodyFontSize - 1,
+                                            color: Colors.amber.shade900,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          ResponsiveSpacing(
+                            mobile: 24,
+                            tablet: 28,
+                            desktop: 32,
+                          ),
+
+                          // ── Input Card ────────────────────────────────────
                           Container(
                             width: double.infinity,
                             padding: responsive.padding(
@@ -221,6 +378,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Card header
                                 Row(
                                   children: [
                                     Container(
@@ -279,15 +437,15 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                   controller: _densityController,
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
+                                    decimal: true,
+                                  ),
                                   style: TextStyle(
                                     fontSize: responsive.bodyFontSize + 1,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: "Example: 500",
+                                    hintText: "e.g. 500",
                                     filled: true,
-                                    fillColor: Colors.white,
+                                    fillColor: Colors.grey.shade50,
                                     prefixIcon: Icon(
                                       Icons.numbers_rounded,
                                       color: Colors.grey[600],
@@ -319,14 +477,29 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                         width: 2,
                                       ),
                                     ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Colors.red,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    focusedErrorBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Colors.red,
+                                        width: 2,
+                                      ),
+                                    ),
                                   ),
                                   validator: (value) {
                                     final v = _parseDensity(value ?? "");
-                                    if (v == null)
+                                    if (v == null) {
                                       return "Please enter a density value";
-                                    if (v <= 0)
+                                    }
+                                    if (v <= 0) {
                                       return "Density must be greater than 0";
-                                    // optional sanity range
+                                    }
                                     if (v < 200 || v > 900) {
                                       return "Enter a realistic value (200–900 g/L)";
                                     }
@@ -340,6 +513,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                   desktop: 16,
                                 ),
 
+                                // Success banner after save
                                 if (_savedDensity != null)
                                   Container(
                                     width: double.infinity,
@@ -356,6 +530,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                         Icon(
                                           Icons.check_circle,
                                           color: Colors.green.shade700,
+                                          size: responsive.mediumIconSize,
                                         ),
                                         const SizedBox(width: 10),
                                         Expanded(
@@ -381,7 +556,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                             desktop: 28,
                           ),
 
-                          // Save button
+                          // ── Save button ───────────────────────────────────
                           Container(
                             width: double.infinity,
                             height: responsive.buttonHeight,
@@ -397,12 +572,15 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                               ],
                             ),
                             child: ElevatedButton(
-                              onPressed: _isSubmitting ? null : _submitDensity,
+                              onPressed:
+                                  _isSubmitting ? null : _submitDensity,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primary,
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.grey.shade300,
-                                disabledForegroundColor: Colors.grey.shade600,
+                                disabledBackgroundColor:
+                                    Colors.grey.shade300,
+                                disabledForegroundColor:
+                                    Colors.grey.shade600,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -414,6 +592,9 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                       height: 22,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                                Colors.white),
                                       ),
                                     )
                                   : Row(
@@ -429,7 +610,8 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                           "Save Density",
                                           style: TextStyle(
                                             fontWeight: FontWeight.w600,
-                                            fontSize: responsive.titleFontSize,
+                                            fontSize:
+                                                responsive.titleFontSize,
                                           ),
                                         ),
                                       ],
@@ -443,7 +625,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                             desktop: 18,
                           ),
 
-                          // Continue button (enabled only after saved)
+                          // ── Continue button ───────────────────────────────
                           Container(
                             width: double.infinity,
                             height: responsive.buttonHeight,
@@ -464,17 +646,12 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          // builder: (_) => ImageUploadScreen(
-                                          //   qualityCheckId:
-                                          //       widget.qualityCheckId,
-                                          //   batchId: widget.batchId,
-                                          // ),
                                           builder: (_) =>
                                               CertificatesStepScreen(
-                                                qualityCheckId:
-                                                    widget.qualityCheckId,
-                                                batchId: widget.batchId,
-                                              ),
+                                            qualityCheckId:
+                                                widget.qualityCheckId,
+                                            batchId: widget.batchId,
+                                          ),
                                         ),
                                       );
                                     }
@@ -482,8 +659,10 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primary,
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: Colors.grey.shade300,
-                                disabledForegroundColor: Colors.grey.shade600,
+                                disabledBackgroundColor:
+                                    Colors.grey.shade300,
+                                disabledForegroundColor:
+                                    Colors.grey.shade600,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(28),
@@ -528,13 +707,56 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
     );
   }
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  Widget _buildInstructionStep({
+    required String number,
+    required String text,
+    required Responsive responsive,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: responsive.value(mobile: 24, tablet: 26, desktop: 28),
+          height: responsive.value(mobile: 24, tablet: 26, desktop: 28),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade100,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: TextStyle(
+                fontSize: responsive.bodyFontSize - 1,
+                fontWeight: FontWeight.w700,
+                color: Colors.blue.shade800,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: responsive.bodyFontSize,
+              color: Colors.grey[700],
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildStepIndicator(
     int step,
     bool isActive,
     Color primary,
     Responsive responsive,
   ) {
-    final isCompleted = step < 2; // step 1 completed here
+    final isCompleted = step < 2;
 
     return Container(
       width: responsive.value(mobile: 32, tablet: 36, desktop: 40),
@@ -562,12 +784,14 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
     );
   }
 
-  Widget _buildStepLine(bool isActive, Color primary, Responsive responsive) {
+  Widget _buildStepLine(
+      bool isActive, Color primary, Responsive responsive) {
     return Expanded(
       child: Container(
         height: 2,
         margin: EdgeInsets.symmetric(
-          horizontal: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+          horizontal:
+              responsive.value(mobile: 8, tablet: 10, desktop: 12),
         ),
         color: isActive ? primary : Colors.grey[300],
       ),

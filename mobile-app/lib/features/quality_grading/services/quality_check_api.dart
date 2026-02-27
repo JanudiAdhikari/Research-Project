@@ -242,39 +242,86 @@ class QualityCheckApi {
     required String qualityCheckId,
   }) async {
     final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception("Not logged in");
-    }
+    if (user == null) throw Exception("Not logged in");
 
     final token = await user.getIdToken();
-    final url = Uri.parse(
+    final headers = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer $token",
+    };
+
+    // ── Try the direct endpoint first ──
+    final directUrl = Uri.parse(
       "${ApiConfig.baseUrl}/api/quality-checks/$qualityCheckId",
     );
 
-    final res = await http.get(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
+    final directRes = await http.get(directUrl, headers: headers);
 
-    dynamic decoded;
-    try {
-      decoded = jsonDecode(res.body);
-    } catch (_) {
-      throw Exception("Server returned invalid JSON (${res.statusCode})");
-    }
-
-    if (res.statusCode >= 200 && res.statusCode < 300) {
+    // If the direct route exists and succeeded, use it
+    if (directRes.statusCode >= 200 && directRes.statusCode < 300) {
+      dynamic decoded;
+      try {
+        decoded = jsonDecode(directRes.body);
+      } catch (_) {
+        throw Exception(
+          "Server returned invalid JSON (${directRes.statusCode})",
+        );
+      }
       if (decoded is Map<String, dynamic>) return decoded;
       throw Exception("Unexpected response format");
     }
 
+    // ── If 404/405 (route not yet added), fall back to /report ──
+    // The /report endpoint returns the same shape and is already in routes.
+    if (directRes.statusCode == 404 || directRes.statusCode == 405) {
+      final reportUrl = Uri.parse(
+        "${ApiConfig.baseUrl}/api/quality-checks/$qualityCheckId/report",
+      );
+
+      final reportRes = await http.get(reportUrl, headers: headers);
+
+      dynamic decoded;
+      try {
+        decoded = jsonDecode(reportRes.body);
+      } catch (_) {
+        throw Exception(
+          "Server returned invalid JSON (${reportRes.statusCode})",
+        );
+      }
+
+      if (reportRes.statusCode >= 200 && reportRes.statusCode < 300) {
+        if (decoded is Map<String, dynamic>) return decoded;
+        throw Exception("Unexpected response format");
+      }
+
+      // /report only works for completed checks — handle "not ready" gracefully
+      if (reportRes.statusCode == 400 &&
+          decoded is Map &&
+          (decoded["message"] as String?)?.contains("not ready") == true) {
+        // Return a minimal stub so the Review screen can still render
+        // batch data passed from earlier steps won't be available here,
+        // but at least we won't crash. The screen shows '—' for missing values.
+        throw Exception(
+          "Quality check is still being processed. Status: ${decoded["message"]}",
+        );
+      }
+
+      final msg = (decoded is Map && decoded["message"] != null)
+          ? decoded["message"].toString()
+          : "Request failed (${reportRes.statusCode})";
+      throw Exception(msg);
+    }
+
+    // ── Any other error from the direct call ──
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(directRes.body);
+    } catch (_) {
+      throw Exception("Server returned invalid JSON (${directRes.statusCode})");
+    }
     final msg = (decoded is Map && decoded["message"] != null)
         ? decoded["message"].toString()
-        : "Request failed (${res.statusCode})";
-
+        : "Request failed (${directRes.statusCode})";
     throw Exception(msg);
   }
 }

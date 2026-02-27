@@ -9,6 +9,7 @@ const {
   updateDensity,
   analyzeQualityImages,
   getMyQualityChecks,
+  getQualityChecksByBatch,
 } = require("../../controllers/quality_grading/qualityCheck.controller");
 
 const {
@@ -18,9 +19,6 @@ const {
 
 // Step 1: batch information
 router.post("/", auth, createQualityCheck);
-
-// Get quality checks for current user - Added by Ashika
-router.get("/batchdetails", auth, getMyQualityChecks);
 
 // Step 2: IoT density
 router.put("/:id/density", auth, updateDensity);
@@ -33,5 +31,11 @@ router.get("/:id/report", auth, getReport);
 
 // Step 4b: download PDF
 router.get("/:id/report/pdf", auth, getPdfReport);
+
+// Fetch quality checks by batchId (no auth) - Added by Ashika
+router.get("/batch/:batchId", getQualityChecksByBatch);
+
+// Get quality checks for current user (authenticated) - Added by Ashika
+router.get("/batchdetails", auth, getMyQualityChecks);
 
 module.exports = router;

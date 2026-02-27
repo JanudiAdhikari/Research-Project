@@ -41,7 +41,4 @@ router.get("/:id/report/pdf", auth, getPdfReport);
 // Fetch quality checks by batchId (no auth) - Added by Ashika
 router.get("/batch/:batchId", getQualityChecksByBatch);
 
-// Get quality checks for current user (authenticated) - Added by Ashika
-router.get("/batchdetails", auth, getMyQualityChecks);
-
 module.exports = router;

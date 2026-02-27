@@ -429,5 +429,47 @@ exports.getQualityCheckById = async (req, res) => {
   } catch (err) {
     console.error("getQualityCheckById error:", err);
     return res.status(500).json({ message: "Server error" });
+// Get quality checks by batchId (no auth required) - Added by Ashika
+exports.getQualityChecksByBatch = async (req, res) => {
+  try {
+    const batchId = (req.params.batchId || req.query.batchId || "")
+      .toString()
+      .trim();
+    if (!batchId) {
+      return res.status(400).json({ message: "Missing batchId" });
+    }
+
+    const checks = await QualityCheck.find({ batchId }).select(
+      "batchId batch results density certificatesSnapshot createdAt updatedAt status",
+    );
+
+    if (!checks || checks.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No quality checks found for batchId" });
+    }
+
+    const payload = checks.map((c) => ({
+      _id: c._id,
+      batchId: c.batchId,
+      batch: c.batch,
+      grade: c.results?.grade ?? null,
+      results: c.results ?? null,
+      density: c.density ?? null,
+      certificatesSnapshot: c.certificatesSnapshot ?? null,
+      status: c.status,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    }));
+
+    return res.status(200).json(payload);
+  } catch (err) {
+    console.error(
+      "getQualityChecksByBatch error:",
+      err && err.stack ? err.stack : err,
+    );
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err?.message });
   }
 };

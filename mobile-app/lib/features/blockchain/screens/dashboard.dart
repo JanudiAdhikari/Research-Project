@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/responsive.dart';
+import '../../../utils/responsive.dart';
 import 'QR_scan.dart';
 
 class BlockchainDashboard extends StatefulWidget {

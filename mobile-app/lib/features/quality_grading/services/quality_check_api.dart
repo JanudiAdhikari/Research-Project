@@ -237,4 +237,44 @@ class QualityCheckApi {
     await file.writeAsBytes(bytes, flush: true);
     return file.path;
   }
+
+  Future<Map<String, dynamic>> getQualityCheckById({
+    required String qualityCheckId,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception("Not logged in");
+    }
+
+    final token = await user.getIdToken();
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/quality-checks/$qualityCheckId",
+    );
+
+    final res = await http.get(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(res.body);
+    } catch (_) {
+      throw Exception("Server returned invalid JSON (${res.statusCode})");
+    }
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (decoded is Map<String, dynamic>) return decoded;
+      throw Exception("Unexpected response format");
+    }
+
+    final msg = (decoded is Map && decoded["message"] != null)
+        ? decoded["message"].toString()
+        : "Request failed (${res.statusCode})";
+
+    throw Exception(msg);
+  }
 }

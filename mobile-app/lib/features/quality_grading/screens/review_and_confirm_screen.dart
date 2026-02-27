@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import 'processing_screen.dart';
-import '../services/quality_check_api.dart';
 
 class SummaryConfirmationScreen extends StatefulWidget {
   final Map<String, File?> images;

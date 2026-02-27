@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import '../services/quality_check_api.dart';
 import 'certificates_step_screen.dart';
-import 'image_upload_screen.dart';
 
 class BulkDensityScreen2 extends StatefulWidget {
   final String qualityCheckId;

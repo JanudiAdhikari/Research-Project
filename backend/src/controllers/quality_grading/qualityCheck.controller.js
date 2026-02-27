@@ -429,6 +429,9 @@ exports.getQualityCheckById = async (req, res) => {
   } catch (err) {
     console.error("getQualityCheckById error:", err);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
 // Get quality checks by batchId (no auth required) - Added by Ashika
 exports.getQualityChecksByBatch = async (req, res) => {
   try {

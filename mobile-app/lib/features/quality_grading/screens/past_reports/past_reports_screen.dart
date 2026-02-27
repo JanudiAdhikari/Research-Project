@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../utils/responsive.dart';
+import '../../../../utils/responsive.dart';
 import 'detailed_report_screen.dart';
 
 class PastReportsScreen extends StatefulWidget {

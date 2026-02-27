@@ -7,6 +7,7 @@ class PriceReportCard extends StatelessWidget {
   final Map<String, dynamic> report;
   final VoidCallback onUpdate;
   final VoidCallback onDelete;
+  final VoidCallback onAddToMarketplace;
   final String language;
 
   const PriceReportCard({
@@ -14,6 +15,7 @@ class PriceReportCard extends StatelessWidget {
     required this.report,
     required this.onUpdate,
     required this.onDelete,
+    required this.onAddToMarketplace,
     required this.language,
   });
 
@@ -29,9 +31,6 @@ class PriceReportCard extends StatelessWidget {
     final district = report['district'] as String? ?? 'N/A';
     final notes = report['notes'] as String? ?? '';
     final saleDate = report['saleDate'] as String? ?? '';
-    final marketplaceProductId = report['marketplaceProductId'] as String?;
-    final isInMarketplace =
-        marketplaceProductId != null && marketplaceProductId.isNotEmpty;
 
     return Container(
       margin: EdgeInsets.only(bottom: responsive.smallSpacing + 4),
@@ -52,13 +51,7 @@ class PriceReportCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(
-              responsive,
-              saleDate,
-              pricePerKg,
-              priceColor,
-              isInMarketplace,
-            ),
+            _buildHeader(responsive, saleDate, pricePerKg, priceColor),
             SizedBox(height: responsive.smallSpacing + 4),
             _buildContent(
               responsive,
@@ -80,21 +73,26 @@ class PriceReportCard extends StatelessWidget {
     );
   }
 
-  // Helper methods to build different sections of the card
   Widget _buildHeader(
     Responsive responsive,
     String saleDate,
     double pricePerKg,
     Color priceColor,
-    bool isInMarketplace,
   ) {
-    final status = (report['currentStatus'] ?? 'created').toString();
+    // Normalize status for consistent display
+    final rawStatus = (report['currentStatus'] as String?)?.trim();
+    final status = _normalizeStatus(rawStatus);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
-            Icon(Icons.calendar_today_rounded, size: 14, color: Colors.black54),
+            const Icon(
+              Icons.calendar_today_rounded,
+              size: 14,
+              color: Colors.black54,
+            ),
             const SizedBox(width: 6),
             Text(
               _formatDate(saleDate),
@@ -109,18 +107,21 @@ class PriceReportCard extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // Only display status badge if not N/A
-            if (status.toUpperCase() != 'N/A')
+            // Show badge only if status exists and not N/A
+            if (status.isNotEmpty && status != 'N/A')
               Row(
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: _statusColor(status).withOpacity(0.13),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
-                      status[0].toUpperCase() + status.substring(1),
+                      _displayStatusText(status),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: _statusColor(status),
@@ -132,51 +133,6 @@ class PriceReportCard extends StatelessWidget {
                 ],
               ),
             const SizedBox(height: 4),
-            if (isInMarketplace) ...[
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.smallSpacing + 4,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue.shade400, Colors.blue.shade600],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.storefront_rounded,
-                      size: 12,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      language == 'si'
-                          ? ActualPriceDataSi.inMarketplace
-                          : 'In Marketplace',
-                      style: TextStyle(
-                        fontSize: responsive.smallFontSize - 1,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-            ],
             Container(
               padding: EdgeInsets.symmetric(
                 horizontal: responsive.smallSpacing + 4,
@@ -203,7 +159,6 @@ class PriceReportCard extends StatelessWidget {
     );
   }
 
-  // Builds the main content section of the card with variety, grade, quantity, and district information
   Widget _buildContent(
     Responsive responsive,
     String variety,
@@ -221,6 +176,7 @@ class PriceReportCard extends StatelessWidget {
     final displayDistrict = language == 'si'
         ? MarketForecastSi.translateDistrict(district)
         : district;
+
     return Row(
       children: [
         Expanded(
@@ -261,7 +217,11 @@ class PriceReportCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.star_rounded, size: 14, color: Colors.white),
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           displayGrade,
@@ -289,7 +249,7 @@ class PriceReportCard extends StatelessWidget {
               SizedBox(height: responsive.smallSpacing),
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.location_on_rounded,
                     size: 14,
                     color: Colors.black45,
@@ -311,7 +271,6 @@ class PriceReportCard extends StatelessWidget {
     );
   }
 
-  // Builds the notes section of the card, displayed only if there are notes provided by the user
   Widget _buildNotesSection(Responsive responsive, String notes) {
     return Container(
       padding: EdgeInsets.all(responsive.smallSpacing),
@@ -323,7 +282,7 @@ class PriceReportCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.note_rounded, size: 14, color: Colors.black45),
+          const Icon(Icons.note_rounded, size: 14, color: Colors.black45),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -340,39 +299,94 @@ class PriceReportCard extends StatelessWidget {
     );
   }
 
-  // Builds the action buttons for updating and deleting the price report
   Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+    final rawStatus = (report['currentStatus'] as String?)?.trim();
+    final status = _normalizeStatus(rawStatus);
+
+    final bool canShowAddToMarketplace = status != 'MARKETPLACE_LISTED';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        OutlinedButton.icon(
-          onPressed: onUpdate,
-          icon: const Icon(Icons.edit_rounded, size: 16),
-          label: Text(language == 'si' ? ActualPriceDataSi.update : 'Update'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF2E7D32),
-            side: const BorderSide(color: Color(0xFF2E7D32)),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
+        // First row: Update & Delete
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onUpdate,
+                icon: const Icon(Icons.edit_rounded, size: 16),
+                label: const Text('Update'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF2E7D32),
+                  side: const BorderSide(color: Color(0xFF2E7D32)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_rounded, size: 16),
+                label: const Text('Delete'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 8),
-        OutlinedButton.icon(
-          onPressed: onDelete,
-          icon: const Icon(Icons.delete_rounded, size: 16),
-          label: Text(
-            language == 'si' ? ActualPriceDataSi.deleteBtn : 'Delete',
+
+        if (canShowAddToMarketplace) ...[
+          const SizedBox(height: 10),
+
+          // Second row: Marketplace button FULL WIDTH
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onAddToMarketplace,
+              icon: const Icon(Icons.storefront_rounded, size: 16),
+              label: const Text('Add to Marketplace'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.blue.shade700,
+                side: BorderSide(color: Colors.blue.shade700),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
           ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.red,
-            side: const BorderSide(color: Colors.red),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-        ),
+        ],
       ],
     );
   }
 
-  // Format the date to readable format
+  String _normalizeStatus(String? status) {
+    if (status == null) return '';
+    return status.trim().replaceAll(' ', '_').toUpperCase();
+  }
+
+  String _displayStatusText(String normalizedStatus) {
+    switch (normalizedStatus) {
+      case 'BATCH_CREATED':
+        return 'Batch Created';
+      case 'MARKETPLACE_LISTED':
+        return 'Marketplace Listed';
+      case 'APPROVED':
+        return 'Approved';
+      case 'REJECTED':
+        return 'Rejected';
+      default:
+        // fallback: SOME_STATUS -> Some Status
+        final s = normalizedStatus.replaceAll('_', ' ').toLowerCase();
+        return s
+            .split(' ')
+            .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
+            .join(' ');
+    }
+  }
+
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return 'N/A';
     try {
@@ -383,7 +397,6 @@ class PriceReportCard extends StatelessWidget {
     }
   }
 
-  // Colors based on the grade
   Color _gradeColor(String grade) {
     switch (grade) {
       case 'Grade 1':
@@ -395,21 +408,22 @@ class PriceReportCard extends StatelessWidget {
     }
   }
 
-  // Colors based on the status
   Color _statusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'created':
-        return const Color(0xFFFFA000); // Amber;
-      case 'approved':
-        return const Color(0xFF0277BD); // Blue
-      case 'rejected':
+    final s = _normalizeStatus(status);
+    switch (s) {
+      case 'BATCH_CREATED':
+        return const Color(0xFF6A1B9A);
+      case 'MARKETPLACE_LISTED':
+        return Colors.blue.shade700;
+      case 'APPROVED':
+        return const Color(0xFF0277BD);
+      case 'REJECTED':
         return Colors.red;
       default:
         return Colors.grey;
     }
   }
 
-  // Format decimal values to remove unnecessary trailing zeros
   String _formatDecimal(double value) {
     if (value == value.toInt()) {
       return value.toInt().toString();

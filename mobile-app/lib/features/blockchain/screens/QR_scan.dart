@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../utils/responsive.dart';
+import '../../../utils/responsive.dart';
 import 'blockchain_details.dart';
 
 class QRScanScreen extends StatefulWidget {

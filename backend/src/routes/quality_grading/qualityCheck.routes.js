@@ -11,6 +11,7 @@ const {
   getMyQualityChecks,
   getQualityCheckById,
   getQualityChecksByBatch,
+  getDashboardStats,
 } = require("../../controllers/quality_grading/qualityCheck.controller");
 
 const {
@@ -23,6 +24,8 @@ router.post("/", auth, createQualityCheck);
 
 // Get quality checks for current user - Added by Ashika
 router.get("/batchdetails", auth, getMyQualityChecks);
+
+router.get("/dashboard-stats", auth, getDashboardStats);
 
 router.get("/:id", auth, getQualityCheckById);
 

@@ -459,14 +459,6 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
 
                 ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
 
-                // ── Quality Breakdown ──────────────────────────────
-                _buildSectionHeader(responsive, primary,
-                    'Quality Breakdown', Icons.analytics_rounded),
-                ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-                _buildBreakdownCard(responsive),
-
-                ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-
                 // ── Raw AI Measurements ────────────────────────────
                 _buildSectionHeader(responsive, primary,
                     'Raw AI Measurements', Icons.biotech_rounded),
@@ -907,56 +899,6 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Quality breakdown  (factor scores with progress bars)
-  // ─────────────────────────────────────────────────────────────────────────
-
-  Widget _buildBreakdownCard(Responsive responsive) {
-    return Container(
-      padding: responsive.padding(
-        mobile: const EdgeInsets.all(20),
-        tablet: const EdgeInsets.all(24),
-        desktop: const EdgeInsets.all(28),
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildScoreBar(responsive, 'Density',
-              _asInt(_factorScores['density']), Colors.green),
-          _buildScoreBar(responsive, 'Adulteration',
-              _asInt(_factorScores['adulteration']), Colors.teal),
-          _buildScoreBar(responsive, 'Mold',
-              _asInt(_factorScores['mold']), Colors.purple),
-          _buildScoreBar(responsive, 'Extraneous Matter',
-              _asInt(_factorScores['extraneous']), Colors.orange),
-          _buildScoreBar(responsive, 'Broken / Abnormal',
-              _asInt(_factorScores['broken']), Colors.blue),
-          _buildScoreBar(responsive, 'Variety / Piperine',
-              _asInt(_factorScores['varietyPiperine']), Colors.cyan),
-          _buildScoreBar(responsive, 'Healthy Visual',
-              _asInt(_factorScores['healthyVisual']), Colors.indigo),
-          _buildScoreBar(
-            responsive,
-            'Certification Bonus',
-            _asInt(_factorScores['certBonus']),
-            Colors.amber,
-            isLast: true,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
   // Raw AI measurements
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -1272,65 +1214,6 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         indent: responsive.value(mobile: 16, tablet: 18, desktop: 20),
         endIndent: responsive.value(mobile: 16, tablet: 18, desktop: 20),
       );
-
-  Widget _buildScoreBar(
-    Responsive responsive,
-    String label,
-    int score,
-    Color color, {
-    bool isLast = false,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: isLast
-            ? 0
-            : responsive.value(mobile: 20, tablet: 22, desktop: 24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: TextStyle(
-                      fontSize: responsive.bodyFontSize,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87)),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.value(
-                      mobile: 10, tablet: 11, desktop: 12),
-                  vertical: responsive.value(
-                      mobile: 4, tablet: 5, desktop: 6),
-                ),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text('$score',
-                    style: TextStyle(
-                        fontSize: responsive.bodyFontSize,
-                        fontWeight: FontWeight.w700,
-                        color: color)),
-              ),
-            ],
-          ),
-          ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: score / 100,
-              backgroundColor: color.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: responsive.value(
-                  mobile: 8, tablet: 9, desktop: 10),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // PDF helpers

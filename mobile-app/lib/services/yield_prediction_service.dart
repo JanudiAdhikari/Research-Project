@@ -3,17 +3,25 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../config/api.dart';
 
 // Only import dart:io on non-web platforms
-import 'dart:io' as io show SocketException;
+import 'dart:io' as io show SocketException, Platform;
 
 class YieldPredictionService {
-  // Your local FastAPI endpoints
-  static const String _baseUrl = 'http://127.0.0.1:8000';
+  // Get the correct base URL based on platform
+  // Android emulator: use 10.0.2.2 to reach host machine
+  // Other platforms: use 127.0.0.1
+  static String get _baseUrl {
+    if (!kIsWeb && io.Platform.isAndroid) {
+      return 'http://10.0.2.2:8000';
+    }
+    return 'http://127.0.0.1:8000';
+  }
 
   // For production, use a remote server IP
-  // static const String _baseUrl = 'http://192.168.x.x:8000';
+  // static const String _remoteUrl = 'http://192.168.x.x:8000';
 
   /// Predict yield from plant image and environmental data
   ///
@@ -74,8 +82,14 @@ class YieldPredictionService {
       }
 
       // Add image file using fromBytes (works on both platforms)
+      // Explicitly set content type as image/jpeg to ensure FastAPI recognizes it
       request.files.add(
-        http.MultipartFile.fromBytes('image', imageBytes, filename: fileName),
+        http.MultipartFile.fromBytes(
+          'file',
+          imageBytes,
+          filename: fileName,
+          contentType: contentTypeFromFileName(fileName),
+        ),
       );
 
       // Add form fields
@@ -88,6 +102,17 @@ class YieldPredictionService {
       if (plantAge != null) {
         request.fields['plant_age'] = plantAge;
       }
+
+      // Debug logging
+      print('[YieldPrediction] Sending request to: $_baseUrl/predict');
+      print('[YieldPrediction] Image size: ${imageBytes.length} bytes');
+      print('[YieldPrediction] Image name: $fileName');
+      print('[YieldPrediction] Soil moisture: $soilMoisture');
+      print('[YieldPrediction] Temperature: $temperature');
+      print('[YieldPrediction] Request fields: ${request.fields}');
+      print(
+        '[YieldPrediction] Request files: ${request.files.map((f) => '${f.field}(${f.filename})').toList()}',
+      );
 
       final response = await request.send().timeout(
         const Duration(seconds: 30),
@@ -104,6 +129,7 @@ class YieldPredictionService {
             .toDouble();
       } else {
         final errorBody = await response.stream.bytesToString();
+        print('[YieldPrediction] Error response: $errorBody');
         throw Exception(
           'Failed to predict yield: ${response.statusCode} - $errorBody',
         );
@@ -133,6 +159,24 @@ class YieldPredictionService {
   static void setBaseUrl(String url) {
     // This would require making the const mutable
     // For now, edit this file directly based on your deployment
+  }
+
+  /// Helper function to get the correct MIME type based on file extension
+  static MediaType contentTypeFromFileName(String fileName) {
+    final lowerName = fileName.toLowerCase();
+
+    if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) {
+      return MediaType('image', 'jpeg');
+    } else if (lowerName.endsWith('.png')) {
+      return MediaType('image', 'png');
+    } else if (lowerName.endsWith('.gif')) {
+      return MediaType('image', 'gif');
+    } else if (lowerName.endsWith('.webp')) {
+      return MediaType('image', 'webp');
+    } else {
+      // Default to jpeg if extension is unknown
+      return MediaType('image', 'jpeg');
+    }
   }
 }
 

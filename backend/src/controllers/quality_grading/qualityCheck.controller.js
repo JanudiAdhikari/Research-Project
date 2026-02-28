@@ -476,3 +476,32 @@ exports.getQualityChecksByBatch = async (req, res) => {
       .json({ message: "Server error", error: err?.message });
   }
 };
+
+// GET /api/quality-checks/dashboard-stats
+// Returns: { totalReports, premiumGrades }
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) return res.status(401).json({ message: "Unauthorized" });
+
+    const dbUser = await findUserByFirebaseUid(firebaseUid);
+    if (!dbUser)
+      return res.status(404).json({ message: "User not found in DB" });
+
+    const totalReports = await QualityCheck.countDocuments({
+      userId: dbUser._id,
+      status: "completed",
+    });
+
+    const premiumGrades = await QualityCheck.countDocuments({
+      userId: dbUser._id,
+      status: "completed",
+      "results.grade": "Grade 1 - Premium",
+    });
+
+    return res.status(200).json({ totalReports, premiumGrades });
+  } catch (err) {
+    console.error("getDashboardStats error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

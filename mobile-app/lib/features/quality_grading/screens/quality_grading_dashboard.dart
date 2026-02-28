@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
 import '../../../widgets/bottom_navigation.dart';
 import '../../certifications/screens/farmer_certifications_dashboard_screen.dart';
+import '../services/quality_check_api.dart';
 import 'new_quality_check/batch_details_screen.dart';
 import 'how_it_works_screen.dart';
 import 'image_capture_guide_screen.dart';
 import 'iot_device_setup_screen.dart';
 import 'past_reports/past_reports_screen.dart';
 import 'quality_tips_main_screen.dart';
+
+Color _withOpacity(Color c, double opacity) {
+  final alpha = (opacity * 255).round().clamp(0, 255);
+  return c.withAlpha(alpha);
+}
 
 class QualityGradingDashboard extends StatefulWidget {
   const QualityGradingDashboard({super.key});
@@ -21,9 +27,14 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
-  final int totalReports = 24;
-  final int premiumGrades = 8;
+  int _totalReports = 0;
+  int _premiumGrades = 0;
+  bool _statsLoading = true;
+  String? _statsError;
+
+  final _api = QualityCheckApi();
 
   @override
   void initState() {
@@ -35,7 +46,32 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
     _animationController.forward();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final stats = await _api.getDashboardStats();
+      if (mounted) {
+        setState(() {
+          _totalReports = stats["totalReports"]!;
+          _premiumGrades = stats["premiumGrades"]!;
+          _statsLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _statsError = e.toString();
+          _statsLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -72,110 +108,144 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           ),
         ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.pagePadding,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: responsive.value(
-                        mobile: 16,
-                        tablet: 20,
-                        desktop: 24,
-                      ),
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 16,
+                      tablet: 20,
+                      desktop: 24,
                     ),
+                  ),
 
-                    // Summary Statistics Cards
-                    _buildSummaryGrid(context, responsive),
+                  _buildSummaryGrid(context, responsive),
 
-                    SizedBox(
-                      height: responsive.value(
-                        mobile: 20,
-                        tablet: 24,
-                        desktop: 28,
-                      ),
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 24,
+                      tablet: 28,
+                      desktop: 32,
                     ),
+                  ),
 
-                    // Main Action Cards
-                    Text(
-                      "Grading Actions",
-                      style: TextStyle(
-                        fontSize: responsive.titleFontSize,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    SizedBox(
-                      height: responsive.value(
-                        mobile: 10,
-                        tablet: 12,
-                        desktop: 16,
-                      ),
-                    ),
-                    _buildActionCardsGrid(context, responsive, primary),
+                  _buildSectionTitle(
+                    responsive,
+                    primary,
+                    "Grading Actions",
+                    Icons.agriculture_rounded,
+                  ),
 
-                    SizedBox(
-                      height: responsive.value(
-                        mobile: 20,
-                        tablet: 24,
-                        desktop: 28,
-                      ),
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 14,
+                      tablet: 18,
+                      desktop: 22,
                     ),
+                  ),
 
-                    // Educational Resources Section
-                    Text(
-                      "Resources & Support",
-                      style: TextStyle(
-                        fontSize: responsive.titleFontSize,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                    SizedBox(
-                      height: responsive.value(
-                        mobile: 10,
-                        tablet: 12,
-                        desktop: 16,
-                      ),
-                    ),
-                    _buildResourceCards(context, responsive, primary),
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: _buildActionCardsGrid(context, responsive, primary),
+                  ),
 
-                    SizedBox(
-                      height: responsive.value(
-                        mobile: 24,
-                        tablet: 32,
-                        desktop: 40,
-                      ),
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 24,
+                      tablet: 28,
+                      desktop: 32,
                     ),
-                  ],
-                ),
+                  ),
+
+                  _buildSectionTitle(
+                    responsive,
+                    primary,
+                    "Resources & Support",
+                    Icons.dashboard_customize_rounded,
+                  ),
+
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 14,
+                      tablet: 18,
+                      desktop: 22,
+                    ),
+                  ),
+
+                  _buildResourceCards(context, responsive, primary),
+
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 32,
+                      tablet: 40,
+                      desktop: 48,
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigation(
-        currentIndex: 2, // Quality tab is index 2
+        currentIndex: 0,
         onTabSelected: (index) {
-          // Handle navigation based on index
-          if (index != 2) {
-            // If not already on Quality tab
-            Navigator.pop(
-              context,
-            ); // Go back and let NavigationWrapper handle it
-          }
+          if (index != 0) Navigator.pop(context);
         },
       ),
     );
   }
+
+  // ── Section title ──────────────────────────────────────────────────────────
+
+  Widget _buildSectionTitle(
+    Responsive responsive,
+    Color primary,
+    String title,
+    IconData icon,
+  ) {
+    return Row(
+      children: [
+        Container(
+          width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
+          height: responsive.value(mobile: 20, tablet: 22, desktop: 24),
+          decoration: BoxDecoration(
+            color: primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        SizedBox(width: responsive.value(mobile: 10, tablet: 12, desktop: 14)),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: responsive.fontSize(
+                mobile: 17,
+                tablet: 20,
+                desktop: 22,
+              ),
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        Icon(
+          icon,
+          color: primary,
+          size: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+        ),
+      ],
+    );
+  }
+
+  // ── Summary stats ──────────────────────────────────────────────────────────
 
   Widget _buildSummaryGrid(BuildContext context, Responsive responsive) {
     final crossAxisCount = responsive
@@ -188,11 +258,10 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         final itemWidth =
             (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
             crossAxisCount;
-        final itemHeight = responsive.value(
-          mobile: 100,
-          tablet: 115,
-          desktop: 125,
-        );
+
+        // Show shimmer-style placeholder while loading
+        final totalValue = _statsLoading ? "—" : _totalReports.toString();
+        final premiumValue = _statsLoading ? "—" : _premiumGrades.toString();
 
         return Wrap(
           spacing: spacing,
@@ -200,24 +269,24 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           children: [
             SizedBox(
               width: itemWidth,
-              height: itemHeight,
               child: _summaryCard(
                 responsive,
                 title: "Total Reports",
-                value: totalReports.toString(),
+                value: totalValue,
                 icon: Icons.assignment_rounded,
                 color: Colors.blue,
+                isLoading: _statsLoading,
               ),
             ),
             SizedBox(
               width: itemWidth,
-              height: itemHeight,
               child: _summaryCard(
                 responsive,
                 title: "Premium Grades",
-                value: premiumGrades.toString(),
+                value: premiumValue,
                 icon: Icons.star_rounded,
                 color: Colors.amber,
+                isLoading: _statsLoading,
               ),
             ),
           ],
@@ -232,6 +301,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     required String value,
     required IconData icon,
     required Color color,
+    bool isLoading = false,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -239,9 +309,9 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: _withOpacity(Colors.black, 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -249,8 +319,8 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
         responsive.value(mobile: 10, tablet: 12, desktop: 14),
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             padding: EdgeInsets.all(
@@ -267,19 +337,33 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
             ),
           ),
           SizedBox(height: responsive.value(mobile: 5, tablet: 6, desktop: 8)),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: responsive.value(mobile: 15, tablet: 16, desktop: 18),
-                fontWeight: FontWeight.w800,
-                color: Colors.grey[800],
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-            ),
-          ),
+          isLoading
+              ? SizedBox(
+                  width: 32,
+                  height: responsive.value(mobile: 15, tablet: 16, desktop: 18),
+                  child: LinearProgressIndicator(
+                    borderRadius: BorderRadius.circular(4),
+                    color: color,
+                    backgroundColor: color.withOpacity(0.15),
+                  ),
+                )
+              : FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: responsive.value(
+                        mobile: 15,
+                        tablet: 16,
+                        desktop: 18,
+                      ),
+                      fontWeight: FontWeight.w800,
+                      color: Colors.grey[800],
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                  ),
+                ),
           SizedBox(height: responsive.value(mobile: 2, tablet: 3, desktop: 4)),
           Text(
             title,
@@ -297,6 +381,8 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     );
   }
 
+  // ── Action cards grid ──────────────────────────────────────────────────────
+
   Widget _buildActionCardsGrid(
     BuildContext context,
     Responsive responsive,
@@ -308,23 +394,18 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final spacing = responsive.value(mobile: 10, tablet: 12, desktop: 16);
+        final spacing = responsive.value(mobile: 12, tablet: 16, desktop: 20);
         final itemWidth =
             (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
             crossAxisCount;
-        final itemHeight = responsive.value(
-          mobile: 140,
-          tablet: 155,
-          desktop: 150,
-        );
 
-        final actionCards = _buildActionCards(context, responsive, primary);
+        final cards = _buildActionCards(context, responsive, primary);
 
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: actionCards.map((card) {
-            return SizedBox(width: itemWidth, height: itemHeight, child: card);
+          children: cards.map((card) {
+            return SizedBox(width: itemWidth, child: card);
           }).toList(),
         );
       },
@@ -337,207 +418,187 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     Color primary,
   ) {
     return [
-      _actionCard(
+      _featureCard(
         context,
         responsive,
         title: "New Quality\nCheck",
         subtitle: "Start grading",
-        icon: Icons.add_circle_outline,
-        gradient: LinearGradient(
-          colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
+        iconData: Icons.add_circle_outline_rounded,
+        iconBgColor: const Color(0xFFE8F5E9),
+        iconColor: const Color(0xFF2E7D32),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BatchDetailsScreen()),
         ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const BatchDetailsScreen()),
-          );
-        },
       ),
-      _actionCard(
+      _featureCard(
         context,
         responsive,
         title: "Past\nReports",
         subtitle: "View history",
-        icon: Icons.history_rounded,
-        gradient: LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+        iconData: Icons.history_rounded,
+        iconBgColor: const Color(0xFFE3F2FD),
+        iconColor: const Color(0xFF1565C0),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const PastReportsScreen()),
         ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PastReportsScreen()),
-          );
-        },
       ),
-      _actionCard(
+      _featureCard(
         context,
         responsive,
         title: "How It\nWorks",
         subtitle: "Learn process",
-        icon: Icons.school_rounded,
-        gradient: LinearGradient(
-          colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
+        iconData: Icons.school_rounded,
+        iconBgColor: const Color(0xFFFFF3E0),
+        iconColor: const Color(0xFFE65100),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
         ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
-          );
-        },
       ),
-      _actionCard(
+      _featureCard(
         context,
         responsive,
         title: "Quality\nTips",
         subtitle: "Improve grade",
-        icon: Icons.lightbulb_outline_rounded,
-        gradient: LinearGradient(
-          colors: [Color(0xFF388E3C), Color(0xFF2E7D32)],
+        iconData: Icons.lightbulb_outline_rounded,
+        iconBgColor: const Color(0xFFFCE4EC),
+        iconColor: const Color(0xFFC62828),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const QualityTipsMainScreen()),
         ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const QualityTipsMainScreen()),
-          );
-        },
       ),
     ];
   }
 
-  Widget _actionCard(
+  Widget _featureCard(
     BuildContext context,
     Responsive responsive, {
     required String title,
     required String subtitle,
-    required IconData icon,
-    required Gradient gradient,
-    required Function onTap,
+    required IconData iconData,
+    required Color iconBgColor,
+    required Color iconColor,
+    required VoidCallback onTap,
   }) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => onTap(),
+        onTap: onTap,
         borderRadius: BorderRadius.circular(
-          responsive.value(mobile: 16, tablet: 18, desktop: 20),
+          responsive.value(mobile: 16, tablet: 20, desktop: 24),
         ),
         child: Container(
           decoration: BoxDecoration(
-            gradient: gradient,
+            gradient: const LinearGradient(
+              colors: [Color(0xFFF8FAF8), Color(0xFFEFF2EF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(
-              responsive.value(mobile: 16, tablet: 18, desktop: 20),
+              responsive.value(mobile: 16, tablet: 20, desktop: 24),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.12),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: _withOpacity(Colors.black, 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -12,
-                bottom: -12,
-                child: Icon(
-                  icon,
-                  size: responsive.value(mobile: 65, tablet: 75, desktop: 85),
-                  color: Colors.white.withOpacity(0.15),
+          child: Padding(
+            padding: responsive.padding(
+              mobile: const EdgeInsets.all(12),
+              tablet: const EdgeInsets.all(16),
+              desktop: const EdgeInsets.all(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon container
+                Container(
+                  padding: responsive.padding(
+                    mobile: const EdgeInsets.all(8),
+                    tablet: const EdgeInsets.all(10),
+                    desktop: const EdgeInsets.all(12),
+                  ),
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    iconData,
+                    color: iconColor,
+                    size: responsive.value(mobile: 28, tablet: 36, desktop: 40),
+                  ),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(
-                  responsive.value(mobile: 12, tablet: 14, desktop: 16),
+
+                SizedBox(
+                  height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(
-                        responsive.value(mobile: 7, tablet: 8, desktop: 9),
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: responsive.value(
-                          mobile: 20,
-                          tablet: 24,
-                          desktop: 28,
-                        ),
-                        color: Colors.white,
-                      ),
+
+                // Title
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: responsive.fontSize(
+                      mobile: 13,
+                      tablet: 15,
+                      desktop: 16,
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: responsive.value(
-                              mobile: 14,
-                              tablet: 15,
-                              desktop: 16,
-                            ),
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(
-                          height: responsive.value(
-                            mobile: 3,
-                            tablet: 4,
-                            desktop: 5,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                subtitle,
-                                style: TextStyle(
-                                  fontSize: responsive.value(
-                                    mobile: 11,
-                                    tablet: 12,
-                                    desktop: 13,
-                                  ),
-                                  color: Colors.white.withOpacity(0.95),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 3),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              color: Colors.white.withOpacity(0.95),
-                              size: responsive.value(
-                                mobile: 13,
-                                tablet: 15,
-                                desktop: 17,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+
+                SizedBox(
+                  height: responsive.value(mobile: 3, tablet: 4, desktop: 5),
+                ),
+
+                // Subtitle
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: responsive.fontSize(
+                      mobile: 10,
+                      tablet: 11,
+                      desktop: 12,
+                    ),
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                SizedBox(
+                  height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                ),
+
+                // Arrow
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  // ── Resource cards ─────────────────────────────────────────────────────────
 
   Widget _buildResourceCards(
     BuildContext context,
@@ -552,12 +613,10 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           description: "Connect your ESP32 bulk density device",
           icon: Icons.bluetooth_rounded,
           color: Colors.indigo,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const IotDeviceSetupScreen()),
-            );
-          },
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const IotDeviceSetupScreen()),
+          ),
         ),
         SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
         _resourceCard(
@@ -566,14 +625,10 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           description: "Learn how to capture quality images",
           icon: Icons.camera_alt_rounded,
           color: Colors.teal,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const ImageCaptureGuideScreen(),
-              ),
-            );
-          },
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ImageCaptureGuideScreen()),
+          ),
         ),
         SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
         _resourceCard(
@@ -582,14 +637,12 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           description: "Upload and verify your certificates",
           icon: Icons.verified_rounded,
           color: Colors.green,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const FarmerCertificationsDashboardScreen(),
-              ),
-            );
-          },
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const FarmerCertificationsDashboardScreen(),
+            ),
+          ),
         ),
       ],
     );
@@ -615,9 +668,9 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
+                color: _withOpacity(Colors.black, 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -686,7 +739,7 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                   ],
                 ),
               ),
-              SizedBox(width: 6),
+              const SizedBox(width: 6),
               Icon(
                 Icons.arrow_forward_ios_rounded,
                 color: Colors.grey[400],
@@ -699,7 +752,8 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     );
   }
 
-  // Dialog methods remain the same but I'll include them for completeness
+  // ── Dialog ─────────────────────────────────────────────────────────────────
+
   void _showQuickGuideDialog(BuildContext context, Responsive responsive) {
     showDialog(
       context: context,
@@ -735,7 +789,6 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     );
   }
 
-  // Helper widgets
   Widget _guideStep(String number, String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),

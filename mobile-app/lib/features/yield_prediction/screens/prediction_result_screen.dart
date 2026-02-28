@@ -145,7 +145,7 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "${widget.predictedYield.round()} kg",
+            "${widget.predictedYield} kg",
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,

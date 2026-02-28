@@ -20,12 +20,12 @@ class FarmDiaryService {
        _prefs = prefs;
 
   Future<String?> _getToken() async {
-    return await _secureStorage.read(key: 'auth_token');
+    return await _secureStorage.read(key: 'token');
   }
 
-  Map<String, String> _getHeaders() => {
+  Map<String, String> _getHeaders(String? token) => {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ${_getToken()}',
+    if (token != null) 'Authorization': 'Bearer $token',
   };
 
   // GET all diary entries for a farm plot
@@ -50,7 +50,7 @@ class FarmDiaryService {
       );
 
       final response = await http
-          .get(uri, headers: _getHeaders())
+          .get(uri, headers: _getHeaders(token))
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -75,7 +75,7 @@ class FarmDiaryService {
       if (token == null) throw Exception('Not authenticated');
 
       final response = await http
-          .get(Uri.parse('$_baseUrl/entries/$id'), headers: _getHeaders())
+          .get(Uri.parse('$_baseUrl/entries/$id'), headers: _getHeaders(token))
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -104,7 +104,7 @@ class FarmDiaryService {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/entries'),
-            headers: _getHeaders(),
+            headers: _getHeaders(token),
             body: jsonEncode(entry.toJson()),
           )
           .timeout(const Duration(seconds: 10));
@@ -138,7 +138,7 @@ class FarmDiaryService {
       final response = await http
           .put(
             Uri.parse('$_baseUrl/entries/$id'),
-            headers: _getHeaders(),
+            headers: _getHeaders(token),
             body: jsonEncode(entry.toJson()),
           )
           .timeout(const Duration(seconds: 10));
@@ -165,7 +165,7 @@ class FarmDiaryService {
       if (token == null) throw Exception('Not authenticated');
 
       final response = await http
-          .delete(Uri.parse('$_baseUrl/entries/$id'), headers: _getHeaders())
+          .delete(Uri.parse('$_baseUrl/entries/$id'), headers: _getHeaders(token))
           .timeout(const Duration(seconds: 10));
 
       return response.statusCode == 200;
@@ -195,7 +195,7 @@ class FarmDiaryService {
       );
 
       final response = await http
-          .get(uri, headers: _getHeaders())
+          .get(uri, headers: _getHeaders(token))
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -225,7 +225,7 @@ class FarmDiaryService {
       final response = await http
           .post(
             Uri.parse('$_baseUrl/sync'),
-            headers: _getHeaders(),
+            headers: _getHeaders(token),
             body: jsonEncode({'entries': entriesToSync}),
           )
           .timeout(const Duration(seconds: 30));

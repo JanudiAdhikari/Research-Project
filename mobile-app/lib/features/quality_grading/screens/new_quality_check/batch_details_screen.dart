@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../utils/responsive.dart';
-import '../services/quality_check_api.dart';
-import 'bulk_density_screen.dart';
+import '../../../../utils/responsive.dart';
+import '../../services/quality_check_api.dart';
 import 'bulk_density_screen2.dart';
 
 class BatchDetailsScreen extends StatefulWidget {
@@ -562,92 +561,6 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                 .map((item) => DropdownMenuItem(value: item, child: Text(item)))
                 .toList(),
             onChanged: onChanged,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    Responsive responsive,
-    Color primary, {
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-    bool isRequired = false,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: responsive.value(mobile: 16, tablet: 18, desktop: 20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: responsive.bodyFontSize,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (isRequired)
-                Text(
-                  ' *',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontSize: responsive.bodyFontSize,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            style: TextStyle(fontSize: responsive.bodyFontSize + 1),
-            validator: isRequired
-                ? (value) => value == null || value.isEmpty
-                      ? 'This field is required'
-                      : null
-                : null,
-            decoration: InputDecoration(
-              hintText: 'Enter ${label.toLowerCase()}',
-              hintStyle: TextStyle(
-                color: Colors.grey[400],
-                fontSize: responsive.bodyFontSize + 1,
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              prefixIcon: Icon(
-                icon,
-                color: Colors.grey[600],
-                size: responsive.mediumIconSize,
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: responsive.mediumSpacing,
-                vertical: responsive.value(mobile: 18, tablet: 20),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: primary, width: 2),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.red.shade300),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.red, width: 2),
-              ),
-            ),
           ),
         ],
       ),

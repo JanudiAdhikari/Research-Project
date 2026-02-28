@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../config/api.dart';
-import '../../../utils/responsive.dart';
-import '../../certifications/models/certification_model.dart';
-import '../../certifications/screens/farmer_add_certifications_screen.dart';
-import '../../certifications/services/certification_api.dart';
-import '../services/quality_check_api.dart';
+import '../../../../config/api.dart';
+import '../../../../utils/responsive.dart';
+import '../../../certifications/models/certification_model.dart';
+import '../../../certifications/screens/farmer_add_certifications_screen.dart';
+import '../../../certifications/services/certification_api.dart';
+import '../../services/quality_check_api.dart';
 import 'image_upload_screen.dart';
 
 class CertificatesStepScreen extends StatefulWidget {

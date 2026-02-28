@@ -324,4 +324,39 @@ class QualityCheckApi {
         : "Request failed (${directRes.statusCode})";
     throw Exception(msg);
   }
+
+  //GET /api/quality-checks/batchdetails
+  // Returns: [{ _id, batchId, batch, grade }] for the authenticated user
+  Future<List<Map<String, dynamic>>> getMyQualityChecks() async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception("Not logged in");
+
+    final token = await user.getIdToken();
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/quality-checks/batchdetails",
+    );
+
+    final res = await http.get(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    final decoded = jsonDecode(res.body);
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      if (decoded is List) {
+        return decoded.cast<Map<String, dynamic>>();
+      }
+      throw Exception("Unexpected response format");
+    }
+
+    final msg = (decoded is Map && decoded["message"] != null)
+        ? decoded["message"].toString()
+        : "Request failed (${res.statusCode})";
+
+    throw Exception(msg);
+  }
 }

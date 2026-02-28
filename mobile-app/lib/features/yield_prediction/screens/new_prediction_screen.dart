@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../screens/prediction_result_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/yield_prediction_provider.dart';
 
 class NewPredictionScreen extends StatefulWidget {
   const NewPredictionScreen({super.key});
@@ -14,9 +16,9 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
   final _formKey = GlobalKey<FormState>();
 
   double soilMoisture = 40;
- double temperature = 28;
- File? selectedImage;
-final ImagePicker _picker = ImagePicker();
+  double temperature = 28;
+  File? selectedImage;
+  final ImagePicker _picker = ImagePicker();
   String plantAge = "6–8 months";
   bool useIoT = false;
 
@@ -37,45 +39,51 @@ final ImagePicker _picker = ImagePicker();
           padding: const EdgeInsets.all(16),
           children: [
             _stepHeader(
-  icon: Icons.camera_alt_rounded,
-  title: "Step 1: Upload Plant Image",
-  subtitle: "Capture or select pepper plant image",
-  color: Colors.green,
-),
-
-const SizedBox(height: 12),
-
-GestureDetector(
-  onTap: _pickImage,
-  child: Container(
-    height: 180,
-    width: double.infinity,
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.grey.shade400),
-      image: selectedImage != null
-          ? DecorationImage(
-              image: FileImage(selectedImage!),
-              fit: BoxFit.cover,
-            )
-          : null,
-    ),
-    child: selectedImage == null
-        ? const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.upload_rounded, size: 40, color: Colors.grey),
-                SizedBox(height: 8),
-                Text("Tap to upload image",
-                    style: TextStyle(color: Colors.grey)),
-              ],
+              icon: Icons.camera_alt_rounded,
+              title: "Step 1: Upload Plant Image",
+              subtitle: "Capture or select pepper plant image",
+              color: Colors.green,
             ),
-          )
-        : null,
-  ),
-),
+
+            const SizedBox(height: 12),
+
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                height: 180,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade400),
+                  image: selectedImage != null
+                      ? DecorationImage(
+                          image: FileImage(selectedImage!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: selectedImage == null
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.upload_rounded,
+                              size: 40,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              "Tap to upload image",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      )
+                    : null,
+              ),
+            ),
 
             _stepHeader(
               icon: Icons.sensors_rounded,
@@ -101,26 +109,23 @@ GestureDetector(
             ),
 
             const SizedBox(height: 24),
-_stepHeader(
-  icon: Icons.thermostat_rounded,
-  title: "Step 3: Temperature",
-  subtitle: "Environmental temperature in °C",
-  color: Colors.orange,
-),
+            _stepHeader(
+              icon: Icons.thermostat_rounded,
+              title: "Step 3: Temperature",
+              subtitle: "Environmental temperature in °C",
+              color: Colors.orange,
+            ),
 
-const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-_sliderField(
-  label: "Temperature (°C)",
-  value: temperature,
-  max: 50,
-  onChanged: (v) => setState(() => temperature = v),
-),
+            _sliderField(
+              label: "Temperature (°C)",
+              value: temperature,
+              max: 50,
+              onChanged: (v) => setState(() => temperature = v),
+            ),
 
-_infoText(
-  "Temperature affects growth rate and fruit development.",
-),
-
+            _infoText("Temperature affects growth rate and fruit development."),
 
             const SizedBox(height: 28),
 
@@ -141,27 +146,57 @@ _infoText(
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-               onPressed: () {
-  if (selectedImage == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Please upload a plant image")),
-    );
-    return;
-  }
+                onPressed: () async {
+                  if (selectedImage == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Please upload a plant image"),
+                      ),
+                    );
+                    return;
+                  }
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => PredictionResultScreen(
-        predictedYield: 0, // placeholder until backend is connected
-        soilMoisture: soilMoisture,
-        temperature: temperature,
-        imageFile: selectedImage!,
-      ),
-    ),
-  );
-},
+                  // Show loading dialog
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (_) =>
+                        const Center(child: CircularProgressIndicator()),
+                  );
 
+                  // Perform prediction
+                  final provider = context.read<YieldPredictionProvider>();
+                  final success = await provider.performPrediction(
+                    imageFile: selectedImage!,
+                    soilMoisture: soilMoisture,
+                    temperature: temperature,
+                    rainfall: null,
+                    plantAge: plantAge,
+                  );
+
+                  Navigator.pop(context); // Close loading dialog
+
+                  if (success) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PredictionResultScreen(
+                          predictedYield: provider.predictedYield,
+                          soilMoisture: soilMoisture,
+                          temperature: temperature,
+                          imageFile: selectedImage!,
+                        ),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(provider.error ?? "Prediction failed"),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
               ),
             ),
           ],
@@ -195,12 +230,18 @@ _infoText(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(subtitle,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                ),
               ],
             ),
           ),
@@ -298,16 +339,14 @@ _infoText(
       ),
     );
   }
-  Future<void> _pickImage() async {
-  final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
-  if (image != null) {
-    setState(() {
-      selectedImage = File(image.path);
-    });
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        selectedImage = File(image.path);
+      });
+    }
   }
 }
-}
-
-
-

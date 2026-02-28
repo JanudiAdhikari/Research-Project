@@ -204,8 +204,7 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                               icon: Icons.add_rounded,
                               label: "Add Certificate",
                               onPressed: () async {
-                                final created =
-                                    await Navigator.push<CertificationModel>(
+                                await Navigator.push<CertificationModel>(
                                       context,
                                       MaterialPageRoute(
                                         builder: (_) =>

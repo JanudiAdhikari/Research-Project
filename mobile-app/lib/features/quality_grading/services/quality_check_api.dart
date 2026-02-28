@@ -358,4 +358,39 @@ class QualityCheckApi {
 
     throw Exception(msg);
   }
+
+  /// GET /api/quality-checks/dashboard-stats
+  /// Returns { totalReports, premiumGrades }
+  Future<Map<String, int>> getDashboardStats() async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception("Not logged in");
+
+    final token = await user.getIdToken();
+    final url = Uri.parse(
+      "${ApiConfig.baseUrl}/api/quality-checks/dashboard-stats",
+    );
+
+    final res = await http.get(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+    );
+
+    final decoded = jsonDecode(res.body);
+
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      return {
+        "totalReports": (decoded["totalReports"] as num).toInt(),
+        "premiumGrades": (decoded["premiumGrades"] as num).toInt(),
+      };
+    }
+
+    final msg = (decoded is Map && decoded["message"] != null)
+        ? decoded["message"].toString()
+        : "Request failed (${res.statusCode})";
+
+    throw Exception(msg);
+  }
 }

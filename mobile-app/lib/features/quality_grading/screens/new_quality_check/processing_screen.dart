@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/language_prefs.dart';
+import '../../../../utils/quality_grading/processing_screen_si.dart';
 import '../../services/quality_check_api.dart';
 import 'result_summary_screen.dart';
 
@@ -31,13 +33,20 @@ class _ProcessingScreenState extends State<ProcessingScreen>
   late Animation<double> _fadeAnimation;
 
   int _currentStep = 0;
-  final List<String> _steps = [
-    'Uploading images...',
-    'Analyzing images...',
-    'Detecting defects...',
-    'Calculating quality score...',
-    'Generating report...',
-  ];
+  String _currentLanguage = 'en';
+
+  bool get _isSinhala => _currentLanguage == 'si';
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
+
+  List<String> get _steps => _isSinhala
+      ? ProcessingScreenSi.steps
+      : const [
+          'Uploading images...',
+          'Analyzing images...',
+          'Detecting defects...',
+          'Calculating quality score...',
+          'Generating report...',
+        ];
 
   Timer? _stepTimer;
   bool _started = false;
@@ -78,7 +87,10 @@ class _ProcessingScreenState extends State<ProcessingScreen>
     _fadeController.forward();
     _updateSteps();
 
-    // Start backend call after first frame to avoid build context issues
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_started) {
         _started = true;
@@ -129,37 +141,34 @@ class _ProcessingScreenState extends State<ProcessingScreen>
     } catch (e) {
       if (!mounted) return;
 
-      // Stop animations step timer if you want
       _stepTimer?.cancel();
 
-      // Show dialog with Retry / Back
       await showDialog<void>(
         context: context,
         barrierDismissible: false,
         builder: (ctx) {
           return AlertDialog(
-            title: const Text("Analysis Failed"),
+            title: Text(
+              _t('Analysis Failed', ProcessingScreenSi.analysisFailed),
+            ),
             content: Text(e.toString()),
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.pop(ctx); // close dialog
-                  Navigator.pop(context); // go back to previous screen (Review)
+                  Navigator.pop(ctx);
+                  Navigator.pop(context);
                 },
-                child: const Text("Back"),
+                child: Text(_t('Back', ProcessingScreenSi.back)),
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(ctx); // close dialog
-                  // restart analysis
-                  setState(() {
-                    _currentStep = 0;
-                  });
+                  Navigator.pop(ctx);
+                  setState(() => _currentStep = 0);
                   _fadeController.forward();
                   _updateSteps();
                   _runAnalysis();
                 },
-                child: const Text("Retry"),
+                child: Text(_t('Retry', ProcessingScreenSi.retry)),
               ),
             ],
           );
@@ -195,6 +204,7 @@ class _ProcessingScreenState extends State<ProcessingScreen>
                 children: [
                   const Spacer(flex: 2),
 
+                  // ── Animated icon ────────────────────────────────────────
                   Stack(
                     alignment: Alignment.center,
                     children: [
@@ -302,7 +312,10 @@ class _ProcessingScreenState extends State<ProcessingScreen>
                   ResponsiveSpacing(mobile: 48, tablet: 56, desktop: 64),
 
                   Text(
-                    "AI Analysis in Progress",
+                    _t(
+                      'AI Analysis in Progress',
+                      ProcessingScreenSi.aiAnalysisInProgress,
+                    ),
                     style: TextStyle(
                       fontSize: responsive.fontSize(
                         mobile: 24,
@@ -317,7 +330,10 @@ class _ProcessingScreenState extends State<ProcessingScreen>
                   ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
 
                   Text(
-                    "Please wait while we analyze your pepper quality",
+                    _t(
+                      'Please wait while we analyze your pepper quality',
+                      ProcessingScreenSi.pleaseWait,
+                    ),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: responsive.bodyFontSize,
@@ -328,6 +344,7 @@ class _ProcessingScreenState extends State<ProcessingScreen>
 
                   ResponsiveSpacing(mobile: 40, tablet: 48, desktop: 56),
 
+                  // ── Steps card ───────────────────────────────────────────
                   Container(
                     padding: responsive.padding(
                       mobile: const EdgeInsets.all(24),
@@ -408,13 +425,14 @@ class _ProcessingScreenState extends State<ProcessingScreen>
                                             tablet: 18,
                                             desktop: 20,
                                           ),
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                const AlwaysStoppedAnimation<
-                                                  Color
-                                                >(primary),
-                                          ),
+                                          child:
+                                              const CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(primary),
+                                              ),
                                         )
                                       : null,
                                 ),
@@ -452,6 +470,7 @@ class _ProcessingScreenState extends State<ProcessingScreen>
 
                   const Spacer(flex: 2),
 
+                  // ── Info banner ──────────────────────────────────────────
                   Container(
                     padding: responsive.padding(
                       mobile: const EdgeInsets.symmetric(
@@ -487,7 +506,10 @@ class _ProcessingScreenState extends State<ProcessingScreen>
                         ),
                         Flexible(
                           child: Text(
-                            "This usually takes a few seconds",
+                            _t(
+                              'This usually takes a few seconds',
+                              ProcessingScreenSi.usuallyTakesFewSeconds,
+                            ),
                             style: TextStyle(
                               fontSize: responsive.bodyFontSize - 1,
                               color: Colors.blue.shade900,

@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/language_prefs.dart';
+import '../../../../../utils/quality_grading/review_and_confirm_screen_si.dart';
 import '../../services/quality_check_api.dart';
 import 'processing_screen.dart';
 
@@ -27,18 +29,19 @@ class ImageStore {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-String _formatPepperType(String? v) {
+String _formatPepperType(String? v, {bool sinhala = false}) {
   switch (v?.toLowerCase()) {
     case 'black':
-      return 'Black Pepper';
+      return sinhala ? ReviewAndConfirmScreenSi.blackPepper : 'Black Pepper';
     case 'white':
-      return 'White Pepper';
+      return sinhala ? ReviewAndConfirmScreenSi.whitePepper : 'White Pepper';
     default:
       return v ?? '—';
   }
 }
 
 String _formatVariety(String? v) {
+  // Variety names are proper names — kept in English regardless of language.
   switch (v?.toLowerCase()) {
     case 'ceylon_pepper':
       return 'Ceylon Pepper';
@@ -59,12 +62,12 @@ String _formatVariety(String? v) {
   }
 }
 
-String _formatDryingMethod(String? v) {
+String _formatDryingMethod(String? v, {bool sinhala = false}) {
   switch (v?.toLowerCase()) {
     case 'sun_dried':
-      return 'Sun Dried';
+      return sinhala ? ReviewAndConfirmScreenSi.sunDried : 'Sun Dried';
     case 'machine_dried':
-      return 'Machine Dried';
+      return sinhala ? ReviewAndConfirmScreenSi.machineDried : 'Machine Dried';
     default:
       return v?.replaceAll('_', ' ') ?? '—';
   }
@@ -128,11 +131,11 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
   bool _isLoading = true;
   String? _errorMessage;
   Map<String, dynamic>? _qcData;
-
-  // Live verified certs — fetched in parallel with qc data.
-  // The certificatesSnapshot on the QC doc is only populated after analysis,
-  // so we fetch the live list here instead.
   List<Map<String, dynamic>> _liveCerts = [];
+  String _currentLanguage = 'en';
+
+  bool get _isSinhala => _currentLanguage == 'si';
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
 
   @override
   void initState() {
@@ -152,6 +155,11 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
         );
 
     _animationController.forward();
+
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
+
     _loadAll();
   }
 
@@ -172,7 +180,6 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
     try {
       final api = QualityCheckApi();
 
-      // Fetch quality-check data and live certs in parallel
       final results = await Future.wait([
         api.getQualityCheckById(qualityCheckId: widget.qualityCheckId),
         api.getMyVerifiedCertifications(),
@@ -209,9 +216,12 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
           elevation: 0,
           automaticallyImplyLeading: false,
           centerTitle: true,
-          title: const Text(
-            'Review & Confirm',
-            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+          title: Text(
+            _t('Review & Confirm', ReviewAndConfirmScreenSi.reviewAndConfirm),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
           ),
         ),
         body: _isLoading
@@ -231,9 +241,12 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
       children: [
         CircularProgressIndicator(color: primary),
         const SizedBox(height: 16),
-        const Text(
-          'Loading review data…',
-          style: TextStyle(color: Colors.grey),
+        Text(
+          _t(
+            'Loading review data…',
+            ReviewAndConfirmScreenSi.loadingReviewData,
+          ),
+          style: const TextStyle(color: Colors.grey),
         ),
       ],
     ),
@@ -254,7 +267,10 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'Failed to load review data',
+            _t(
+              'Failed to load review data',
+              ReviewAndConfirmScreenSi.failedToLoad,
+            ),
             style: TextStyle(
               fontSize: responsive.titleFontSize,
               fontWeight: FontWeight.w700,
@@ -274,7 +290,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
           ElevatedButton.icon(
             onPressed: _loadAll,
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Retry'),
+            label: Text(_t('Retry', ReviewAndConfirmScreenSi.retry)),
             style: ElevatedButton.styleFrom(
               backgroundColor: primary,
               foregroundColor: Colors.white,
@@ -291,9 +307,15 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
     final batch = _qcData?['batch'] as Map<String, dynamic>? ?? {};
     final density = _qcData?['density'] as Map<String, dynamic>? ?? {};
 
-    final pepperType = _formatPepperType(batch['pepperType'] as String?);
+    final pepperType = _formatPepperType(
+      batch['pepperType'] as String?,
+      sinhala: _isSinhala,
+    );
     final pepperVariety = _formatVariety(batch['pepperVariety'] as String?);
-    final dryingMethod = _formatDryingMethod(batch['dryingMethod'] as String?);
+    final dryingMethod = _formatDryingMethod(
+      batch['dryingMethod'] as String?,
+      sinhala: _isSinhala,
+    );
     final batchWeight = _formatWeight(batch['batchWeightGrams']);
     final densityValue = density['value'];
     final densityDisplay = densityValue != null
@@ -319,7 +341,10 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                     _buildSectionHeader(
                       responsive,
                       primary,
-                      'Batch Information',
+                      _t(
+                        'Batch Information',
+                        ReviewAndConfirmScreenSi.batchInformation,
+                      ),
                       Icons.info_rounded,
                     ),
                     ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -328,28 +353,40 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                       children: [
                         _buildInfoRow(
                           responsive,
-                          'Pepper Type',
+                          _t(
+                            'Pepper Type',
+                            ReviewAndConfirmScreenSi.pepperType,
+                          ),
                           pepperType,
                           Icons.grass_rounded,
                         ),
                         _buildDivider(responsive),
                         _buildInfoRow(
                           responsive,
-                          'Pepper Variety',
+                          _t(
+                            'Pepper Variety',
+                            ReviewAndConfirmScreenSi.pepperVariety,
+                          ),
                           pepperVariety,
                           Icons.local_florist_rounded,
                         ),
                         _buildDivider(responsive),
                         _buildInfoRow(
                           responsive,
-                          'Drying Method',
+                          _t(
+                            'Drying Method',
+                            ReviewAndConfirmScreenSi.dryingMethod,
+                          ),
                           dryingMethod,
                           Icons.wb_sunny_rounded,
                         ),
                         _buildDivider(responsive),
                         _buildInfoRow(
                           responsive,
-                          'Batch Weight',
+                          _t(
+                            'Batch Weight',
+                            ReviewAndConfirmScreenSi.batchWeight,
+                          ),
                           batchWeight,
                           Icons.scale_rounded,
                           isLast: true,
@@ -363,7 +400,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                     _buildSectionHeader(
                       responsive,
                       primary,
-                      'Bulk Density',
+                      _t('Bulk Density', ReviewAndConfirmScreenSi.bulkDensity),
                       Icons.science_rounded,
                     ),
                     ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -372,15 +409,26 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                       children: [
                         _buildInfoRow(
                           responsive,
-                          'Measured Density',
+                          _t(
+                            'Measured Density',
+                            ReviewAndConfirmScreenSi.measuredDensity,
+                          ),
                           densityDisplay,
                           Icons.analytics_rounded,
                         ),
                         _buildDivider(responsive),
                         _buildInfoRow(
                           responsive,
-                          'Status',
-                          densityValue != null ? 'Verified' : 'Not recorded',
+                          _t('Status', ReviewAndConfirmScreenSi.status),
+                          densityValue != null
+                              ? _t(
+                                  'Verified',
+                                  ReviewAndConfirmScreenSi.verified,
+                                )
+                              : _t(
+                                  'Not recorded',
+                                  ReviewAndConfirmScreenSi.notRecorded,
+                                ),
                           Icons.check_circle_rounded,
                           valueColor: densityValue != null
                               ? Colors.green.shade700
@@ -396,7 +444,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                     _buildSectionHeader(
                       responsive,
                       primary,
-                      'Certificates',
+                      _t('Certificates', ReviewAndConfirmScreenSi.certificates),
                       Icons.verified_rounded,
                     ),
                     ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -408,7 +456,10 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                     _buildSectionHeader(
                       responsive,
                       primary,
-                      'Captured Images',
+                      _t(
+                        'Captured Images',
+                        ReviewAndConfirmScreenSi.capturedImages,
+                      ),
                       Icons.photo_library_rounded,
                     ),
                     ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
@@ -455,7 +506,10 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'No verified certificates found. You can still proceed — certificates are optional.',
+                _t(
+                  'No verified certificates found. You can still proceed — certificates are optional.',
+                  ReviewAndConfirmScreenSi.noCertificatesFound,
+                ),
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize,
                   color: Colors.grey[600],
@@ -467,6 +521,11 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
         ),
       );
     }
+
+    final count = _liveCerts.length;
+    final certCountLabel = _isSinhala
+        ? '$count ${count == 1 ? ReviewAndConfirmScreenSi.verifiedCertificate : ReviewAndConfirmScreenSi.verifiedCertificates}'
+        : '$count verified certificate${count == 1 ? '' : 's'} will be included';
 
     return Container(
       width: double.infinity,
@@ -490,7 +549,6 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Count header
           Row(
             children: [
               Icon(
@@ -500,7 +558,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
               ),
               const SizedBox(width: 8),
               Text(
-                '${_liveCerts.length} verified certificate${_liveCerts.length == 1 ? '' : 's'} will be included',
+                certCountLabel,
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize,
                   fontWeight: FontWeight.w600,
@@ -512,7 +570,6 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
 
           const SizedBox(height: 14),
 
-          // One row per cert
           ...List.generate(_liveCerts.length, (i) {
             final cert = _liveCerts[i];
             final type = _formatCertType(cert['certificationType'] as String?);
@@ -534,7 +591,6 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Icon badge
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -552,7 +608,6 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Name + details
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,7 +623,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                             if (number.isNotEmpty) ...[
                               const SizedBox(height: 3),
                               Text(
-                                'No: $number',
+                                '${_t('No:', ReviewAndConfirmScreenSi.certNo)} $number',
                                 style: TextStyle(
                                   fontSize: responsive.bodyFontSize - 1,
                                   color: Colors.grey[600],
@@ -588,7 +643,6 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                           ],
                         ),
                       ),
-                      // Expiry badge
                       if (expiry.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -601,7 +655,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
                             border: Border.all(color: Colors.green.shade200),
                           ),
                           child: Text(
-                            'Exp: $expiry',
+                            '${_t('Exp:', ReviewAndConfirmScreenSi.expLabel)} $expiry',
                             style: TextStyle(
                               fontSize: responsive.bodyFontSize - 2,
                               color: Colors.green.shade700,
@@ -628,7 +682,7 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
         responsive.isMobile && MediaQuery.of(context).size.width < 380;
 
     final backBtn = Container(
-      height: responsive.buttonHeight,
+      height: responsive.value(mobile: 60, tablet: 64, desktop: 68),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: Colors.grey.shade400, width: 2),
@@ -642,26 +696,17 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
             borderRadius: BorderRadius.circular(28),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.edit_rounded, size: responsive.smallIconSize),
-            const SizedBox(width: 8),
-            Text(
-              'Back to Edit',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: responsive.titleFontSize,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
+        child: _buttonContent(
+          responsive: responsive,
+          text: _t('Back to Edit', ReviewAndConfirmScreenSi.backToEdit),
+          leadingIcon: Icons.edit_rounded,
+          textColor: Colors.grey.shade700,
         ),
       ),
     );
 
     final confirmBtn = Container(
-      height: responsive.buttonHeight,
+      height: responsive.value(mobile: 60, tablet: 64, desktop: 68),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
@@ -691,20 +736,12 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
             borderRadius: BorderRadius.circular(28),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Confirm',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: responsive.titleFontSize,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(Icons.arrow_forward_rounded, size: responsive.smallIconSize),
-          ],
+        child: _buttonContent(
+          responsive: responsive,
+          text: _t('Confirm', ReviewAndConfirmScreenSi.confirm),
+          leadingIcon: Icons.check_circle_rounded,
+          trailingIcon: Icons.arrow_forward_rounded,
+          textColor: Colors.white,
         ),
       ),
     );
@@ -728,9 +765,49 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
     );
   }
 
+  Widget _buttonContent({
+    required Responsive responsive,
+    required String text,
+    required IconData leadingIcon,
+    IconData? trailingIcon,
+    Color? textColor,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(leadingIcon, size: responsive.smallIconSize, color: textColor),
+        const SizedBox(width: 8),
+
+        // IMPORTANT: allow wrapping/shrinking
+        Flexible(
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            softWrap: true,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: responsive.titleFontSize,
+              height: 1.1,
+              color: textColor,
+            ),
+          ),
+        ),
+
+        if (trailingIcon != null) ...[
+          const SizedBox(width: 8),
+          Icon(trailingIcon, size: responsive.smallIconSize, color: textColor),
+        ],
+      ],
+    );
+  }
+
   // ── Images card ──────────────────────────────────────────────────────────
 
   Widget _buildImagesCard(Responsive responsive) {
+    final capturedCount = widget.images.values.whereType<File>().length;
+
     return Container(
       padding: responsive.padding(
         mobile: const EdgeInsets.all(12),
@@ -760,7 +837,9 @@ class _SummaryConfirmationScreenState extends State<SummaryConfirmationScreen>
               ),
               ResponsiveSpacing.horizontal(mobile: 8, tablet: 10, desktop: 12),
               Text(
-                '${widget.images.values.whereType<File>().length} images captured',
+                _isSinhala
+                    ? 'රූප $capturedCount ${ReviewAndConfirmScreenSi.imagesCaptured}'
+                    : '$capturedCount images captured',
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize,
                   fontWeight: FontWeight.w600,

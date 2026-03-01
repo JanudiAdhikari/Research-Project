@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
-import 'QR_scan.dart';
+import 'verified_batches.dart';
 
 class BlockchainDashboard extends StatefulWidget {
   const BlockchainDashboard({super.key});
@@ -158,7 +158,7 @@ class _BlockchainDashboardState extends State<BlockchainDashboard> {
               ),
               SizedBox(height: responsive.smallSpacing),
               Text(
-                'Follow these simple steps to trace your pepper batch',
+                'Follow these simple steps to trace the pepper batch',
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize,
                   color: Colors.grey[600],
@@ -171,46 +171,46 @@ class _BlockchainDashboardState extends State<BlockchainDashboard> {
               _buildEnhancedInfoCard(
                 responsive,
                 '1',
-                'Locate QR Code',
-                'Find the unique QR code on your pepper package label',
-                Icons.qr_code_rounded,
-                Colors.blue,
+                'Select a Verified Batch',
+                'Open the verified batches list and choose a batch',
+                Icons.check_circle_rounded,
+                Colors.green,
               ),
               SizedBox(height: responsive.mediumSpacing),
               _buildEnhancedInfoCard(
                 responsive,
                 '2',
-                'Start Scanning',
-                'Click Start button and point camera at the QR code',
-                Icons.camera_alt_rounded,
-                Colors.purple,
-              ),
-              SizedBox(height: responsive.mediumSpacing),
-              _buildEnhancedInfoCard(
-                responsive,
-                '3',
-                'View Full Details',
-                'See complete batch information, origin, and handling details',
+                'View Full Batch Details',
+                'View batch details, quality check results, and complete blockchain history in one place',
                 Icons.info_outline_rounded,
                 Colors.orange,
               ),
               SizedBox(height: responsive.mediumSpacing),
               _buildEnhancedInfoCard(
                 responsive,
+                '3',
+                'QR Code is Generated',
+                'A unique QR code is automatically available for each verified batch for quick verification',
+                Icons.qr_code_2_rounded,
+                Colors.blue,
+              ),
+              SizedBox(height: responsive.mediumSpacing),
+              _buildEnhancedInfoCard(
+                responsive,
                 '4',
-                'Verify Origin',
-                'Confirm the pepper is authentic and from registered exporters',
-                Icons.verified_rounded,
-                Colors.green,
+                'Share QR with Buyers',
+                'Share the QR code with buyers so they can scan and confirm authenticity and origin',
+                Icons.share_rounded,
+                Colors.purple,
               ),
               SizedBox(height: responsive.mediumSpacing),
               _buildEnhancedInfoCard(
                 responsive,
                 '5',
-                'Check History',
-                'View complete blockchain record of the batch journey',
-                Icons.history_rounded,
-                Colors.teal,
+                'Download PDF Report',
+                'Download a complete traceability report as a PDF',
+                Icons.picture_as_pdf_rounded,
+                Colors.redAccent,
               ),
 
               SizedBox(
@@ -221,9 +221,9 @@ class _BlockchainDashboardState extends State<BlockchainDashboard> {
               Center(
                 child: SizedBox(
                   width: responsive.value(
-                    mobile: MediaQuery.of(context).size.width * 0.75,
-                    tablet: MediaQuery.of(context).size.width * 0.5,
-                    desktop: 400,
+                    mobile: MediaQuery.of(context).size.width * 0.5,
+                    tablet: MediaQuery.of(context).size.width * 0.35,
+                    desktop: 280,
                   ),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -246,30 +246,21 @@ class _BlockchainDashboardState extends State<BlockchainDashboard> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const QRScanScreen(),
+                          builder: (context) => const VerifiedBatchesScreen(),
                         ),
                       );
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.qr_code_scanner_rounded,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
                         Text(
-                          'Scan Batch Now',
+                          'Start',
                           style: TextStyle(
-                            fontSize: responsive.bodyFontSize,
+                            fontSize: responsive.fontSize(
+                              mobile: 16,
+                              tablet: 18,
+                              desktop: 20,
+                            ),
                             fontWeight: FontWeight.w900,
                             color: Colors.white,
                           ),

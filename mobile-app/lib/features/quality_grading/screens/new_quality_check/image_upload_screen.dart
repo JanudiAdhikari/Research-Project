@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/language_prefs.dart';
+import '../../../../utils/quality_grading/image_upload_screen_si.dart';
 import '../image_capture_guide_screen.dart';
 import 'review_and_confirm_screen.dart';
 import 'review_and_confirm_screen.dart' show ImageStore;
@@ -23,6 +25,7 @@ class ImageUploadScreen extends StatefulWidget {
 class _ImageUploadScreenState extends State<ImageUploadScreen>
     with SingleTickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
+  String _currentLanguage = 'en';
 
   final Map<String, File?> images = {
     'bottom_full': null,
@@ -39,6 +42,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  bool get _isSinhala => _currentLanguage == 'si';
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
 
   @override
   void initState() {
@@ -64,6 +70,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
         );
 
     _animationController.forward();
+
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
 
   @override
@@ -74,7 +84,6 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
 
   // ── Image picking ──────────────────────────────────────────────────────────
 
-  /// Shows a bottom sheet so the user can choose Camera or Gallery.
   Future<void> pickImage(String key) async {
     final source = await _showImageSourceSheet();
     if (source == null) return;
@@ -105,7 +114,6 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            // Drag handle
             Container(
               width: 40,
               height: 4,
@@ -118,7 +126,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                'Select Image Source',
+                _t(
+                  'Select Image Source',
+                  ImageUploadScreenSi.selectImageSource,
+                ),
                 style: TextStyle(
                   fontSize: responsive.titleFontSize,
                   fontWeight: FontWeight.w700,
@@ -131,21 +142,19 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  // Camera option
                   Expanded(
                     child: _SourceTile(
                       icon: Icons.camera_alt_rounded,
-                      label: 'Camera',
+                      label: _t('Camera', ImageUploadScreenSi.camera),
                       color: primary,
                       onTap: () => Navigator.pop(context, ImageSource.camera),
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // Gallery option
                   Expanded(
                     child: _SourceTile(
                       icon: Icons.photo_library_rounded,
-                      label: 'Gallery',
+                      label: _t('Gallery', ImageUploadScreenSi.gallery),
                       color: Colors.blue.shade600,
                       onTap: () => Navigator.pop(context, ImageSource.gallery),
                     ),
@@ -163,9 +172,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
   // ── Computed state ─────────────────────────────────────────────────────────
 
   bool get allImagesUploaded => images.values.every((e) => e != null);
-
   int get uploadedImagesCount => images.values.where((e) => e != null).length;
-
   int get remainingCount => 9 - uploadedImagesCount;
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -187,9 +194,12 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Image Upload',
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          _t('Image Upload', ImageUploadScreenSi.imageUpload),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
       ),
       body: FadeTransition(
@@ -209,7 +219,6 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Step indicator
                     Row(
                       children: [
                         _buildStepIndicator(1, true, primary, responsive),
@@ -223,7 +232,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                     ),
                     ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                     Text(
-                      "Capture Pepper Images",
+                      _t(
+                        'Capture Pepper Images',
+                        ImageUploadScreenSi.capturePepperImages,
+                      ),
                       style: TextStyle(
                         fontSize: responsive.fontSize(
                           mobile: 22,
@@ -236,7 +248,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                     ),
                     ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
                     Text(
-                      "Take or select 9 images from different angles and layers",
+                      _t(
+                        'Take or select 9 images from different angles and layers',
+                        ImageUploadScreenSi.headerSubtitle,
+                      ),
                       style: TextStyle(
                         fontSize: responsive.bodyFontSize,
                         color: Colors.grey[600],
@@ -251,7 +266,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '$uploadedImagesCount of 9 images uploaded',
+                              _isSinhala
+                                  ? 'රූප $uploadedImagesCount / 9 ${ImageUploadScreenSi.imagesUploaded}'
+                                  : '$uploadedImagesCount of 9 images uploaded',
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize - 1,
                                 fontWeight: FontWeight.w600,
@@ -351,7 +368,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                 ),
                                 Expanded(
                                   child: Text(
-                                    'Image Capture Instructions',
+                                    _t(
+                                      'Image Capture Instructions',
+                                      ImageUploadScreenSi
+                                          .imageCaptureInstructions,
+                                    ),
                                     style: TextStyle(
                                       fontSize: responsive.titleFontSize,
                                       fontWeight: FontWeight.w700,
@@ -367,7 +388,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                               desktop: 20,
                             ),
                             Text(
-                              '1. Place pepper on clean white A4 paper\n2. Ensure good natural lighting\n3. Capture 9 images (3 angles × 3 layers)\n4. Keep camera 20–30 cm above sample\n5. Use Camera to take a fresh photo or Gallery to pick an existing one',
+                              _t(
+                                '1. Place pepper on clean white A4 paper\n2. Ensure good natural lighting\n3. Capture 9 images (3 angles × 3 layers)\n4. Keep camera 20–30 cm above sample\n5. Use Camera to take a fresh photo or Gallery to pick an existing one',
+                                ImageUploadScreenSi.instructions,
+                              ),
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize,
                                 color: Colors.grey[700],
@@ -418,7 +442,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'View detailed instructions',
+                                      _t(
+                                        'View detailed instructions',
+                                        ImageUploadScreenSi
+                                            .viewDetailedInstructions,
+                                      ),
                                       style: TextStyle(
                                         fontSize: responsive.bodyFontSize - 1,
                                         color: Colors.blue.shade700,
@@ -439,7 +467,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                       _buildSection(
                         responsive,
                         primary,
-                        'Bottom Sample',
+                        _t('Bottom Sample', ImageUploadScreenSi.bottomSample),
                         'bottom',
                         Icons.arrow_downward_rounded,
                         Colors.orange,
@@ -448,7 +476,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                       _buildSection(
                         responsive,
                         primary,
-                        'Middle Sample',
+                        _t('Middle Sample', ImageUploadScreenSi.middleSample),
                         'middle',
                         Icons.remove_rounded,
                         Colors.blue,
@@ -457,7 +485,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                       _buildSection(
                         responsive,
                         primary,
-                        'Top Sample',
+                        _t('Top Sample', ImageUploadScreenSi.topSample),
                         'top',
                         Icons.arrow_upward_rounded,
                         Colors.purple,
@@ -493,7 +521,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '$remainingCount image${remainingCount == 1 ? '' : 's'} remaining',
+                                      _isSinhala
+                                          ? '$remainingCount ${remainingCount == 1 ? ImageUploadScreenSi.imageSingularRemaining : ImageUploadScreenSi.imagesRemaining}'
+                                          : '$remainingCount image${remainingCount == 1 ? '' : 's'} remaining',
                                       style: TextStyle(
                                         fontSize: responsive.bodyFontSize,
                                         fontWeight: FontWeight.w700,
@@ -502,7 +532,10 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'All 9 images must be uploaded before you can continue to the next step.',
+                                      _t(
+                                        'All 9 images must be uploaded before you can continue to the next step.',
+                                        ImageUploadScreenSi.allImagesRequired,
+                                      ),
                                       style: TextStyle(
                                         fontSize: responsive.bodyFontSize - 1,
                                         color: Colors.amber.shade800,
@@ -522,7 +555,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                       // ── Continue button ───────────────────────────────────
                       Container(
                         width: double.infinity,
-                        height: responsive.buttonHeight,
+                        height: responsive.value(
+                          mobile: 60,
+                          tablet: 64,
+                          desktop: 68,
+                        ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: [
@@ -537,10 +574,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                         child: ElevatedButton(
                           onPressed: allImagesUploaded
                               ? () {
-                                  // Persist images so SummaryConfirmationScreen (and any return trip)
-                                  // can access them without re-uploading.
                                   ImageStore.instance.images = Map.from(images);
-
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -571,14 +605,29 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                                 size: responsive.smallIconSize,
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                allImagesUploaded
-                                    ? "Continue"
-                                    : "Upload all images to continue",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: responsive.titleFontSize,
-                                  letterSpacing: 0.5,
+
+                              // IMPORTANT: let text wrap/shrink inside the Row
+                              Flexible(
+                                child: Text(
+                                  allImagesUploaded
+                                      ? _t(
+                                          'Continue',
+                                          ImageUploadScreenSi.continueText,
+                                        )
+                                      : _t(
+                                          'Upload all images to continue',
+                                          ImageUploadScreenSi
+                                              .uploadAllToContinue,
+                                        ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: true,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: responsive.titleFontSize,
+                                    height: 1.1,
+                                  ),
                                 ),
                               ),
                             ],
@@ -701,7 +750,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Complete',
+                        _t('Complete', ImageUploadScreenSi.complete),
                         style: TextStyle(
                           color: Colors.green.shade700,
                           fontSize: responsive.bodyFontSize - 2,
@@ -719,7 +768,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
               _buildImageTile(
                 responsive,
                 '${keyPrefix}_full',
-                'Full View',
+                _t('Full View', ImageUploadScreenSi.fullView),
                 Icons.crop_free_rounded,
                 accentColor,
               ),
@@ -727,7 +776,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
               _buildImageTile(
                 responsive,
                 '${keyPrefix}_half',
-                'Half View',
+                _t('Half View', ImageUploadScreenSi.halfView),
                 Icons.crop_square_rounded,
                 accentColor,
               ),
@@ -735,7 +784,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
               _buildImageTile(
                 responsive,
                 '${keyPrefix}_close',
-                'Close-up',
+                _t('Close-up', ImageUploadScreenSi.closeUp),
                 Icons.zoom_in_rounded,
                 accentColor,
               ),

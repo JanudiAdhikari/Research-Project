@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/language_prefs.dart';
 import '../../services/quality_check_api.dart';
 import 'detailed_report_screen.dart';
+import '../../../../utils/quality_grading/past_reports_screen_si.dart';
 
 class PastReportsScreen extends StatefulWidget {
   const PastReportsScreen({super.key});
@@ -17,6 +19,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
 
   String _sortBy = 'Newest First';
   String _filterGrade = 'All Grades';
+  String _currentLanguage = 'en';
 
   final QualityCheckApi _api = QualityCheckApi();
   List<Map<String, dynamic>> _allReports = [];
@@ -33,6 +36,12 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
+
     _fetchReports();
   }
 
@@ -42,6 +51,43 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     super.dispose();
   }
 
+  // ─── Language helper ─────────────────────────────────────────────
+
+  bool get _isSi => _currentLanguage == 'si';
+
+  String _t(String enText, String siText) => _isSi ? siText : enText;
+
+  // Sort / filter option keys (internal, language-independent)
+  static const _sortNewest = 'Newest First';
+  static const _sortOldest = 'Oldest First';
+  static const _sortHighest = 'Highest Score';
+  static const _sortLowest = 'Lowest Score';
+  static const _filterAllGrades = 'All Grades';
+
+  String _localizedSortOption(String key) {
+    if (!_isSi) return key;
+    switch (key) {
+      case _sortNewest:
+        return PastReportsScreenSi.newestFirst;
+      case _sortOldest:
+        return PastReportsScreenSi.oldestFirst;
+      case _sortHighest:
+        return PastReportsScreenSi.highestScore;
+      case _sortLowest:
+        return PastReportsScreenSi.lowestScore;
+      default:
+        return key;
+    }
+  }
+
+  String _localizedGradeOption(String key) {
+    if (!_isSi) return key;
+    if (key == _filterAllGrades) return PastReportsScreenSi.allGrades;
+    return key; // grade labels like "Premium", "Gold" stay as-is
+  }
+
+  // ─── Fetch ───────────────────────────────────────────────────────
+
   Future<void> _fetchReports() async {
     setState(() {
       _isLoading = true;
@@ -49,29 +95,16 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     });
 
     try {
-      // Uses GET /api/quality-checks/batchdetails
-      // Returns: [{ _id, batchId, batch, grade }]
       final rawList = await _api.getMyQualityChecks();
-
-      // For each item, fetch the full report to get all details
-      // GET /api/quality-checks/:id
       final List<Map<String, dynamic>> enriched = [];
       for (final item in rawList) {
         try {
           final id = item['_id']?.toString() ?? '';
           if (id.isEmpty) continue;
-
           final full = await _api.getQualityCheckById(qualityCheckId: id);
-
-          // Only show completed checks in the reports list
-          if (full['status'] == 'completed') {
-            enriched.add(full);
-          }
-        } catch (_) {
-          // Skip items that fail to load
-        }
+          if (full['status'] == 'completed') enriched.add(full);
+        } catch (_) {}
       }
-
       setState(() {
         _allReports = enriched;
         _isLoading = false;
@@ -85,9 +118,8 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     }
   }
 
-  // ─── Helpers to extract fields from backend shape ───────────────
+  // ─── Helpers ─────────────────────────────────────────────────────
 
-  /// e.g. "Grade 4 - Basic"  →  "Basic"  (for filter chips)
   String _shortGrade(String? fullGrade) {
     if (fullGrade == null || fullGrade.isEmpty) return 'Unknown';
     final parts = fullGrade.split(' - ');
@@ -105,10 +137,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     return raw
         .replaceAll('_', ' ')
         .split(' ')
-        .map((w) {
-          if (w.isEmpty) return w;
-          return w[0].toUpperCase() + w.substring(1);
-        })
+        .map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1))
         .join(' ');
   }
 
@@ -120,63 +149,56 @@ class _PastReportsScreenState extends State<PastReportsScreen>
   String _dateString(Map<String, dynamic> report) {
     final raw = report['createdAt'] as String?;
     if (raw == null) return '';
-    return raw.split('T').first; // yyyy-MM-dd
+    return raw.split('T').first;
   }
 
   String _density(Map<String, dynamic> report) {
     final val = report['density']?['value'];
-    if (val == null) return '—';
-    return '${val.toString()} g/L';
+    return val == null ? '—' : '${val.toString()} g/L';
   }
 
   String _weight(Map<String, dynamic> report) {
     final grams = report['batch']?['batchWeightGrams'] as num?;
     if (grams == null) return '—';
-    final kg = grams / 1000;
-    return '${kg.toStringAsFixed(2)} kg';
+    return '${(grams / 1000).toStringAsFixed(2)} kg';
   }
 
   // ─── Filtering & sorting ─────────────────────────────────────────
 
   List<Map<String, dynamic>> get _filteredReports {
     var reports = List<Map<String, dynamic>>.from(_allReports);
-
-    if (_filterGrade != 'All Grades') {
-      reports = reports.where((r) {
-        return _shortGrade(_displayGrade(r)) == _filterGrade;
-      }).toList();
+    if (_filterGrade != _filterAllGrades) {
+      reports = reports
+          .where((r) => _shortGrade(_displayGrade(r)) == _filterGrade)
+          .toList();
     }
-
     switch (_sortBy) {
-      case 'Newest First':
+      case _sortNewest:
         reports.sort((a, b) => _dateString(b).compareTo(_dateString(a)));
         break;
-      case 'Oldest First':
+      case _sortOldest:
         reports.sort((a, b) => _dateString(a).compareTo(_dateString(b)));
         break;
-      case 'Highest Score':
+      case _sortHighest:
         reports.sort((a, b) => _score(b).compareTo(_score(a)));
         break;
-      case 'Lowest Score':
+      case _sortLowest:
         reports.sort((a, b) => _score(a).compareTo(_score(b)));
         break;
     }
-
     return reports;
   }
 
   // ─── Stats ───────────────────────────────────────────────────────
 
   int get _totalReports => _allReports.length;
-
   int get _premiumCount => _allReports
       .where((r) => _shortGrade(_displayGrade(r)) == 'Premium')
       .length;
-
   double get _avgScore {
     if (_allReports.isEmpty) return 0;
-    final total = _allReports.map((r) => _score(r)).reduce((a, b) => a + b);
-    return total / _allReports.length;
+    return _allReports.map((r) => _score(r)).reduce((a, b) => a + b) /
+        _allReports.length;
   }
 
   // ─── Build ───────────────────────────────────────────────────────
@@ -198,16 +220,18 @@ class _PastReportsScreenState extends State<PastReportsScreen>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Quality Reports',
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          _t('Quality Reports', PastReportsScreenSi.qualityReports),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
         actions: [
-          // Refresh button
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.white),
             onPressed: _fetchReports,
-            tooltip: 'Refresh',
+            tooltip: _t('Refresh', PastReportsScreenSi.refresh),
           ),
         ],
       ),
@@ -223,18 +247,13 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                 child: Column(
                   children: [
                     ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-
-                    // Statistics Cards
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: responsive.pagePadding,
                       ),
                       child: _buildStatsGrid(responsive),
                     ),
-
                     ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-                    // Filters & Sort Section
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: responsive.pagePadding,
@@ -245,9 +264,9 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                             child: _buildFilterChip(
                               responsive,
                               primary,
-                              'Filter',
+                              _t('Filter', PastReportsScreenSi.filter),
                               Icons.filter_list_rounded,
-                              _filterGrade,
+                              _localizedGradeOption(_filterGrade),
                               () => _showFilterDialog(
                                 context,
                                 responsive,
@@ -264,9 +283,9 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                             child: _buildFilterChip(
                               responsive,
                               primary,
-                              'Sort',
+                              _t('Sort', PastReportsScreenSi.sort),
                               Icons.sort_rounded,
-                              _sortBy,
+                              _localizedSortOption(_sortBy),
                               () =>
                                   _showSortDialog(context, responsive, primary),
                             ),
@@ -274,10 +293,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                         ],
                       ),
                     ),
-
                     ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
-                    // Results count
                     Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: responsive.pagePadding,
@@ -285,7 +301,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                       child: Row(
                         children: [
                           Text(
-                            '${_filteredReports.length} ${_filteredReports.length == 1 ? 'Report' : 'Reports'}',
+                            '${_filteredReports.length} ${_filteredReports.length == 1 ? _t('Report', PastReportsScreenSi.report) : _t('Reports', PastReportsScreenSi.reports)}',
                             style: TextStyle(
                               fontSize: responsive.bodyFontSize,
                               fontWeight: FontWeight.w600,
@@ -295,10 +311,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                         ],
                       ),
                     ),
-
                     ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
-
-                    // Reports List
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -307,16 +320,14 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                       ),
                       itemCount: _filteredReports.length,
                       itemBuilder: (context, index) {
-                        final report = _filteredReports[index];
                         return _reportCard(
                           context,
                           responsive,
                           primary,
-                          report,
+                          _filteredReports[index],
                         );
                       },
                     ),
-
                     ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
                   ],
                 ),
@@ -360,7 +371,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
             ),
             ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
             Text(
-              'Failed to Load Reports',
+              _t('Failed to Load Reports', PastReportsScreenSi.failedToLoad),
               style: TextStyle(
                 fontSize: responsive.headingFontSize,
                 fontWeight: FontWeight.w700,
@@ -369,7 +380,11 @@ class _PastReportsScreenState extends State<PastReportsScreen>
             ),
             ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
             Text(
-              _error ?? 'An unexpected error occurred.',
+              _error ??
+                  _t(
+                    'An unexpected error occurred.',
+                    PastReportsScreenSi.unexpectedError,
+                  ),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: responsive.bodyFontSize,
@@ -381,7 +396,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
             ElevatedButton.icon(
               onPressed: _fetchReports,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try Again'),
+              label: Text(_t('Try Again', PastReportsScreenSi.tryAgain)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: Colors.white,
@@ -408,7 +423,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
         Expanded(
           child: _statCard(
             responsive,
-            'Total Reports',
+            _t('Total Reports', PastReportsScreenSi.totalReports),
             _totalReports.toString(),
             Icons.assignment_rounded,
             Colors.blue,
@@ -418,7 +433,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
         Expanded(
           child: _statCard(
             responsive,
-            'Premium Grades',
+            _t('Premium Grades', PastReportsScreenSi.premiumGrades),
             _premiumCount.toString(),
             Icons.star_rounded,
             Colors.amber,
@@ -428,7 +443,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
         Expanded(
           child: _statCard(
             responsive,
-            'Avg Score',
+            _t('Avg Score', PastReportsScreenSi.avgScore),
             _avgScore.toStringAsFixed(1),
             Icons.trending_up_rounded,
             Colors.green,
@@ -617,7 +632,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
           MaterialPageRoute(
             builder: (_) => DetailedReportScreen(
               qualityCheckId: qualityCheckId,
-              reportData: report, // pass full data so detail screen can use it
+              reportData: report,
             ),
           ),
         );
@@ -640,7 +655,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
         ),
         child: Column(
           children: [
-            // Header Section
+            // Header
             Container(
               padding: responsive.padding(
                 mobile: const EdgeInsets.all(14),
@@ -661,7 +676,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
               ),
               child: Row(
                 children: [
-                  // Score Badge
+                  // Score badge
                   Container(
                     width: responsive.value(
                       mobile: 56,
@@ -728,7 +743,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Grade badge  (short label)
+                        // Grade badge
                         Container(
                           padding: EdgeInsets.symmetric(
                             horizontal: responsive.value(
@@ -761,7 +776,6 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                           ),
                         ),
                         ResponsiveSpacing(mobile: 6, tablet: 7, desktop: 8),
-                        // Variety
                         Text(
                           _variety(report),
                           style: TextStyle(
@@ -771,7 +785,6 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                           ),
                         ),
                         ResponsiveSpacing(mobile: 2, tablet: 3, desktop: 4),
-                        // Pepper type + batch ID
                         Row(
                           children: [
                             Icon(
@@ -785,7 +798,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${_pepperType(report)} Pepper',
+                              '${_pepperType(report)} ${_t('Pepper', PastReportsScreenSi.pepper)}',
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize - 2,
                                 color: Colors.grey[600],
@@ -809,7 +822,6 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                           ],
                         ),
                         ResponsiveSpacing(mobile: 2, tablet: 3, desktop: 4),
-                        // Date
                         Row(
                           children: [
                             Icon(
@@ -843,8 +855,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                 ],
               ),
             ),
-
-            // Footer row: weight + density
+            // Footer: weight + density
             Padding(
               padding: responsive.padding(
                 mobile: const EdgeInsets.symmetric(
@@ -924,7 +935,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
             ),
             ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
             Text(
-              'No Reports Yet',
+              _t('No Reports Yet', PastReportsScreenSi.noReportsYet),
               style: TextStyle(
                 fontSize: responsive.headingFontSize,
                 fontWeight: FontWeight.w700,
@@ -933,7 +944,10 @@ class _PastReportsScreenState extends State<PastReportsScreen>
             ),
             ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
             Text(
-              'Start your first quality check to see\nyour grading reports here',
+              _t(
+                'Start your first quality check to see\nyour grading reports here',
+                PastReportsScreenSi.startFirstCheck,
+              ),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: responsive.bodyFontSize,
@@ -954,6 +968,8 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     Responsive responsive,
     Color primary,
   ) {
+    final sortOptions = [_sortNewest, _sortOldest, _sortHighest, _sortLowest];
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -972,7 +988,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                 Icon(Icons.sort_rounded, color: primary),
                 const SizedBox(width: 12),
                 Text(
-                  'Sort By',
+                  _t('Sort By', PastReportsScreenSi.sort),
                   style: TextStyle(
                     fontSize: responsive.headingFontSize,
                     fontWeight: FontWeight.w700,
@@ -981,14 +997,9 @@ class _PastReportsScreenState extends State<PastReportsScreen>
               ],
             ),
             const SizedBox(height: 20),
-            ...[
-              'Newest First',
-              'Oldest First',
-              'Highest Score',
-              'Lowest Score',
-            ].map(
+            ...sortOptions.map(
               (option) => RadioListTile<String>(
-                title: Text(option),
+                title: Text(_localizedSortOption(option)),
                 value: option,
                 groupValue: _sortBy,
                 activeColor: primary,
@@ -1009,9 +1020,8 @@ class _PastReportsScreenState extends State<PastReportsScreen>
     Responsive responsive,
     Color primary,
   ) {
-    // Dynamically build grade options from actual data
     final grades = {
-      'All Grades',
+      _filterAllGrades,
       ...(_allReports.map((r) => _shortGrade(_displayGrade(r)))),
     }.toList();
 
@@ -1033,7 +1043,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
                 Icon(Icons.filter_list_rounded, color: primary),
                 const SizedBox(width: 12),
                 Text(
-                  'Filter by Grade',
+                  _t('Filter by Grade', PastReportsScreenSi.filterByGrade),
                   style: TextStyle(
                     fontSize: responsive.headingFontSize,
                     fontWeight: FontWeight.w700,
@@ -1044,7 +1054,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
             const SizedBox(height: 20),
             ...grades.map(
               (option) => RadioListTile<String>(
-                title: Text(option),
+                title: Text(_localizedGradeOption(option)),
                 value: option,
                 groupValue: _filterGrade,
                 activeColor: primary,
@@ -1062,32 +1072,24 @@ class _PastReportsScreenState extends State<PastReportsScreen>
 
   // ─── Utilities ───────────────────────────────────────────────────
 
-  /// Map full grade string (e.g. "Grade 1 - Premium") to a color
   Color _getGradeColor(String fullGrade) {
     final lower = fullGrade.toLowerCase();
-    if (lower.contains('premium') || lower.contains('grade 1')) {
+    if (lower.contains('premium') || lower.contains('grade 1'))
       return Colors.green.shade600;
-    }
-    if (lower.contains('gold') || lower.contains('grade 2')) {
+    if (lower.contains('gold') || lower.contains('grade 2'))
       return Colors.amber.shade700;
-    }
-    if (lower.contains('silver') || lower.contains('grade 3')) {
+    if (lower.contains('silver') || lower.contains('grade 3'))
       return Colors.blueGrey.shade600;
-    }
-    if (lower.contains('basic') || lower.contains('grade 4')) {
+    if (lower.contains('basic') || lower.contains('grade 4'))
       return Colors.orange.shade600;
-    }
-    if (lower.contains('reject')) {
-      return Colors.red.shade600;
-    }
+    if (lower.contains('reject')) return Colors.red.shade600;
     return Colors.grey.shade600;
   }
 
   String _formatDate(String date) {
     final parts = date.split('-');
     if (parts.length != 3) return date;
-
-    final months = [
+    const months = [
       'Jan',
       'Feb',
       'Mar',
@@ -1101,11 +1103,6 @@ class _PastReportsScreenState extends State<PastReportsScreen>
       'Nov',
       'Dec',
     ];
-
-    final month = months[int.parse(parts[1]) - 1];
-    final day = parts[2];
-    final year = parts[0];
-
-    return '$day $month $year';
+    return '${parts[2]} ${months[int.parse(parts[1]) - 1]} ${parts[0]}';
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../config/api.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/language_prefs.dart';
+import '../../../../utils/quality_grading/certificates_step_screen_si.dart';
 import '../../../certifications/models/certification_model.dart';
 import '../../../certifications/screens/farmer_add_certifications_screen.dart';
 import '../../../certifications/services/certification_api.dart';
@@ -25,6 +27,7 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
     with SingleTickerProviderStateMixin {
   bool _loading = true;
   String? _error;
+  String _currentLanguage = 'en';
 
   List<Map<String, dynamic>> _certs = [];
 
@@ -33,6 +36,9 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
   late final Animation<Offset> _slideAnimation;
 
   late final CertificationApi _certApi;
+
+  bool get _isSinhala => _currentLanguage == 'si';
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
 
   @override
   void initState() {
@@ -55,6 +61,11 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
         );
 
     _animationController.forward();
+
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
+
     _loadCerts();
   }
 
@@ -74,7 +85,6 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
       final api = QualityCheckApi();
       final allVerified = await api.getMyVerifiedCertifications();
 
-      // backend provides isExpired + effectiveStatus
       final valid = allVerified.where((c) {
         final isExpired = c["isExpired"] == true;
         return !isExpired;
@@ -97,7 +107,6 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
   String _fmtDate(dynamic dateStr) {
     if (dateStr == null) return "-";
     final s = dateStr.toString();
-    // expects ISO string
     try {
       final d = DateTime.parse(s).toLocal();
       return "${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}";
@@ -123,9 +132,12 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Certificates",
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          _t("Certificates", CertificatesStepScreenSi.certificates),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
       ),
       body: FadeTransition(
@@ -145,7 +157,6 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Step indicator (4 steps) step3 active
                     Row(
                       children: [
                         _buildStepIndicator(1, true, primary, responsive),
@@ -159,7 +170,10 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                     ),
                     ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                     Text(
-                      "Verified Certificates",
+                      _t(
+                        "Verified Certificates",
+                        CertificatesStepScreenSi.verifiedCertificates,
+                      ),
                       style: TextStyle(
                         fontSize: responsive.fontSize(
                           mobile: 22,
@@ -172,7 +186,10 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                     ),
                     ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
                     Text(
-                      "Only verified and not expired certificates will be used for grading.",
+                      _t(
+                        "Only verified and not expired certificates will be used for grading.",
+                        CertificatesStepScreenSi.headerSubtitle,
+                      ),
                       style: TextStyle(
                         fontSize: responsive.bodyFontSize,
                         color: Colors.grey[600],
@@ -202,18 +219,20 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                               responsive: responsive,
                               color: Colors.blue.shade600,
                               icon: Icons.add_rounded,
-                              label: "Add Certificate",
+                              label: _t(
+                                "Add Certificate",
+                                CertificatesStepScreenSi.addCertificate,
+                              ),
                               onPressed: () async {
                                 await Navigator.push<CertificationModel>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            FarmerAddCertificationScreen(
-                                              api: _certApi,
-                                            ),
-                                      ),
-                                    );
-
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        FarmerAddCertificationScreen(
+                                          api: _certApi,
+                                        ),
+                                  ),
+                                );
                                 _loadCerts();
                               },
                             ),
@@ -222,7 +241,10 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                           IconButton(
                             onPressed: _loadCerts,
                             icon: const Icon(Icons.refresh_rounded),
-                            tooltip: "Refresh",
+                            tooltip: _t(
+                              "Refresh",
+                              CertificatesStepScreenSi.refresh,
+                            ),
                           ),
                         ],
                       ),
@@ -267,7 +289,11 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  "No verified certificates found. You can still continue, but certificate bonus will be 0.",
+                                  _t(
+                                    "No verified certificates found. You can still continue, but certificate bonus will be 0.",
+                                    CertificatesStepScreenSi
+                                        .noCertificatesFound,
+                                  ),
                                   style: TextStyle(
                                     fontSize: responsive.bodyFontSize,
                                     color: Colors.orange.shade900,
@@ -343,7 +369,7 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
-                                    "Certificate No: $num",
+                                    "${_t('Certificate No:', CertificatesStepScreenSi.certificateNo)} $num",
                                     style: TextStyle(
                                       fontSize: responsive.bodyFontSize,
                                       color: Colors.grey[800],
@@ -352,7 +378,7 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    "Issuing body: $body",
+                                    "${_t('Issuing body:', CertificatesStepScreenSi.issuingBody)} $body",
                                     style: TextStyle(
                                       fontSize: responsive.bodyFontSize - 1,
                                       color: Colors.grey[700],
@@ -363,7 +389,7 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                                     children: [
                                       Expanded(
                                         child: Text(
-                                          "Issue: $issue",
+                                          "${_t('Issue:', CertificatesStepScreenSi.issue)} $issue",
                                           style: TextStyle(
                                             fontSize:
                                                 responsive.bodyFontSize - 1,
@@ -373,7 +399,7 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                                       ),
                                       Expanded(
                                         child: Text(
-                                          "Expiry: $exp",
+                                          "${_t('Expiry:', CertificatesStepScreenSi.expiry)} $exp",
                                           textAlign: TextAlign.end,
                                           style: TextStyle(
                                             fontSize:
@@ -392,7 +418,7 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
 
                       ResponsiveSpacing(mobile: 18, tablet: 20, desktop: 22),
 
-                      // Continue button to Step 4
+                      // Continue button
                       Container(
                         width: double.infinity,
                         height: responsive.buttonHeight,
@@ -430,7 +456,11 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Continue to Image Upload",
+                                _t(
+                                  "Continue to Image Upload",
+                                  CertificatesStepScreenSi
+                                      .continueToImageUpload,
+                                ),
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: responsive.titleFontSize,

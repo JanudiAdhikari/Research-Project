@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, ArrowRight } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import '../App.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ export default function Login() {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
-      
+
       // Basic validation for demo
       if (email && password) {
         navigate('/dashboard');
@@ -44,15 +46,15 @@ export default function Login() {
         </div>
         <div className="brand-decoration"></div>
       </div>
-      
+
       <div className="login-right">
         <div className="login-card">
           <h2>Welcome Back 👋</h2>
           <p className="login-subtitle">Please enter your details to sign in.</p>
-          
+
           <form onSubmit={handleLogin} className="login-form">
             {error && <div className="error-message">{error}</div>}
-            
+
             <div className="form-group">
               <label htmlFor="email">Email Address</label>
               <div className="input-wrapper">
@@ -67,30 +69,44 @@ export default function Login() {
                 />
               </div>
             </div>
-            
+
             <div className="form-group">
               <label htmlFor="password">Password</label>
               <div className="input-wrapper">
                 <Lock className="input-icon" size={20} />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   id="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
-            
+
             <div className="form-actions">
               <label className="remember-me">
-                <input type="checkbox" />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="forgot-password">Forgot password?</a>
+              <Link to="/forgot-password" className="forgot-password">
+                Forgot password?
+              </Link>
             </div>
-            
+
             <button type="submit" className="btn-primary login-btn" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign In'}
               {!loading && <ArrowRight size={18} />}

@@ -5,7 +5,6 @@ import 'image_picker_screen.dart';
 import 'posts_view_screen.dart';
 import 'complaint_screen.dart';
 import 'complaint_list_screen.dart';
-import 'analyze_plants_screen.dart';
 import '../../../utils/localization.dart';
 import '../../../utils/language_prefs.dart';
 
@@ -94,13 +93,6 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  void _navigateToAnalyzePlants(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AnalyzePlantsScreen()),
-    );
-  }
-
   String _getUserDisplayName() {
     return 'Farmer';
   }
@@ -121,82 +113,84 @@ class _HomeScreenState extends State<HomeScreen>
           children: [
             // ---------------- FIXED HEADER ----------------
             Container(
-                width: double.infinity,
-                padding: EdgeInsets.fromLTRB(
-                  0,
-                  MediaQuery.of(context).padding.top + 20,
-                  0,
-                  30,
+              width: double.infinity,
+              padding: EdgeInsets.fromLTRB(
+                0,
+                MediaQuery.of(context).padding.top + 20,
+                0,
+                30,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [primary, primary.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primary, primary.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primary.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _translate(
+                                  'hello_user',
+                                ).replaceAll('{name}', _getUserDisplayName()),
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                _translate('disease_detection_title'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              if (_getUserEmail().isNotEmpty) ...[
+                                const SizedBox(height: 4),
                                 Text(
-                                  _translate('hello_user').replaceAll('{name}', _getUserDisplayName()),
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 16,
+                                  _getUserEmail(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w400,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  _translate('disease_detection_title'),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                if (_getUserEmail().isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _getUserEmail(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
                               ],
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                 ),
               ),
+            ),
 
             // ----------- SCROLLABLE CONTENT -----------
             Expanded(
@@ -261,7 +255,7 @@ class _HomeScreenState extends State<HomeScreen>
                       onTap: () => _navigateToComplaintManagement(context),
                     ),
 
-                   const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                     // // Analyze Plants
                     // _buildNavigationCard(
@@ -350,10 +344,7 @@ class _HomeScreenState extends State<HomeScreen>
                 const SizedBox(height: 4),
                 Text(
                   _translate('disease_description'),
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black87,
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.black87),
                 ),
               ],
             ),
@@ -410,11 +401,7 @@ class _HomeScreenState extends State<HomeScreen>
                         color: Colors.white.withOpacity(0.25),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
-                        icon,
-                        size: 22,
-                        color: Colors.white,
-                      ),
+                      child: Icon(icon, size: 22, color: Colors.white),
                     ),
                     const SizedBox(height: 16),
                     Column(

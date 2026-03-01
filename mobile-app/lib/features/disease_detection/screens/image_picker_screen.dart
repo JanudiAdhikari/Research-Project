@@ -5,6 +5,11 @@ import 'disease_result_screen.dart';
 import '../../../utils/localization.dart';
 import '../../../utils/language_prefs.dart';
 
+Color _withOpacity(Color c, double opacity) {
+  final alpha = (opacity * 255).round().clamp(0, 255);
+  return c.withAlpha(alpha);
+}
+
 class ImagePickerScreen extends StatefulWidget {
   const ImagePickerScreen({Key? key}) : super(key: key);
 
@@ -12,25 +17,46 @@ class ImagePickerScreen extends StatefulWidget {
   State<ImagePickerScreen> createState() => _ImagePickerScreenState();
 }
 
-class _ImagePickerScreenState extends State<ImagePickerScreen> {
+class _ImagePickerScreenState extends State<ImagePickerScreen>
+    with SingleTickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
   String _currentLanguage = 'en';
 
-  String _translate(String key) {
-    return AppLocalizations.translate(_currentLanguage, key);
-  }
+  static const Color primary = Color(0xFF2E7D32);
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  String _translate(String key) =>
+      AppLocalizations.translate(_currentLanguage, key);
 
   @override
   void initState() {
     super.initState();
-    // Load language preference
+
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
+    _animationController.forward();
+
     LanguagePrefs.getLanguage().then((lang) {
-      if (mounted) {
-        setState(() {
-          _currentLanguage = lang;
-        });
-      }
+      if (mounted) setState(() => _currentLanguage = lang);
     });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _takePhoto() async {
@@ -40,13 +66,9 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
       maxHeight: 1800,
       imageQuality: 90,
     );
-
     if (image != null) {
       final imageFile = File(image.path);
-
       if (!mounted) return;
-
-      // Navigate to disease result screen for analysis (same as gallery)
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -63,13 +85,9 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
       maxHeight: 1800,
       imageQuality: 90,
     );
-
     if (image != null) {
       final imageFile = File(image.path);
-
       if (!mounted) return;
-
-      // Navigate to disease result screen for analysis
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -82,265 +100,239 @@ class _ImagePickerScreenState extends State<ImagePickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
+        backgroundColor: primary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
           _translate('add_photo'),
           style: const TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: Column(
+            children: [
+              // ── White header section ──────────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _translate('choose_photo_source'),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _translate('select_how_you_want_to_add_photo'),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Option cards ──────────────────────────────────────────────
+              SlideTransition(
+                position: _slideAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: [
+                      // Section header
+                      _buildSectionHeader(
+                        'Select Source',
+                        Icons.add_photo_alternate_rounded,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Camera card
+                      _buildOptionCard(
+                        title: _translate('take_photo'),
+                        subtitle: _translate('take_photo_with_camera'),
+                        icon: Icons.camera_alt_rounded,
+                        iconBgColor: const Color(0xFFE8F5E9),
+                        iconColor: primary,
+                        onTap: _takePhoto,
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // Gallery card
+                      _buildOptionCard(
+                        title: _translate('pick_from_gallery'),
+                        subtitle: _translate('select_existing_photo'),
+                        icon: Icons.photo_library_rounded,
+                        iconBgColor: const Color(0xFFE3F2FD),
+                        iconColor: const Color(0xFF1565C0),
+                        onTap: _pickFromGallery,
+                      ),
+
+                      const SizedBox(height: 28),
+
+                      // Info card (green-tinted to match theme)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: _withOpacity(primary, 0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _withOpacity(primary, 0.2)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              color: primary,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Photos are optimized for best quality and performance.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Section header ─────────────────────────────────────────────────────────
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _withOpacity(primary, 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: primary, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
             color: Colors.black87,
           ),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
-      ),
-      body: Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // Header Section
-            Column(
-              children: [
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.blue[100]!,
-                      width: 3,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.camera_alt_outlined,
-                    size: 50,
-                    color: Colors.blue,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  _translate('choose_photo_source'),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _translate('select_how_you_want_to_add_photo'),
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-            const SizedBox(height: 48),
+      ],
+    );
+  }
 
-            // Option Cards
-            Expanded(
-              child: Column(
-                children: [
-                  // Camera Option
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 20),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.blue[50]!,
-                            Colors.blue[100]!,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(24),
-                        leading: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 30,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        title: Text(
-                          _translate('take_photo'),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        subtitle: Text(
-                          _translate('take_photo_with_camera'),
-                          style: const TextStyle(
-                            color: Colors.grey,
-                          ),
-                        ),
-                        trailing: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        onTap: _takePhoto,
-                      ),
-                    ),
-                  ),
+  // ── Option card (matches _featureCard / _resourceCard style) ──────────────
 
-                  // Gallery Option
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 20),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.purple[50]!,
-                            Colors.purple[100]!,
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(24),
-                        leading: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.purple.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.photo_library,
-                            size: 30,
-                            color: Colors.purple,
-                          ),
-                        ),
-                        title: Text(
-                          _translate('pick_from_gallery'),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        subtitle: Text(
-                          _translate('select_existing_photo'),
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
-                        ),
-                        trailing: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.purple.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: Colors.purple,
-                          ),
-                        ),
-                        onTap: _pickFromGallery,
-                      ),
-                    ),
-                  ),
-
-                  // Info Card
-                  Card(
-                    margin: const EdgeInsets.only(top: 20),
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    color: Colors.grey[50],
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: Colors.blue[400],
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Photos are optimized for best quality and performance',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+  Widget _buildOptionCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconBgColor,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: _withOpacity(Colors.black, 0.07),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-            ),
-          ],
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 26),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.grey[400],
+                size: 15,
+              ),
+            ],
+          ),
         ),
       ),
     );

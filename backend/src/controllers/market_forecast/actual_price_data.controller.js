@@ -8,6 +8,7 @@ const STATUSES = {
   BATCH_CREATED: "BATCH_CREATED",
   MARKETPLACE_LISTED: "MARKETPLACE_LISTED",
   VERIFIED: "VERIFIED",
+  QR_GENERATED: "QR_GENERATED",
   RECEIVED: "RECEIVED",
 };
 
@@ -136,7 +137,11 @@ function canTransition({ fromStatus, toStatus, actorRole }) {
     return actorRole === ROLES.ADMIN;
   }
 
-  if (fromStatus === STATUSES.VERIFIED && toStatus === STATUSES.RECEIVED) {
+  if (fromStatus === STATUSES.VERIFIED && toStatus === STATUSES.QR_GENERATED) {
+    return actorRole === ROLES.ADMIN;
+  }
+
+  if (fromStatus === STATUSES.QR_GENERATED && toStatus === STATUSES.RECEIVED) {
     return actorRole === ROLES.EXPORTER || actorRole === ROLES.ADMIN;
   }
 
@@ -354,6 +359,19 @@ const updateActualPriceData = async (req, res) => {
         }
       }
 
+      // Admin generates QR
+      if (
+        existingStatus === STATUSES.VERIFIED &&
+        incomingStatus === STATUSES.QR_GENERATED &&
+        actorRole === ROLES.ADMIN
+      ) {
+        // create a unique token only once (avoid regenerating)
+        if (!record.qrToken) {
+          record.qrToken = crypto.randomBytes(16).toString("hex");
+          record.qrGeneratedAt = new Date();
+        }
+      }
+
       appendStatusBlock(record, incomingStatus, actorId, actorRole);
       await record.save();
       return res.json(record);
@@ -448,9 +466,38 @@ const deleteActualPriceData = async (req, res) => {
   }
 };
 
+// Get the record details by QR token (for exporter scanning)
+const getRecordByQrToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const record = await ActualPriceData.findOne({ qrToken: token }).lean();
+    if (!record) {
+      return res.status(404).json({ message: "Invalid QR token" });
+    }
+
+    //Attach farmer name
+    if (record.userId) {
+      const u = await User.findOne({ firebaseUid: record.userId }).lean();
+      if (u) {
+        record.farmerName =
+          `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email || "";
+      }
+    }
+
+    return res.json(record);
+  } catch (err) {
+    console.error("getRecordByQrToken error:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
+  }
+};
+
 module.exports = {
   getActualPriceData,
   createActualPriceData,
   updateActualPriceData,
   deleteActualPriceData,
+  getRecordByQrToken
 };

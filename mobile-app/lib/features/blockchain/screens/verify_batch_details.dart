@@ -353,6 +353,9 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
     final statusColor = _statusColor(statusRaw);
     final statusIcon = _statusIcon(statusRaw);
 
+    final bool isAlreadyVerified = statusRaw.trim().toUpperCase() == 'VERIFIED';
+    final bool isQrGenerated = statusRaw.trim().toUpperCase() == 'QR_GENERATED';
+
     final saleDate = _formatDate(r['saleDate']);
     final district = _safe(r['district']);
     final pepperType = _safe(r['pepperType']);
@@ -631,13 +634,23 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
                 SizedBox(width: responsive.mediumSpacing),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _verifying ? null : _handleVerify,
+                    onPressed:
+                        (_verifying || isAlreadyVerified || isQrGenerated)
+                        ? null
+                        : _handleVerify,
                     icon: Icon(
                       Icons.verified_rounded,
                       size: responsive.mediumIconSize,
+                      color: (isAlreadyVerified || isQrGenerated)
+                          ? Colors.white70
+                          : null,
                     ),
                     label: Text(
-                      _verifying ? 'Verifying...' : 'Verify',
+                      isAlreadyVerified
+                          ? 'Verified'
+                          : isQrGenerated
+                          ? 'QR Generated'
+                          : (_verifying ? 'Verifying...' : 'Verify'),
                       style: TextStyle(fontSize: responsive.bodyFontSize),
                     ),
                     style: ElevatedButton.styleFrom(

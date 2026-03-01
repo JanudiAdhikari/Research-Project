@@ -33,16 +33,20 @@ class PriceReportCard extends StatelessWidget {
     final saleDate = report['saleDate'] as String? ?? '';
 
     return Container(
-      margin: EdgeInsets.only(bottom: responsive.smallSpacing + 4),
+      margin: EdgeInsets.only(bottom: responsive.smallSpacing + 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          colors: [Colors.white, Colors.grey.shade50],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -303,42 +307,45 @@ class PriceReportCard extends StatelessWidget {
     final rawStatus = (report['currentStatus'] as String?)?.trim();
     final status = _normalizeStatus(rawStatus);
 
-    final bool canShowAddToMarketplace = status != 'MARKETPLACE_LISTED';
+    final bool isVerified = status == 'VERIFIED';
+    final bool canShowAddToMarketplace =
+        !isVerified && status != 'MARKETPLACE_LISTED';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // First row: Update & Delete
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onUpdate,
-                icon: const Icon(Icons.edit_rounded, size: 16),
-                label: const Text('Update'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF2E7D32),
-                  side: const BorderSide(color: Color(0xFF2E7D32)),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+        // First row: Update & Delete (hide when verified)
+        if (!isVerified)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onUpdate,
+                  icon: const Icon(Icons.edit_rounded, size: 16),
+                  label: const Text('Update'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2E7D32),
+                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_rounded, size: 16),
-                label: const Text('Delete'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_rounded, size: 16),
+                  label: const Text('Delete'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
 
         if (canShowAddToMarketplace) ...[
           const SizedBox(height: 10),
@@ -373,10 +380,8 @@ class PriceReportCard extends StatelessWidget {
         return 'Batch Created';
       case 'MARKETPLACE_LISTED':
         return 'Marketplace Listed';
-      case 'APPROVED':
-        return 'Approved';
-      case 'REJECTED':
-        return 'Rejected';
+      case 'VERIFIED':
+        return 'Verified';
       default:
         // fallback: SOME_STATUS -> Some Status
         final s = normalizedStatus.replaceAll('_', ' ').toLowerCase();
@@ -415,10 +420,8 @@ class PriceReportCard extends StatelessWidget {
         return const Color(0xFF6A1B9A);
       case 'MARKETPLACE_LISTED':
         return Colors.blue.shade700;
-      case 'APPROVED':
-        return const Color(0xFF0277BD);
-      case 'REJECTED':
-        return Colors.red;
+      case 'VERIFIED':
+        return const Color(0xFF2E7D32);
       default:
         return Colors.grey;
     }

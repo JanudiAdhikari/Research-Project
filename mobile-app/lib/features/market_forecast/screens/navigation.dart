@@ -123,8 +123,9 @@ class _PriceNavigationState extends State<PriceNavigation>
                       : 'View weekly predictions',
                   icon: Icons.trending_up_rounded,
                   gradient: LinearGradient(
-                    colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
+                    colors: [Colors.white, Color(0xFFF7F7F8)],
                   ),
+                  iconColor: Colors.deepOrange,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -148,8 +149,9 @@ class _PriceNavigationState extends State<PriceNavigation>
                       : 'Analyze trends',
                   icon: Icons.assessment_rounded,
                   gradient: LinearGradient(
-                    colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                    colors: [Colors.white, Color(0xFFF7F7F8)],
                   ),
+                  iconColor: Colors.indigo,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -173,8 +175,9 @@ class _PriceNavigationState extends State<PriceNavigation>
                       : 'Track global exports',
                   icon: Icons.public_rounded,
                   gradient: LinearGradient(
-                    colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
+                    colors: [Colors.white, Color(0xFFF7F7F8)],
                   ),
+                  iconColor: Colors.blue,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -198,8 +201,9 @@ class _PriceNavigationState extends State<PriceNavigation>
                       : 'Enter price details of your pepper batch',
                   icon: Icons.receipt_long_rounded,
                   gradient: LinearGradient(
-                    colors: [Color(0xFF4CAF50), Color(0xFF388E3C)],
+                    colors: [Colors.white, Color(0xFFF7F7F8)],
                   ),
+                  iconColor: Colors.amber,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -307,6 +311,7 @@ class _PriceNavigationState extends State<PriceNavigation>
     required String subtitle,
     required IconData icon,
     required Gradient gradient,
+    required Color iconColor,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -338,7 +343,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                 child: Icon(
                   icon,
                   size: responsive.value(mobile: 65, tablet: 75, desktop: 85),
-                  color: Colors.white.withOpacity(0.15),
+                  color: iconColor.withOpacity(0.12),
                 ),
               ),
               Padding(
@@ -354,8 +359,15 @@ class _PriceNavigationState extends State<PriceNavigation>
                         responsive.value(mobile: 8, tablet: 9, desktop: 10),
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
+                        color: iconColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Icon(
                         icon,
@@ -364,7 +376,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                           tablet: 26,
                           desktop: 30,
                         ),
-                        color: Colors.white,
+                        color: iconColor,
                       ),
                     ),
                     SizedBox(
@@ -387,7 +399,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                               desktop: 22,
                             ),
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: Colors.black87,
                             height: 1.2,
                           ),
                           maxLines: 2,
@@ -411,7 +423,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                                     tablet: 15,
                                     desktop: 16,
                                   ),
-                                  color: Colors.white.withOpacity(0.95),
+                                  color: Colors.grey[800],
                                   fontWeight: FontWeight.w500,
                                 ),
                                 maxLines: 1,
@@ -422,7 +434,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                             // Forward arrow icon
                             Icon(
                               Icons.arrow_forward_rounded,
-                              color: Colors.white.withOpacity(0.95),
+                              color: Colors.grey[700],
                               size: responsive.value(
                                 mobile: 14,
                                 tablet: 16,

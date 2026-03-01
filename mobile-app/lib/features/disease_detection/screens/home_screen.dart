@@ -76,19 +76,19 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _navigateToPosts(BuildContext context) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const PostsViewScreen()),
-      );
+    context,
+    MaterialPageRoute(builder: (_) => const PostsViewScreen()),
+  );
 
   void _navigateToComplaint(BuildContext context) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ComplaintScreen()),
-      );
+    context,
+    MaterialPageRoute(builder: (_) => const ComplaintScreen()),
+  );
 
   void _navigateToComplaintManagement(BuildContext context) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const ComplaintListScreen()),
-      );
+    context,
+    MaterialPageRoute(builder: (_) => const ComplaintListScreen()),
+  );
 
   @override
   Widget build(BuildContext context) {

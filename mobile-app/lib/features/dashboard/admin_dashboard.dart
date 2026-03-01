@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_page.dart';
-import '../blockchain/screens/pepper_batches.dart';
+import '../blockchain/screens/blockchain_process.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -498,22 +498,6 @@ class _AdminDashboardState extends State<AdminDashboard>
       ),
       _featureCard(
         responsive,
-        title: 'Verify Pepper Batches',
-        icon: Icons.verified_rounded,
-        gradient: LinearGradient(
-          colors: [Colors.green.shade400, Colors.green.shade700],
-        ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const VerifyBatchesScreen(),
-            ),
-          );
-        },
-      ),
-      _featureCard(
-        responsive,
         title: 'Market Control',
         icon: Icons.trending_up_rounded,
         gradient: LinearGradient(
@@ -523,12 +507,19 @@ class _AdminDashboardState extends State<AdminDashboard>
       ),
       _featureCard(
         responsive,
-        title: 'Blockchain Logs',
+        title: 'Blockchain',
         icon: Icons.link_rounded,
         gradient: LinearGradient(
           colors: [Colors.red.shade400, Colors.red.shade700],
         ),
-        onTap: () {},
+                onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BlockchainProcessScreen(),
+            ),
+          );
+        },
       ),
     ];
   }

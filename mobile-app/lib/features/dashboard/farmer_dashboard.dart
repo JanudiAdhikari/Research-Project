@@ -15,7 +15,6 @@ import '../chatbot/chatbot_screen.dart';
 import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
 import 'package:flutter/services.dart';
 
-
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
   final alpha = (opacity * 255).round().clamp(0, 255);
@@ -434,16 +433,16 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                           color: Colors.white.withValues(alpha: 0.3),
                         ),
                         _languageButton('සි', 'si', responsive, primary),
-                        Container(
-                          width: 1,
-                          height: responsive.value(
-                            mobile: 20,
-                            tablet: 22,
-                            desktop: 24,
-                          ),
-                          color: Colors.white.withValues(alpha: 0.3),
-                        ),
-                        _languageButton('தமிழ்', 'ta', responsive, primary),
+                        // Container(
+                        //   width: 1,
+                        //   height: responsive.value(
+                        //     mobile: 20,
+                        //     tablet: 22,
+                        //     desktop: 24,
+                        //   ),
+                        //   color: Colors.white.withValues(alpha: 0.3),
+                        // ),
+                        // _languageButton('தமிழ்', 'ta', responsive, primary),
                       ],
                     ),
                   ),

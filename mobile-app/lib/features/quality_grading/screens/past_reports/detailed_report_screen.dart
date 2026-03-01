@@ -6,13 +6,15 @@ import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
 
 import '../../../../utils/responsive.dart';
+import '../../../../utils/language_prefs.dart';
 import '../../../../utils/web_download_stub.dart'
     if (dart.library.html) '../../../../utils/web_download.dart';
 import '../../../quality_grading/services/quality_check_api.dart';
 import '../how_it_works_screen.dart';
+import '../../../../utils/quality_grading/detailed_report_screen_si.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Grade colour theme  (mirrors result_summary_screen.dart)
+// Grade colour theme
 // ─────────────────────────────────────────────────────────────────────────────
 class _GradeTheme {
   final Color primary;
@@ -96,31 +98,46 @@ String _str(dynamic v, {String fallback = '—'}) {
 
 String _mapPepperType(String v) {
   switch (v) {
-    case 'black': return 'Black Pepper';
-    case 'white': return 'White Pepper';
-    default: return v.isEmpty ? '—' : v;
+    case 'black':
+      return 'Black Pepper';
+    case 'white':
+      return 'White Pepper';
+    default:
+      return v.isEmpty ? '—' : v;
   }
 }
 
 String _mapVariety(String v) {
   switch (v) {
-    case 'ceylon_pepper':    return 'Ceylon Pepper';
-    case 'panniyur_1':       return 'Panniyur-1';
-    case 'kuching':          return 'Kuching';
-    case 'dingi_rala':       return 'Dingi Rala';
-    case 'kohukumbure_rala': return 'Kohukumbure Rala';
-    case 'bootawe_rala':     return 'Bootawe Rala';
-    case 'malabar':          return 'Malabar';
-    case 'unknown':          return 'Unknown';
-    default: return v.isEmpty ? '—' : v.replaceAll('_', ' ');
+    case 'ceylon_pepper':
+      return 'Ceylon Pepper';
+    case 'panniyur_1':
+      return 'Panniyur-1';
+    case 'kuching':
+      return 'Kuching';
+    case 'dingi_rala':
+      return 'Dingi Rala';
+    case 'kohukumbure_rala':
+      return 'Kohukumbure Rala';
+    case 'bootawe_rala':
+      return 'Bootawe Rala';
+    case 'malabar':
+      return 'Malabar';
+    case 'unknown':
+      return 'Unknown';
+    default:
+      return v.isEmpty ? '—' : v.replaceAll('_', ' ');
   }
 }
 
 String _mapDrying(String v) {
   switch (v) {
-    case 'sun_dried':     return 'Sun Dried';
-    case 'machine_dried': return 'Machine Dried';
-    default: return v.isEmpty ? '—' : v.replaceAll('_', ' ');
+    case 'sun_dried':
+      return 'Sun Dried';
+    case 'machine_dried':
+      return 'Machine Dried';
+    default:
+      return v.isEmpty ? '—' : v.replaceAll('_', ' ');
   }
 }
 
@@ -170,11 +187,7 @@ double _asDouble(dynamic v) {
 // Screen
 // ─────────────────────────────────────────────────────────────────────────────
 class DetailedReportScreen extends StatefulWidget {
-  /// MongoDB _id of the quality check.
   final String qualityCheckId;
-
-  /// Pre-fetched data from the list screen (avoids a redundant network call).
-  /// When null the screen fetches the data itself via [qualityCheckId].
   final Map<String, dynamic>? reportData;
 
   const DetailedReportScreen({
@@ -199,7 +212,15 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
   bool _downloading = false;
   String? _lastPdfPath;
 
-  // ── Convenient getters ────────────────────────────────────────────────────
+  String _currentLanguage = 'en';
+
+  // ── Language helper ────────────────────────────────────────────────────────
+
+  bool get _isSi => _currentLanguage == 'si';
+
+  String _t(String en, String si) => _isSi ? si : en;
+
+  // ── Convenient getters ─────────────────────────────────────────────────────
 
   Map<String, dynamic> get _batch =>
       (_qc?['batch'] as Map<String, dynamic>?) ?? {};
@@ -243,11 +264,11 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     return (v as num).toStringAsFixed(1);
   }
 
-  String get _pepperTypeUi  => _mapPepperType(_str(_batch['pepperType']));
-  String get _varietyUi     => _mapVariety(_str(_batch['pepperVariety']));
-  String get _dryingUi      => _mapDrying(_str(_batch['dryingMethod']));
+  String get _pepperTypeUi => _mapPepperType(_str(_batch['pepperType']));
+  String get _varietyUi => _mapVariety(_str(_batch['pepperVariety']));
+  String get _dryingUi => _mapDrying(_str(_batch['dryingMethod']));
   String get _harvestDateUi => _formatDateIso(_batch['harvestDate']);
-  String get _weightUi      => _formatGrams(_batch['batchWeightGrams']);
+  String get _weightUi => _formatGrams(_batch['batchWeightGrams']);
   String get _densityUi {
     final v = _density['value'];
     return v != null ? '${v.toString()} g/L' : '—';
@@ -255,7 +276,7 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
 
   String get _batchId => _str(_qc?['batchId'], fallback: '—');
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -267,6 +288,11 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
 
     if (widget.reportData != null) {
       _qc = widget.reportData;
@@ -307,7 +333,7 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     }
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -320,43 +346,49 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         backgroundColor: primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          _loading ? 'Report Details' : 'Batch $_batchId',
+          _loading
+              ? _t('Report Details', DetailedReportScreenSi.reportDetails)
+              : _batchId,
           style: const TextStyle(
-              fontWeight: FontWeight.w700, color: Colors.white),
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share_rounded, color: Colors.white),
-            tooltip: 'Share report',
-            onPressed:
-                (_loading || _error != null || _downloading) ? null : _sharePdf,
+            tooltip: _t('Share report', DetailedReportScreenSi.shareReport),
+            onPressed: (_loading || _error != null || _downloading)
+                ? null
+                : _sharePdf,
           ),
         ],
       ),
       body: _loading
           ? _loadingState()
           : _error != null
-              ? _errorState(responsive, primary)
-              : FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: _buildBody(responsive, primary),
-                ),
+          ? _errorState(responsive, primary)
+          : FadeTransition(
+              opacity: _fadeAnimation,
+              child: _buildBody(responsive, primary),
+            ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _loadingState() => const Center(
-        child: CircularProgressIndicator(
-          valueColor:
-              AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
-        ),
-      );
+    child: CircularProgressIndicator(
+      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+    ),
+  );
 
   Widget _errorState(Responsive responsive, Color primary) {
     return Center(
@@ -367,39 +399,56 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
           children: [
             Container(
               padding: EdgeInsets.all(
-                  responsive.value(mobile: 24, tablet: 28, desktop: 32)),
+                responsive.value(mobile: 24, tablet: 28, desktop: 32),
+              ),
               decoration: BoxDecoration(
-                  color: Colors.red.shade50, shape: BoxShape.circle),
-              child: Icon(Icons.error_outline_rounded,
-                  size:
-                      responsive.value(mobile: 56, tablet: 64, desktop: 72),
-                  color: Colors.red.shade400),
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
+                size: responsive.value(mobile: 56, tablet: 64, desktop: 72),
+                color: Colors.red.shade400,
+              ),
             ),
             ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-            Text('Failed to Load Report',
-                style: TextStyle(
-                    fontSize: responsive.headingFontSize,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey[800])),
+            Text(
+              _t('Failed to Load Report', DetailedReportScreenSi.failedToLoad),
+              style: TextStyle(
+                fontSize: responsive.headingFontSize,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
             ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-            Text(_error ?? 'An unexpected error occurred.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: responsive.bodyFontSize,
-                    color: Colors.grey[600],
-                    height: 1.5)),
+            Text(
+              _error ??
+                  _t(
+                    'An unexpected error occurred.',
+                    DetailedReportScreenSi.unexpectedError,
+                  ),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: responsive.bodyFontSize,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
             ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
             ElevatedButton.icon(
               onPressed: _fetchReport,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Try Again'),
+              label: Text(_t('Try Again', DetailedReportScreenSi.tryAgain)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 12),
+                  horizontal: 24,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -408,9 +457,9 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Main body
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildBody(Responsive responsive, Color primary) {
     final theme = _gradeTheme(_grade);
@@ -420,12 +469,11 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         children: [
           ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
           Padding(
-            padding: EdgeInsets.symmetric(
-                horizontal: responsive.pagePadding),
+            padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Grade / Score card ─────────────────────────────
+                // ── Grade / Score card ───────────────────────────────────────
                 _buildGradeCard(responsive, theme),
 
                 if (_hardReject) ...[
@@ -435,47 +483,79 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
 
                 ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
 
-                // ── Batch Information ──────────────────────────────
-                _buildSectionHeader(responsive, primary,
-                    'Batch Information', Icons.info_rounded),
+                // ── Batch Information ────────────────────────────────────────
+                _buildSectionHeader(
+                  responsive,
+                  primary,
+                  _t(
+                    'Batch Information',
+                    DetailedReportScreenSi.batchInformation,
+                  ),
+                  Icons.info_rounded,
+                ),
                 ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                 _buildBatchCard(responsive),
 
                 ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
 
-                // ── Bulk Density ───────────────────────────────────
-                _buildSectionHeader(responsive, primary,
-                    'Bulk Density (IoT)', Icons.science_rounded),
+                // ── Bulk Density ─────────────────────────────────────────────
+                _buildSectionHeader(
+                  responsive,
+                  primary,
+                  _t('Bulk Density (IoT)', DetailedReportScreenSi.bulkDensity),
+                  Icons.science_rounded,
+                ),
                 ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                 _buildDensityCard(responsive),
 
                 ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
 
-                // ── Certificates ───────────────────────────────────
-                _buildSectionHeader(responsive, primary,
-                    'Certificates at Grading', Icons.verified_rounded),
+                // ── Certificates ─────────────────────────────────────────────
+                _buildSectionHeader(
+                  responsive,
+                  primary,
+                  _t(
+                    'Certificates at Grading',
+                    DetailedReportScreenSi.certificatesAtGrading,
+                  ),
+                  Icons.verified_rounded,
+                ),
                 ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                 _buildCertificatesCard(responsive),
 
                 ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
 
-                // ── Raw AI Measurements ────────────────────────────
-                _buildSectionHeader(responsive, primary,
-                    'Raw AI Measurements', Icons.biotech_rounded),
+                // ── Raw AI Measurements ──────────────────────────────────────
+                _buildSectionHeader(
+                  responsive,
+                  primary,
+                  _t(
+                    'Raw AI Measurements',
+                    DetailedReportScreenSi.rawAiMeasurements,
+                  ),
+                  Icons.biotech_rounded,
+                ),
                 ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                 _buildRawFactorsCard(responsive),
 
                 if (_improvements.isNotEmpty) ...[
                   ResponsiveSpacing(mobile: 28, tablet: 32, desktop: 36),
-                  _buildSectionHeader(responsive, primary,
-                      'Improvement Suggestions', Icons.lightbulb_rounded),
+                  _buildSectionHeader(
+                    responsive,
+                    primary,
+                    _t(
+                      'Improvement Suggestions',
+                      DetailedReportScreenSi.improvementSuggestions,
+                    ),
+                    Icons.lightbulb_rounded,
+                  ),
                   ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                   _buildImprovementsCard(responsive),
                 ],
 
                 ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
 
-                // ── Actions ────────────────────────────────────────
+                // ── Actions ──────────────────────────────────────────────────
                 _buildActionButtons(context, responsive, primary),
 
                 ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
@@ -487,9 +567,9 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Grade card
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildGradeCard(Responsive responsive, _GradeTheme theme) {
     return Container(
@@ -505,9 +585,10 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         border: Border.all(color: theme.border, width: 2),
         boxShadow: [
           BoxShadow(
-              color: theme.primary.withOpacity(0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 8)),
+            color: theme.primary.withOpacity(0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: Column(
@@ -517,32 +598,36 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
             padding: responsive.padding(
               mobile: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               tablet: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-              desktop:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+              desktop: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
             ),
             decoration: BoxDecoration(
               color: theme.primary,
               borderRadius: BorderRadius.circular(50),
               boxShadow: [
                 BoxShadow(
-                    color: theme.primary.withOpacity(0.35),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4)),
+                  color: theme.primary.withOpacity(0.35),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(theme.icon,
-                    color: Colors.white,
-                    size: responsive.value(
-                        mobile: 18, tablet: 20, desktop: 22)),
+                Icon(
+                  theme.icon,
+                  color: Colors.white,
+                  size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                ),
                 const SizedBox(width: 8),
                 Text(
                   _grade.toUpperCase(),
                   style: TextStyle(
                     fontSize: responsive.fontSize(
-                        mobile: 14, tablet: 16, desktop: 18),
+                      mobile: 14,
+                      tablet: 16,
+                      desktop: 18,
+                    ),
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     letterSpacing: 1.5,
@@ -564,9 +649,10 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
               border: Border.all(color: theme.primary, width: 3),
               boxShadow: [
                 BoxShadow(
-                    color: theme.primary.withOpacity(0.15),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6)),
+                  color: theme.primary.withOpacity(0.15),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
               ],
             ),
             child: Column(
@@ -576,7 +662,10 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
                   _scoreDisplay,
                   style: TextStyle(
                     fontSize: responsive.fontSize(
-                        mobile: 46, tablet: 54, desktop: 62),
+                      mobile: 46,
+                      tablet: 54,
+                      desktop: 62,
+                    ),
                     fontWeight: FontWeight.w800,
                     color: theme.primary,
                     height: 1,
@@ -586,7 +675,10 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
                   '/ 100',
                   style: TextStyle(
                     fontSize: responsive.fontSize(
-                        mobile: 15, tablet: 17, desktop: 19),
+                      mobile: 15,
+                      tablet: 17,
+                      desktop: 19,
+                    ),
                     fontWeight: FontWeight.w600,
                     color: theme.primary.withOpacity(0.7),
                   ),
@@ -598,20 +690,24 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
           ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
 
           Text(
-            'Overall Quality Score',
+            _t(
+              'Overall Quality Score',
+              DetailedReportScreenSi.overallQualityScore,
+            ),
             style: TextStyle(
-                fontSize: responsive.titleFontSize,
-                color: theme.onLight,
-                fontWeight: FontWeight.w600),
+              fontSize: responsive.titleFontSize,
+              color: theme.onLight,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Hard reject banner
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildHardRejectBanner(Responsive responsive) {
     return Container(
@@ -627,18 +723,23 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber_rounded,
-                  color: Colors.red.shade700,
-                  size: responsive.value(
-                      mobile: 18, tablet: 20, desktop: 22)),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.red.shade700,
+                size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+              ),
               const SizedBox(width: 8),
               Text(
-                'HARD REJECT',
+                _t(
+                  'HARD REJECT',
+                  DetailedReportScreenSi.hardReject,
+                ).toUpperCase(),
                 style: TextStyle(
-                    fontSize: responsive.bodyFontSize,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.red.shade700,
-                    letterSpacing: 1),
+                  fontSize: responsive.bodyFontSize,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.red.shade700,
+                  letterSpacing: 1,
+                ),
               ),
             ],
           ),
@@ -650,15 +751,17 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.circle,
-                        size: 6, color: Colors.red.shade600),
+                    Icon(Icons.circle, size: 6, color: Colors.red.shade600),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(r,
-                          style: TextStyle(
-                              fontSize: responsive.bodyFontSize - 1,
-                              color: Colors.red.shade800,
-                              height: 1.4)),
+                      child: Text(
+                        r,
+                        style: TextStyle(
+                          fontSize: responsive.bodyFontSize - 1,
+                          color: Colors.red.shade800,
+                          height: 1.4,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -670,9 +773,9 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Batch info card
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildBatchCard(Responsive responsive) {
     return Container(
@@ -682,36 +785,57 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
-          _buildInfoRow(responsive, 'Pepper Type', _pepperTypeUi,
-              Icons.grass_rounded),
+          _buildInfoRow(
+            responsive,
+            _t('Pepper Type', DetailedReportScreenSi.pepperType),
+            _pepperTypeUi,
+            Icons.grass_rounded,
+          ),
           _buildDivider(responsive),
-          _buildInfoRow(responsive, 'Pepper Variety', _varietyUi,
-              Icons.local_florist_rounded),
+          _buildInfoRow(
+            responsive,
+            _t('Pepper Variety', DetailedReportScreenSi.pepperVariety),
+            _varietyUi,
+            Icons.local_florist_rounded,
+          ),
           _buildDivider(responsive),
-          _buildInfoRow(responsive, 'Drying Method', _dryingUi,
-              Icons.wb_sunny_rounded),
+          _buildInfoRow(
+            responsive,
+            _t('Drying Method', DetailedReportScreenSi.dryingMethod),
+            _dryingUi,
+            Icons.wb_sunny_rounded,
+          ),
           _buildDivider(responsive),
-          _buildInfoRow(responsive, 'Harvest Date', _harvestDateUi,
-              Icons.calendar_today_rounded),
+          _buildInfoRow(
+            responsive,
+            _t('Harvest Date', DetailedReportScreenSi.harvestDate),
+            _harvestDateUi,
+            Icons.calendar_today_rounded,
+          ),
           _buildDivider(responsive),
-          _buildInfoRow(responsive, 'Batch Weight', _weightUi,
-              Icons.scale_rounded,
-              isLast: true),
+          _buildInfoRow(
+            responsive,
+            _t('Batch Weight', DetailedReportScreenSi.batchWeight),
+            _weightUi,
+            Icons.scale_rounded,
+            isLast: true,
+          ),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Density card
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildDensityCard(Responsive responsive) {
     return Container(
@@ -721,25 +845,31 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
-          _buildInfoRow(responsive, 'Measured Density', _densityUi,
-              Icons.compress_rounded),
-          _buildDivider(responsive),
           _buildInfoRow(
-              responsive,
-              'Density Score',
-              '${_asInt(_factorScores['density'])} / 100',
-              Icons.speed_rounded),
+            responsive,
+            _t('Measured Density', DetailedReportScreenSi.measuredDensity),
+            _densityUi,
+            Icons.compress_rounded,
+          ),
           _buildDivider(responsive),
           _buildInfoRow(
             responsive,
-            'Measured At',
+            _t('Density Score', DetailedReportScreenSi.densityScore),
+            '${_asInt(_factorScores['density'])} / 100',
+            Icons.speed_rounded,
+          ),
+          _buildDivider(responsive),
+          _buildInfoRow(
+            responsive,
+            _t('Measured At', DetailedReportScreenSi.measuredAt),
             _formatDateIso(_density['measuredAt']),
             Icons.access_time_rounded,
             isLast: true,
@@ -749,9 +879,9 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Certificates card
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildCertificatesCard(Responsive responsive) {
     final items = _certItems;
@@ -771,16 +901,22 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         ),
         child: Row(
           children: [
-            Icon(Icons.info_outline_rounded,
-                color: Colors.grey.shade500,
-                size: responsive.smallIconSize),
+            Icon(
+              Icons.info_outline_rounded,
+              color: Colors.grey.shade500,
+              size: responsive.smallIconSize,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'No certificates were attached at grading time.',
+                _t(
+                  'No certificates were attached at grading time.',
+                  DetailedReportScreenSi.noCertificates,
+                ),
                 style: TextStyle(
-                    fontSize: responsive.bodyFontSize,
-                    color: Colors.grey[600]),
+                  fontSize: responsive.bodyFontSize,
+                  color: Colors.grey[600],
+                ),
               ),
             ),
           ],
@@ -801,21 +937,19 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: List.generate(items.length, (i) {
           final cert = items[i];
-          final type =
-              _formatCertType(cert['certificationType'] as String?);
-          final number =
-              (cert['certificateNumber'] as String? ?? '').trim();
-          final issuer =
-              (cert['issuingBody'] as String? ?? '').trim();
+          final type = _formatCertType(cert['certificationType'] as String?);
+          final number = (cert['certificateNumber'] as String? ?? '').trim();
+          final issuer = (cert['issuingBody'] as String? ?? '').trim();
           final isLast = i == items.length - 1;
 
           return Column(
@@ -823,7 +957,10 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
               Padding(
                 padding: EdgeInsets.symmetric(
                   vertical: responsive.value(
-                      mobile: 10, tablet: 12, desktop: 14),
+                    mobile: 10,
+                    tablet: 12,
+                    desktop: 14,
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -834,36 +971,48 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
                         color: Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.verified_rounded,
-                          color: Colors.blue.shade700,
-                          size: responsive.value(
-                              mobile: 18, tablet: 20, desktop: 22)),
+                      child: Icon(
+                        Icons.verified_rounded,
+                        color: Colors.blue.shade700,
+                        size: responsive.value(
+                          mobile: 18,
+                          tablet: 20,
+                          desktop: 22,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(type,
-                              style: TextStyle(
-                                  fontSize: responsive.bodyFontSize,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87)),
+                          Text(
+                            type,
+                            style: TextStyle(
+                              fontSize: responsive.bodyFontSize,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.black87,
+                            ),
+                          ),
                           if (number.isNotEmpty) ...[
                             const SizedBox(height: 3),
-                            Text('No: $number',
-                                style: TextStyle(
-                                    fontSize:
-                                        responsive.bodyFontSize - 1,
-                                    color: Colors.grey[600])),
+                            Text(
+                              '${_t('No', DetailedReportScreenSi.certNo)}: $number',
+                              style: TextStyle(
+                                fontSize: responsive.bodyFontSize - 1,
+                                color: Colors.grey[600],
+                              ),
+                            ),
                           ],
                           if (issuer.isNotEmpty) ...[
                             const SizedBox(height: 2),
-                            Text(issuer,
-                                style: TextStyle(
-                                    fontSize:
-                                        responsive.bodyFontSize - 1,
-                                    color: Colors.grey[600])),
+                            Text(
+                              issuer,
+                              style: TextStyle(
+                                fontSize: responsive.bodyFontSize - 1,
+                                color: Colors.grey[600],
+                              ),
+                            ),
                           ],
                         ],
                       ),
@@ -871,15 +1020,16 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
                     if (cert['expiryDate'] != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.shade50,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                              color: Colors.green.shade200),
+                          border: Border.all(color: Colors.green.shade200),
                         ),
                         child: Text(
-                          'Exp: ${_formatDateIso(cert["expiryDate"])}',
+                          '${_t('Exp', DetailedReportScreenSi.certExp)}: ${_formatDateIso(cert["expiryDate"])}',
                           style: TextStyle(
                             fontSize: responsive.bodyFontSize - 2,
                             color: Colors.green.shade700,
@@ -898,13 +1048,17 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Raw AI measurements
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildRawFactorsCard(Responsive responsive) {
-    Widget pctRow(String label, dynamic value, IconData icon,
-        {bool isLast = false}) {
+    Widget pctRow(
+      String label,
+      dynamic value,
+      IconData icon, {
+      bool isLast = false,
+    }) {
       final pct = _asDouble(value);
       return Column(
         children: [
@@ -912,29 +1066,37 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
             padding: responsive.padding(
               mobile: EdgeInsets.fromLTRB(16, 14, 16, isLast ? 14 : 0),
               tablet: EdgeInsets.fromLTRB(18, 16, 18, isLast ? 16 : 0),
-              desktop:
-                  EdgeInsets.fromLTRB(20, 18, 20, isLast ? 18 : 0),
+              desktop: EdgeInsets.fromLTRB(20, 18, 20, isLast ? 18 : 0),
             ),
             child: Row(
               children: [
-                Icon(icon,
-                    size: responsive.smallIconSize,
-                    color: Colors.grey[600]),
+                Icon(
+                  icon,
+                  size: responsive.smallIconSize,
+                  color: Colors.grey[600],
+                ),
                 ResponsiveSpacing.horizontal(
-                    mobile: 12, tablet: 14, desktop: 16),
+                  mobile: 12,
+                  tablet: 14,
+                  desktop: 16,
+                ),
                 Expanded(
-                  child: Text(label,
-                      style: TextStyle(
-                          fontSize: responsive.bodyFontSize,
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w500)),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: responsive.bodyFontSize,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
                 Text(
                   '${pct.toStringAsFixed(2)}%',
                   style: TextStyle(
-                      fontSize: responsive.bodyFontSize,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87),
+                    fontSize: responsive.bodyFontSize,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
                 ),
               ],
             ),
@@ -951,32 +1113,51 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
-          pctRow('Adulterant Seeds', _factors['adulterantPct'],
-              Icons.warning_amber_rounded),
-          pctRow('Extraneous Matter', _factors['extraneousPct'],
-              Icons.grass_rounded),
-          pctRow('Mold', _factors['moldPct'], Icons.blur_on_rounded),
-          pctRow('Broken / Abnormal Texture',
-              _factors['abnormalTexturePct'],
-              Icons.broken_image_rounded),
-          pctRow('Healthy Visual', _factors['healthyVisualPct'],
-              Icons.check_circle_rounded,
-              isLast: true),
+          pctRow(
+            _t('Adulterant Seeds', DetailedReportScreenSi.adulterantSeeds),
+            _factors['adulterantPct'],
+            Icons.warning_amber_rounded,
+          ),
+          pctRow(
+            _t('Extraneous Matter', DetailedReportScreenSi.extraneousMatter),
+            _factors['extraneousPct'],
+            Icons.grass_rounded,
+          ),
+          pctRow(
+            _t('Mold', DetailedReportScreenSi.mold),
+            _factors['moldPct'],
+            Icons.blur_on_rounded,
+          ),
+          pctRow(
+            _t(
+              'Broken / Abnormal Texture',
+              DetailedReportScreenSi.brokenAbnormal,
+            ),
+            _factors['abnormalTexturePct'],
+            Icons.broken_image_rounded,
+          ),
+          pctRow(
+            _t('Healthy Visual', DetailedReportScreenSi.healthyVisual),
+            _factors['healthyVisualPct'],
+            Icons.check_circle_rounded,
+            isLast: true,
+          ),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Improvement suggestions
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildImprovementsCard(Responsive responsive) {
     return Container(
@@ -991,9 +1172,10 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         border: Border.all(color: Colors.blue.shade200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -1005,26 +1187,38 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: EdgeInsets.all(responsive.value(
-                          mobile: 8, tablet: 9, desktop: 10)),
+                      padding: EdgeInsets.all(
+                        responsive.value(mobile: 8, tablet: 9, desktop: 10),
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.blue.shade100,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.lightbulb_rounded,
-                          color: Colors.blue.shade700,
-                          size: responsive.value(
-                              mobile: 18, tablet: 20, desktop: 22)),
+                      child: Icon(
+                        Icons.lightbulb_rounded,
+                        color: Colors.blue.shade700,
+                        size: responsive.value(
+                          mobile: 18,
+                          tablet: 20,
+                          desktop: 22,
+                        ),
+                      ),
                     ),
                     ResponsiveSpacing.horizontal(
-                        mobile: 12, tablet: 14, desktop: 16),
+                      mobile: 12,
+                      tablet: 14,
+                      desktop: 16,
+                    ),
                     Expanded(
-                      child: Text(t,
-                          style: TextStyle(
-                              fontSize: responsive.bodyFontSize,
-                              color: Colors.blue.shade900,
-                              fontWeight: FontWeight.w500,
-                              height: 1.5)),
+                      child: Text(
+                        t,
+                        style: TextStyle(
+                          fontSize: responsive.bodyFontSize,
+                          color: Colors.blue.shade900,
+                          fontWeight: FontWeight.w500,
+                          height: 1.5,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -1035,12 +1229,15 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Action buttons
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildActionButtons(
-      BuildContext context, Responsive responsive, Color primary) {
+    BuildContext context,
+    Responsive responsive,
+    Color primary,
+  ) {
     return Column(
       children: [
         // Download PDF
@@ -1051,9 +1248,10 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                  color: primary.withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10)),
+                color: primary.withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
             ],
           ),
           child: ElevatedButton(
@@ -1065,27 +1263,36 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
               foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28)),
+                borderRadius: BorderRadius.circular(28),
+              ),
             ),
             child: _downloading
                 ? const SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.download_rounded,
-                          size: responsive.smallIconSize),
+                      Icon(
+                        Icons.download_rounded,
+                        size: responsive.smallIconSize,
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                        'Download Report (PDF)',
+                        _t(
+                          'Download Report (PDF)',
+                          DetailedReportScreenSi.downloadPdf,
+                        ),
                         style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: responsive.titleFontSize,
-                            letterSpacing: 0.5),
+                          fontWeight: FontWeight.w600,
+                          fontSize: responsive.titleFontSize,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ],
                   ),
@@ -1105,27 +1312,33 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
           child: OutlinedButton(
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (_) => const HowItWorksScreen()),
+              MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
             ),
             style: OutlinedButton.styleFrom(
               foregroundColor: primary,
               side: BorderSide.none,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28)),
+                borderRadius: BorderRadius.circular(28),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.help_outline_rounded,
-                    size: responsive.smallIconSize),
+                Icon(
+                  Icons.help_outline_rounded,
+                  size: responsive.smallIconSize,
+                ),
                 const SizedBox(width: 8),
                 Text(
-                  'How is Quality Calculated?',
+                  _t(
+                    'How is Quality Calculated?',
+                    DetailedReportScreenSi.howQualityCalculated,
+                  ),
                   style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: responsive.titleFontSize,
-                      letterSpacing: 0.5),
+                    fontWeight: FontWeight.w600,
+                    fontSize: responsive.titleFontSize,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ],
             ),
@@ -1135,34 +1348,41 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // Shared widget helpers
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   Widget _buildSectionHeader(
-      Responsive responsive, Color primary, String title, IconData icon) {
+    Responsive responsive,
+    Color primary,
+    String title,
+    IconData icon,
+  ) {
     return Row(
       children: [
         Container(
           padding: EdgeInsets.all(
-              responsive.value(mobile: 8, tablet: 9, desktop: 10)),
+            responsive.value(mobile: 8, tablet: 9, desktop: 10),
+          ),
           decoration: BoxDecoration(
             color: primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon,
-              color: primary,
-              size:
-                  responsive.value(mobile: 20, tablet: 22, desktop: 24)),
+          child: Icon(
+            icon,
+            color: primary,
+            size: responsive.value(mobile: 20, tablet: 22, desktop: 24),
+          ),
         ),
         ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
         Flexible(
           child: Text(
             title,
             style: TextStyle(
-                fontSize: responsive.headingFontSize - 2,
-                fontWeight: FontWeight.w700,
-                color: Colors.black87),
+              fontSize: responsive.headingFontSize - 2,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
           ),
         ),
       ],
@@ -1184,25 +1404,29 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
       ),
       child: Row(
         children: [
-          Icon(icon,
-              size: responsive.smallIconSize, color: Colors.grey[600]),
-          ResponsiveSpacing.horizontal(
-              mobile: 12, tablet: 14, desktop: 16),
+          Icon(icon, size: responsive.smallIconSize, color: Colors.grey[600]),
+          ResponsiveSpacing.horizontal(mobile: 12, tablet: 14, desktop: 16),
           Expanded(
-            child: Text(label,
-                style: TextStyle(
-                    fontSize: responsive.bodyFontSize,
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w500)),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: responsive.bodyFontSize,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
           const SizedBox(width: 8),
           Flexible(
-            child: Text(value,
-                textAlign: TextAlign.end,
-                style: TextStyle(
-                    fontSize: responsive.bodyFontSize,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87)),
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: responsive.bodyFontSize,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
           ),
         ],
       ),
@@ -1210,14 +1434,14 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
   }
 
   Widget _buildDivider(Responsive responsive) => Divider(
-        height: 1,
-        indent: responsive.value(mobile: 16, tablet: 18, desktop: 20),
-        endIndent: responsive.value(mobile: 16, tablet: 18, desktop: 20),
-      );
+    height: 1,
+    indent: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+    endIndent: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+  );
 
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
   // PDF helpers
-  // ─────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
 
   String _pdfFileName() => 'pepper_report_$_batchId.pdf';
 
@@ -1225,32 +1449,45 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
     if (_downloading) return;
     setState(() => _downloading = true);
     try {
-      final bytes = await QualityCheckApi()
-          .downloadPdfBytes(qualityCheckId: widget.qualityCheckId);
+      final bytes = await QualityCheckApi().downloadPdfBytes(
+        qualityCheckId: widget.qualityCheckId,
+      );
       final fileName = _pdfFileName();
 
       if (kIsWeb) {
         downloadBytesOnWeb(bytes, fileName);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('PDF downloaded')));
+            SnackBar(
+              content: Text(
+                _t('PDF downloaded', DetailedReportScreenSi.pdfDownloaded),
+              ),
+            ),
+          );
         }
         return;
       }
 
-      final path = await QualityCheckApi()
-          .savePdfToFile(bytes: bytes, fileName: fileName);
+      final path = await QualityCheckApi().savePdfToFile(
+        bytes: bytes,
+        fileName: fileName,
+      );
       _lastPdfPath = path;
       if (openAfter) await OpenFilex.open(path);
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Saved: $fileName')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${_t('Saved', DetailedReportScreenSi.saved)}: $fileName',
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
       }
     } finally {
       if (mounted) setState(() => _downloading = false);
@@ -1264,26 +1501,27 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
         return;
       }
       if (_lastPdfPath != null && File(_lastPdfPath!).existsSync()) {
-        await Share.shareXFiles(
-          [XFile(_lastPdfPath!)],
-          text: 'Ceylon Pepper Quality Report ($_batchId)',
-        );
+        await Share.shareXFiles([
+          XFile(_lastPdfPath!),
+        ], text: 'Ceylon Pepper Quality Report ($_batchId)');
         return;
       }
-      final bytes = await QualityCheckApi()
-          .downloadPdfBytes(qualityCheckId: widget.qualityCheckId);
-      final path = await QualityCheckApi()
-          .savePdfToFile(bytes: bytes, fileName: _pdfFileName());
-      _lastPdfPath = path;
-      await Share.shareXFiles(
-        [XFile(path)],
-        text: 'Ceylon Pepper Quality Report ($_batchId)',
+      final bytes = await QualityCheckApi().downloadPdfBytes(
+        qualityCheckId: widget.qualityCheckId,
       );
+      final path = await QualityCheckApi().savePdfToFile(
+        bytes: bytes,
+        fileName: _pdfFileName(),
+      );
+      _lastPdfPath = path;
+      await Share.shareXFiles([
+        XFile(path),
+      ], text: 'Ceylon Pepper Quality Report ($_batchId)');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
       }
     }
   }

@@ -38,10 +38,10 @@ export default function Dashboard() {
     const featureCards = [
         { title: 'Users Management', icon: <User size={32} />, color: 'var(--info)' },
         { title: 'View Reports', icon: <PieChart size={32} />, color: '#0d9488' },
-        { title: 'System Analytics', icon: <Activity size={32} />, color: '#ea580c' },
+        { title: 'Manage Complaints', icon: <Activity size={32} />, color: '#ea580c' },
         { title: 'Verify Certificates', icon: <CheckCircle size={32} />, color: 'var(--success)', path: '/verify-certificates' },
         { title: 'Market Control', icon: <Share2 size={32} />, color: '#9333ea' },
-        { title: 'Blockchain Logs', icon: <Database size={32} />, color: 'var(--error)' },
+        { title: 'Blockchain', icon: <Database size={32} />, color: 'var(--error)', path: '/blockchain' },
     ];
 
     if (loading) {

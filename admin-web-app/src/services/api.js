@@ -69,3 +69,29 @@ export const updateProfile = async (data) => {
     return response.data;
 };
 
+// --- Blockchain & Market Forecast Endpoints ---
+
+export const fetchActualPriceData = async (params = {}) => {
+    const response = await api.get('/market-forecast/actual-price-data', { params });
+    return response.data;
+};
+
+export const verifyBatchRecord = async (recordId) => {
+    const response = await api.put(`/market-forecast/actual-price-data/${recordId}`, {
+        currentStatus: 'VERIFIED'
+    });
+    return response.data;
+};
+
+export const generateBatchQr = async (recordId) => {
+    const response = await api.put(`/market-forecast/actual-price-data/${recordId}`, {
+        currentStatus: 'QR_GENERATED'
+    });
+    return response.data;
+};
+
+export const getQualityChecksByBatch = async (batchId) => {
+    const response = await api.get(`/quality-checks/batch/${batchId}`);
+    return response.data;
+};
+

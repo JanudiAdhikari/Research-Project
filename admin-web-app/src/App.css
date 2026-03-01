@@ -193,6 +193,53 @@ a:hover {
   gap: 0.5rem;
 }
 
+/* === UTILITIES FOR BLOCKCHAIN FEATURES === */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.metric-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  transition: all 0.2s;
+}
+
+.metric-box:hover {
+  border-color: #cbd5e1;
+  background-color: #f1f5f9;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.metric-value {
+  font-size: 1.1rem;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
 .form-group label {
   font-size: 0.875rem;
   font-weight: 600;

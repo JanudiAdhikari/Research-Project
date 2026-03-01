@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../services/disease_detection_service.dart';
 import '../../../utils/localization.dart';

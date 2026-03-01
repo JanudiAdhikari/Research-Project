@@ -210,33 +210,15 @@ class PriceReportCard extends StatelessWidget {
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: gradeColor.withOpacity(0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          displayGrade,
-                          style: TextStyle(
-                            fontSize: responsive.smallFontSize + 1,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      displayGrade,
+                      style: TextStyle(
+                        fontSize: responsive.smallFontSize + 1,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -308,8 +290,17 @@ class PriceReportCard extends StatelessWidget {
     final status = _normalizeStatus(rawStatus);
 
     final bool isVerified = status == 'VERIFIED';
+    final bool isQrGenerated = status == 'QR_GENERATED';
     final bool canShowAddToMarketplace =
         !isVerified && status != 'MARKETPLACE_LISTED';
+
+    // Hide update/delete/add buttons when QR has already been generated
+    final bool hideActionsForQr = isQrGenerated;
+
+    // If QR has been generated, hide all action buttons
+    if (hideActionsForQr) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -350,7 +341,7 @@ class PriceReportCard extends StatelessWidget {
         if (canShowAddToMarketplace) ...[
           const SizedBox(height: 10),
 
-          // Second row: Marketplace button FULL WIDTH
+          // Marketplace button
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -382,6 +373,8 @@ class PriceReportCard extends StatelessWidget {
         return 'Marketplace Listed';
       case 'VERIFIED':
         return 'Verified';
+      case 'QR_GENERATED':
+        return 'QR Generated';
       default:
         // fallback: SOME_STATUS -> Some Status
         final s = normalizedStatus.replaceAll('_', ' ').toLowerCase();
@@ -403,14 +396,7 @@ class PriceReportCard extends StatelessWidget {
   }
 
   Color _gradeColor(String grade) {
-    switch (grade) {
-      case 'Grade 1':
-        return const Color(0xFF1B5E20);
-      case 'Grade 2':
-        return const Color(0xFF0277BD);
-      default:
-        return const Color(0xFF2E7D32);
-    }
+    return const Color(0xFF2E7D32);
   }
 
   Color _statusColor(String status) {
@@ -422,6 +408,8 @@ class PriceReportCard extends StatelessWidget {
         return Colors.blue.shade700;
       case 'VERIFIED':
         return const Color(0xFF2E7D32);
+      case 'QR_GENERATED':
+        return Colors.grey;
       default:
         return Colors.grey;
     }

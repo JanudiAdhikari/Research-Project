@@ -179,8 +179,16 @@ const getActualPriceData = async (req, res) => {
     const user = await User.findOne({ firebaseUid });
     const userRole = user?.role || "farmer";
 
-    // Only 'admin' can view all records, others see their own
-    if (userRole !== "admin") {
+    // Admin can view all records
+    if (userRole === "admin") {
+      // no userId filter
+    }
+    // Exporter can view QR_GENERATED records
+    else if (userRole === "exporter") {
+      filter.currentStatus = { $in: ["QR_GENERATED"] };
+    }
+    // Farmer can see only their own
+    else {
       filter.userId = firebaseUid;
     }
 
@@ -499,5 +507,5 @@ module.exports = {
   createActualPriceData,
   updateActualPriceData,
   deleteActualPriceData,
-  getRecordByQrToken
+  getRecordByQrToken,
 };

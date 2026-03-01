@@ -1,12 +1,14 @@
 const crypto = require("crypto");
 const ActualPriceData = require("../../models/market_forecast/actual_price_data.model");
 const User = require("../../models/user.models");
+const MarketProduct = require("../../models/market.model");
 
 // Statuses
 const STATUSES = {
   BATCH_CREATED: "BATCH_CREATED",
   MARKETPLACE_LISTED: "MARKETPLACE_LISTED",
   VERIFIED: "VERIFIED",
+  QR_GENERATED: "QR_GENERATED",
   RECEIVED: "RECEIVED",
 };
 
@@ -35,9 +37,28 @@ function sha256(input) {
 }
 
 // Get actor id and role
-function getActor(req) {
+async function getActor(req) {
   const actorId = req.user?.uid;
-  const actorRole = normalizeRole(req.user?.role);
+
+  // Default to FARMER role if we cannot determine it
+  let actorRole = ROLES.FARMER;
+
+  try {
+    if (actorId) {
+      // Try to read role from users collection for authoritative role
+      const user = await User.findOne({ firebaseUid: actorId }).lean();
+      if (user && user.role) {
+        actorRole = normalizeRole(user.role);
+      } else if (req.user?.role) {
+        // Fallback to token claim if present
+        actorRole = normalizeRole(req.user.role);
+      }
+    }
+  } catch (e) {
+    // If DB lookup fails, fallback to token claim or FARMER
+    if (req.user?.role) actorRole = normalizeRole(req.user.role);
+  }
+
   return { actorId, actorRole };
 }
 
@@ -116,7 +137,11 @@ function canTransition({ fromStatus, toStatus, actorRole }) {
     return actorRole === ROLES.ADMIN;
   }
 
-  if (fromStatus === STATUSES.VERIFIED && toStatus === STATUSES.RECEIVED) {
+  if (fromStatus === STATUSES.VERIFIED && toStatus === STATUSES.QR_GENERATED) {
+    return actorRole === ROLES.ADMIN;
+  }
+
+  if (fromStatus === STATUSES.QR_GENERATED && toStatus === STATUSES.RECEIVED) {
     return actorRole === ROLES.EXPORTER || actorRole === ROLES.ADMIN;
   }
 
@@ -154,8 +179,16 @@ const getActualPriceData = async (req, res) => {
     const user = await User.findOne({ firebaseUid });
     const userRole = user?.role || "farmer";
 
-    // Only 'admin' can view all records, others see their own
-    if (userRole !== "admin") {
+    // Admin can view all records
+    if (userRole === "admin") {
+      // no userId filter
+    }
+    // Exporter can view QR_GENERATED records
+    else if (userRole === "exporter") {
+      filter.currentStatus = { $in: ["QR_GENERATED"] };
+    }
+    // Farmer can see only their own
+    else {
       filter.userId = firebaseUid;
     }
 
@@ -208,7 +241,7 @@ const getActualPriceData = async (req, res) => {
 // Create record (Block #1)
 const createActualPriceData = async (req, res) => {
   try {
-    const { actorId, actorRole } = getActor(req);
+    const { actorId, actorRole } = await getActor(req);
     if (!actorId) return res.status(401).json({ message: "No user id" });
 
     const {
@@ -264,7 +297,7 @@ const createActualPriceData = async (req, res) => {
 // Update record
 const updateActualPriceData = async (req, res) => {
   try {
-    const { actorId, actorRole } = getActor(req);
+    const { actorId, actorRole } = await getActor(req);
     if (!actorId) return res.status(401).json({ message: "No user id" });
 
     const { id } = req.params;
@@ -280,10 +313,10 @@ const updateActualPriceData = async (req, res) => {
 
     // Field updates by FARMER only if owner + not locked
     if (!wantsStatusChange) {
-      if (actorRole === ROLES.USER && !owner) {
+      if (actorRole === ROLES.FARMER && !owner) {
         return res.status(403).json({ message: "Not authorized" });
       }
-      if (actorRole === ROLES.USER && isApprovedLocked(existingStatus)) {
+      if (actorRole === ROLES.FARMER && isApprovedLocked(existingStatus)) {
         return res
           .status(400)
           .json({ message: "Record is locked after verification" });
@@ -306,6 +339,45 @@ const updateActualPriceData = async (req, res) => {
         return res.status(400).json({
           message: `Invalid status transition: ${existingStatus} -> ${incomingStatus} for role ${actorRole}`,
         });
+      }
+
+      // If Admin verifies a MARKETPLACE_LISTED record -> create marketplace product
+      if (
+        existingStatus === STATUSES.MARKETPLACE_LISTED &&
+        incomingStatus === STATUSES.VERIFIED &&
+        actorRole === ROLES.ADMIN
+      ) {
+        // prevent duplicate marketplace items
+        if (!record.marketplaceProductId) {
+          const nameParts = [
+            record.pepperType || "Pepper",
+            record.grade ? `(${record.grade})` : null,
+            record.batchId ? `- ${record.batchId}` : null,
+          ].filter(Boolean);
+
+          const prod = new MarketProduct({
+            name: nameParts.join(" "),
+            price: Number(record.pricePerKg) || 0,
+            unit: "kg",
+            vendorUid: record.userId, // farmer uid (better than admin uid)
+          });
+
+          await prod.save();
+          record.marketplaceProductId = String(prod._id);
+        }
+      }
+
+      // Admin generates QR
+      if (
+        existingStatus === STATUSES.VERIFIED &&
+        incomingStatus === STATUSES.QR_GENERATED &&
+        actorRole === ROLES.ADMIN
+      ) {
+        // create a unique token only once (avoid regenerating)
+        if (!record.qrToken) {
+          record.qrToken = crypto.randomBytes(16).toString("hex");
+          record.qrGeneratedAt = new Date();
+        }
       }
 
       appendStatusBlock(record, incomingStatus, actorId, actorRole);
@@ -368,7 +440,7 @@ const updateActualPriceData = async (req, res) => {
 // Farmer can delete only before VERIFIED
 const deleteActualPriceData = async (req, res) => {
   try {
-    const { actorId, actorRole } = getActor(req);
+    const { actorId, actorRole } = await getActor(req);
     if (!actorId) return res.status(401).json({ message: "No user id" });
 
     const { id } = req.params;
@@ -402,9 +474,38 @@ const deleteActualPriceData = async (req, res) => {
   }
 };
 
+// Get the record details by QR token (for exporter scanning)
+const getRecordByQrToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const record = await ActualPriceData.findOne({ qrToken: token }).lean();
+    if (!record) {
+      return res.status(404).json({ message: "Invalid QR token" });
+    }
+
+    //Attach farmer name
+    if (record.userId) {
+      const u = await User.findOne({ firebaseUid: record.userId }).lean();
+      if (u) {
+        record.farmerName =
+          `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.email || "";
+      }
+    }
+
+    return res.json(record);
+  } catch (err) {
+    console.error("getRecordByQrToken error:", err);
+    return res
+      .status(500)
+      .json({ message: "Server error", error: err.message });
+  }
+};
+
 module.exports = {
   getActualPriceData,
   createActualPriceData,
   updateActualPriceData,
   deleteActualPriceData,
+  getRecordByQrToken,
 };

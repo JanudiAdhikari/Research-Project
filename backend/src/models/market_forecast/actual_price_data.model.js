@@ -28,6 +28,9 @@ const actualPriceDataSchema = new mongoose.Schema(
     // Current status for UI quick display
     currentStatus: { type: String, index: true },
 
+    qrToken: { type: String, index: true },
+    qrGeneratedAt: { type: Date },
+
     // Blockchain history
     statusHistory: { type: [statusBlockSchema], default: [] },
   },

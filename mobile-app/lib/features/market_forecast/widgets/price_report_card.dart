@@ -33,16 +33,20 @@ class PriceReportCard extends StatelessWidget {
     final saleDate = report['saleDate'] as String? ?? '';
 
     return Container(
-      margin: EdgeInsets.only(bottom: responsive.smallSpacing + 4),
+      margin: EdgeInsets.only(bottom: responsive.smallSpacing + 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          colors: [Colors.white, Colors.grey.shade50],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -206,33 +210,15 @@ class PriceReportCard extends StatelessWidget {
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: gradeColor.withOpacity(0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          displayGrade,
-                          style: TextStyle(
-                            fontSize: responsive.smallFontSize + 1,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      displayGrade,
+                      style: TextStyle(
+                        fontSize: responsive.smallFontSize + 1,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -303,47 +289,59 @@ class PriceReportCard extends StatelessWidget {
     final rawStatus = (report['currentStatus'] as String?)?.trim();
     final status = _normalizeStatus(rawStatus);
 
-    final bool canShowAddToMarketplace = status != 'MARKETPLACE_LISTED';
+    final bool isVerified = status == 'VERIFIED';
+    final bool isQrGenerated = status == 'QR_GENERATED';
+    final bool canShowAddToMarketplace =
+        !isVerified && status != 'MARKETPLACE_LISTED';
+
+    // Hide update/delete/add buttons when QR has already been generated
+    final bool hideActionsForQr = isQrGenerated;
+
+    // If QR has been generated, hide all action buttons
+    if (hideActionsForQr) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // First row: Update & Delete
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onUpdate,
-                icon: const Icon(Icons.edit_rounded, size: 16),
-                label: const Text('Update'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF2E7D32),
-                  side: const BorderSide(color: Color(0xFF2E7D32)),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+        // First row: Update & Delete (hide when verified)
+        if (!isVerified)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onUpdate,
+                  icon: const Icon(Icons.edit_rounded, size: 16),
+                  label: const Text('Update'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2E7D32),
+                    side: const BorderSide(color: Color(0xFF2E7D32)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_rounded, size: 16),
-                label: const Text('Delete'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_rounded, size: 16),
+                  label: const Text('Delete'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: const BorderSide(color: Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
 
         if (canShowAddToMarketplace) ...[
           const SizedBox(height: 10),
 
-          // Second row: Marketplace button FULL WIDTH
+          // Marketplace button
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -373,10 +371,10 @@ class PriceReportCard extends StatelessWidget {
         return 'Batch Created';
       case 'MARKETPLACE_LISTED':
         return 'Marketplace Listed';
-      case 'APPROVED':
-        return 'Approved';
-      case 'REJECTED':
-        return 'Rejected';
+      case 'VERIFIED':
+        return 'Verified';
+      case 'QR_GENERATED':
+        return 'QR Generated';
       default:
         // fallback: SOME_STATUS -> Some Status
         final s = normalizedStatus.replaceAll('_', ' ').toLowerCase();
@@ -398,14 +396,7 @@ class PriceReportCard extends StatelessWidget {
   }
 
   Color _gradeColor(String grade) {
-    switch (grade) {
-      case 'Grade 1':
-        return const Color(0xFF1B5E20);
-      case 'Grade 2':
-        return const Color(0xFF0277BD);
-      default:
-        return const Color(0xFF2E7D32);
-    }
+    return const Color(0xFF2E7D32);
   }
 
   Color _statusColor(String status) {
@@ -415,10 +406,10 @@ class PriceReportCard extends StatelessWidget {
         return const Color(0xFF6A1B9A);
       case 'MARKETPLACE_LISTED':
         return Colors.blue.shade700;
-      case 'APPROVED':
-        return const Color(0xFF0277BD);
-      case 'REJECTED':
-        return Colors.red;
+      case 'VERIFIED':
+        return const Color(0xFF2E7D32);
+      case 'QR_GENERATED':
+        return Colors.grey;
       default:
         return Colors.grey;
     }

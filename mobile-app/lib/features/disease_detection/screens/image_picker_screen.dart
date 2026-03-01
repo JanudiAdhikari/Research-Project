@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'disease_result_screen.dart';
@@ -15,7 +14,6 @@ class ImagePickerScreen extends StatefulWidget {
 
 class _ImagePickerScreenState extends State<ImagePickerScreen> {
   final ImagePicker _picker = ImagePicker();
-  File? _selectedImage;
   String _currentLanguage = 'en';
 
   String _translate(String key) {

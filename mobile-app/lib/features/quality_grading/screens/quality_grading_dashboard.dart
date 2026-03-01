@@ -34,7 +34,6 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
   int _totalReports = 0;
   int _premiumGrades = 0;
   bool _statsLoading = true;
-  String? _statsError;
   String _currentLanguage = 'en';
 
   final _api = QualityCheckApi();
@@ -76,7 +75,6 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _statsError = e.toString();
           _statsLoading = false;
         });
       }

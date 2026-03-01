@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const ActualPriceData = require("../../models/market_forecast/actual_price_data.model");
 const User = require("../../models/user.models");
+const MarketProduct = require("../../models/market.model");
 
 // Statuses
 const STATUSES = {
@@ -35,9 +36,28 @@ function sha256(input) {
 }
 
 // Get actor id and role
-function getActor(req) {
+async function getActor(req) {
   const actorId = req.user?.uid;
-  const actorRole = normalizeRole(req.user?.role);
+
+  // Default to FARMER role if we cannot determine it
+  let actorRole = ROLES.FARMER;
+
+  try {
+    if (actorId) {
+      // Try to read role from users collection for authoritative role
+      const user = await User.findOne({ firebaseUid: actorId }).lean();
+      if (user && user.role) {
+        actorRole = normalizeRole(user.role);
+      } else if (req.user?.role) {
+        // Fallback to token claim if present
+        actorRole = normalizeRole(req.user.role);
+      }
+    }
+  } catch (e) {
+    // If DB lookup fails, fallback to token claim or FARMER
+    if (req.user?.role) actorRole = normalizeRole(req.user.role);
+  }
+
   return { actorId, actorRole };
 }
 
@@ -208,7 +228,7 @@ const getActualPriceData = async (req, res) => {
 // Create record (Block #1)
 const createActualPriceData = async (req, res) => {
   try {
-    const { actorId, actorRole } = getActor(req);
+    const { actorId, actorRole } = await getActor(req);
     if (!actorId) return res.status(401).json({ message: "No user id" });
 
     const {
@@ -264,7 +284,7 @@ const createActualPriceData = async (req, res) => {
 // Update record
 const updateActualPriceData = async (req, res) => {
   try {
-    const { actorId, actorRole } = getActor(req);
+    const { actorId, actorRole } = await getActor(req);
     if (!actorId) return res.status(401).json({ message: "No user id" });
 
     const { id } = req.params;
@@ -280,10 +300,10 @@ const updateActualPriceData = async (req, res) => {
 
     // Field updates by FARMER only if owner + not locked
     if (!wantsStatusChange) {
-      if (actorRole === ROLES.USER && !owner) {
+      if (actorRole === ROLES.FARMER && !owner) {
         return res.status(403).json({ message: "Not authorized" });
       }
-      if (actorRole === ROLES.USER && isApprovedLocked(existingStatus)) {
+      if (actorRole === ROLES.FARMER && isApprovedLocked(existingStatus)) {
         return res
           .status(400)
           .json({ message: "Record is locked after verification" });
@@ -306,6 +326,32 @@ const updateActualPriceData = async (req, res) => {
         return res.status(400).json({
           message: `Invalid status transition: ${existingStatus} -> ${incomingStatus} for role ${actorRole}`,
         });
+      }
+
+      // If Admin verifies a MARKETPLACE_LISTED record -> create marketplace product
+      if (
+        existingStatus === STATUSES.MARKETPLACE_LISTED &&
+        incomingStatus === STATUSES.VERIFIED &&
+        actorRole === ROLES.ADMIN
+      ) {
+        // prevent duplicate marketplace items
+        if (!record.marketplaceProductId) {
+          const nameParts = [
+            record.pepperType || "Pepper",
+            record.grade ? `(${record.grade})` : null,
+            record.batchId ? `- ${record.batchId}` : null,
+          ].filter(Boolean);
+
+          const prod = new MarketProduct({
+            name: nameParts.join(" "),
+            price: Number(record.pricePerKg) || 0,
+            unit: "kg",
+            vendorUid: record.userId, // farmer uid (better than admin uid)
+          });
+
+          await prod.save();
+          record.marketplaceProductId = String(prod._id);
+        }
       }
 
       appendStatusBlock(record, incomingStatus, actorId, actorRole);
@@ -368,7 +414,7 @@ const updateActualPriceData = async (req, res) => {
 // Farmer can delete only before VERIFIED
 const deleteActualPriceData = async (req, res) => {
   try {
-    const { actorId, actorRole } = getActor(req);
+    const { actorId, actorRole } = await getActor(req);
     if (!actorId) return res.status(401).json({ message: "No user id" });
 
     const { id } = req.params;

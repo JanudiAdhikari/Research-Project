@@ -37,8 +37,6 @@ api.interceptors.response.use(
 
 export default api;
 
-// --- Certificate Verification Endpoints ---
-
 export const fetchPendingCertificates = async () => {
     const response = await api.get('/certifications/admin/all?status=pending');
     return response.data;
@@ -56,6 +54,18 @@ export const rejectCertificate = async (id, reason) => {
         action: 'reject',
         reason: reason
     });
+    return response.data;
+};
+
+// --- User Endpoints ---
+
+export const getProfile = async () => {
+    const response = await api.get('/users/me');
+    return response.data;
+};
+
+export const updateProfile = async (data) => {
+    const response = await api.put('/users/me', data);
     return response.data;
 };
 

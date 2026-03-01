@@ -60,18 +60,18 @@ export default function Dashboard() {
                 </div>
 
                 <nav className="sidebar-nav">
-                    <a href="#" className="nav-item active">
+                    <div className="nav-item active" style={{ cursor: 'default' }}>
                         <LayoutDashboard size={20} />
                         <span>Dashboard</span>
-                    </a>
-                    <a href="#" className="nav-item">
+                    </div>
+                    <div className="nav-item" onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
                         <User size={20} />
                         <span>Profile</span>
-                    </a>
-                    <a href="#" className="nav-item">
+                    </div>
+                    <div className="nav-item inactive">
                         <Settings size={20} />
                         <span>Settings</span>
-                    </a>
+                    </div>
                 </nav>
 
                 <div className="sidebar-footer">

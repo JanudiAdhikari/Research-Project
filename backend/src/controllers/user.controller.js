@@ -31,4 +31,25 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, getCurrentUser };
+const updateUser = async (req, res) => {
+  try {
+    const { firstName, lastName, contact, location } = req.body;
+
+    // Find user by Firebase UID and update their fields
+    const updatedUser = await User.findOneAndUpdate(
+      { firebaseUid: req.user.uid },
+      { $set: { firstName, lastName, contact, location } },
+      { new: true, runValidators: true } // Return updated doc
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { registerUser, getCurrentUser, updateUser };

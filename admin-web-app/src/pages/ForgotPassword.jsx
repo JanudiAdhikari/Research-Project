@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { KeyRound, Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import '../App.css';
 
 export default function ForgotPassword() {
@@ -23,14 +25,13 @@ export default function ForgotPassword() {
         setLoading(true);
 
         try {
-            // Simulate API call to auth service
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await sendPasswordResetEmail(auth, email);
 
             // On success, show confirmation state
             setIsSubmitted(true);
         } catch (err) {
-            // Handle error (mock)
-            alert("Failed to send reset email. Try again.");
+            console.error(err);
+            alert(err.message || "Failed to send reset email. Verify your email address and Try again.");
         } finally {
             setLoading(false);
         }
@@ -75,7 +76,7 @@ export default function ForgotPassword() {
                                 <button
                                     type="button"
                                     className="text-btn"
-                                    onClick={() => alert("Reset link sent again!")}
+                                    onClick={handleSendResetEmail}
                                 >
                                     Resend
                                 </button>

@@ -4,6 +4,7 @@ import {
     LogOut, User, Settings, PieChart, Activity,
     CheckCircle, Database, LayoutDashboard, Share2
 } from 'lucide-react';
+import api from '../services/api';
 import '../App.css';
 
 export default function Dashboard() {
@@ -12,24 +13,35 @@ export default function Dashboard() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Simulate loading user data
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 500);
-        return () => clearTimeout(timer);
+        const fetchUserProfile = async () => {
+            try {
+                const response = await api.get('/users/me');
+                if (response.data && response.data.fullName) {
+                    setUserName(response.data.fullName.split(' ')[0]);
+                }
+            } catch (err) {
+                console.error("Failed to fetch profile. User might not be an admin or token expired.");
+                // Note: The global Axios interceptor handles the 401 redirect to Login 
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserProfile();
     }, []);
 
     const handleLogout = () => {
+        localStorage.removeItem('token');
         navigate('/');
     };
 
     const featureCards = [
         { title: 'Users Management', icon: <User size={32} />, color: 'var(--info)' },
         { title: 'View Reports', icon: <PieChart size={32} />, color: '#0d9488' },
-        { title: 'System Analytics', icon: <Activity size={32} />, color: '#ea580c' },
-        { title: 'Verify Pepper Batches', icon: <CheckCircle size={32} />, color: 'var(--success)' },
+        { title: 'Manage Complaints', icon: <Activity size={32} />, color: '#ea580c' },
+        { title: 'Verify Certificates', icon: <CheckCircle size={32} />, color: 'var(--success)', path: '/verify-certificates' },
         { title: 'Market Control', icon: <Share2 size={32} />, color: '#9333ea' },
-        { title: 'Blockchain Logs', icon: <Database size={32} />, color: 'var(--error)' },
+        { title: 'Blockchain', icon: <Database size={32} />, color: 'var(--error)', path: '/blockchain' },
     ];
 
     if (loading) {
@@ -48,18 +60,18 @@ export default function Dashboard() {
                 </div>
 
                 <nav className="sidebar-nav">
-                    <a href="#" className="nav-item active">
+                    <div className="nav-item active" style={{ cursor: 'default' }}>
                         <LayoutDashboard size={20} />
                         <span>Dashboard</span>
-                    </a>
-                    <a href="#" className="nav-item">
+                    </div>
+                    <div className="nav-item" onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
                         <User size={20} />
                         <span>Profile</span>
-                    </a>
-                    <a href="#" className="nav-item">
+                    </div>
+                    <div className="nav-item inactive">
                         <Settings size={20} />
                         <span>Settings</span>
-                    </a>
+                    </div>
                 </nav>
 
                 <div className="sidebar-footer">
@@ -99,6 +111,9 @@ export default function Dashboard() {
                                 className="feature-card"
                                 key={idx}
                                 style={{ '--card-color': card.color }}
+                                onClick={() => {
+                                    if (card.path) navigate(card.path);
+                                }}
                             >
                                 <div className="card-icon-wrapper">
                                     {card.icon}

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/language_prefs.dart';
+import '../../../../utils/quality_grading/batch_details_screen_si.dart';
 import '../../services/quality_check_api.dart';
 import 'bulk_density_screen2.dart';
 
@@ -17,9 +19,15 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
   String _pepperType = 'Black Pepper';
   String _pepperVariety = 'Ceylon Pepper';
   String _dryingMethod = 'Sun Dried';
+  String _currentLanguage = 'en';
+
+  bool get _isSinhala => _currentLanguage == 'si';
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
 
   String _mapPepperType(String ui) {
-    return ui == 'Black Pepper' ? 'black' : 'white';
+    return (ui == 'Black Pepper' || ui == BatchDetailsScreenSi.blackPepper)
+        ? 'black'
+        : 'white';
   }
 
   String _mapVariety(String ui) {
@@ -44,7 +52,9 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
   }
 
   String _mapDryingMethod(String ui) {
-    return ui == 'Sun Dried' ? 'sun_dried' : 'machine_dried';
+    return (ui == 'Sun Dried' || ui == BatchDetailsScreenSi.sunDried)
+        ? 'sun_dried'
+        : 'machine_dried';
   }
 
   DateTime? _harvestDate;
@@ -76,6 +86,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
         );
 
     _animationController.forward();
+
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
 
   @override
@@ -85,6 +99,72 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
     _batchWeightGController.dispose();
     super.dispose();
   }
+
+  // ── Dropdown item helpers ──────────────────────────────────────────────────
+
+  List<String> get _pepperTypeItems => _isSinhala
+      ? [BatchDetailsScreenSi.blackPepper, BatchDetailsScreenSi.whitePepper]
+      : ['Black Pepper', 'White Pepper'];
+
+  // Variety labels stay in English (proper names / technical terms)
+  List<String> get _pepperVarietyItems => const [
+    'Ceylon Pepper',
+    'Panniyur-1',
+    'Kuching',
+    'Dingi Rala',
+    'Kohukumbure Rala',
+    'Bootawe Rala',
+    'Malabar',
+    'Unknown',
+  ];
+
+  List<String> get _dryingMethodItems => _isSinhala
+      ? [BatchDetailsScreenSi.sunDried, BatchDetailsScreenSi.machineDried]
+      : ['Sun Dried', 'Machine Dried'];
+
+  // Keep selected values in sync when language switches
+  String get _localizedPepperType {
+    if (_isSinhala) {
+      return _pepperType == 'Black Pepper'
+          ? BatchDetailsScreenSi.blackPepper
+          : BatchDetailsScreenSi.whitePepper;
+    }
+    return _pepperType;
+  }
+
+  String get _localizedDryingMethod {
+    if (_isSinhala) {
+      return _dryingMethod == 'Sun Dried'
+          ? BatchDetailsScreenSi.sunDried
+          : BatchDetailsScreenSi.machineDried;
+    }
+    return _dryingMethod;
+  }
+
+  void _onPepperTypeChanged(String? value) {
+    if (value == null) return;
+    // Normalise back to English key for storage
+    if (value == BatchDetailsScreenSi.blackPepper) {
+      setState(() => _pepperType = 'Black Pepper');
+    } else if (value == BatchDetailsScreenSi.whitePepper) {
+      setState(() => _pepperType = 'White Pepper');
+    } else {
+      setState(() => _pepperType = value);
+    }
+  }
+
+  void _onDryingMethodChanged(String? value) {
+    if (value == null) return;
+    if (value == BatchDetailsScreenSi.sunDried) {
+      setState(() => _dryingMethod = 'Sun Dried');
+    } else if (value == BatchDetailsScreenSi.machineDried) {
+      setState(() => _dryingMethod = 'Machine Dried');
+    } else {
+      setState(() => _dryingMethod = value);
+    }
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -103,16 +183,16 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Batch Details',
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          _t('Batch Details', BatchDetailsScreenSi.batchDetails),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
       ),
       body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-
+        onTap: () => FocusScope.of(context).unfocus(),
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: SingleChildScrollView(
@@ -130,7 +210,6 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Step indicator (4 steps)
                       Row(
                         children: [
                           _buildStepIndicator(1, true, primary, responsive),
@@ -144,7 +223,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                       ),
                       ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
                       Text(
-                        "Batch Information",
+                        _t(
+                          'Batch Information',
+                          BatchDetailsScreenSi.batchInformation,
+                        ),
                         style: TextStyle(
                           fontSize: responsive.fontSize(
                             mobile: 22,
@@ -157,7 +239,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                       ),
                       ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
                       Text(
-                        "Enter your pepper batch details",
+                        _t(
+                          'Enter your pepper batch details',
+                          BatchDetailsScreenSi.enterBatchDetails,
+                        ),
                         style: TextStyle(
                           fontSize: responsive.bodyFontSize,
                           color: Colors.grey[600],
@@ -181,11 +266,14 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Pepper Information Section
+                          // Pepper Information
                           _buildSectionHeader(
                             responsive,
                             primary,
-                            'Pepper Information',
+                            _t(
+                              'Pepper Information',
+                              BatchDetailsScreenSi.pepperInformation,
+                            ),
                             Icons.grass_rounded,
                           ),
 
@@ -198,30 +286,26 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                           _buildDropdownField(
                             responsive,
                             primary,
-                            label: 'Pepper Type',
-                            value: _pepperType,
+                            label: _t(
+                              'Pepper Type',
+                              BatchDetailsScreenSi.pepperType,
+                            ),
+                            value: _localizedPepperType,
                             icon: Icons.category_rounded,
-                            items: const ['Black Pepper', 'White Pepper'],
-                            onChanged: (value) =>
-                                setState(() => _pepperType = value!),
+                            items: _pepperTypeItems,
+                            onChanged: _onPepperTypeChanged,
                           ),
 
                           _buildDropdownField(
                             responsive,
                             primary,
-                            label: 'Pepper Variety',
+                            label: _t(
+                              'Pepper Variety',
+                              BatchDetailsScreenSi.pepperVariety,
+                            ),
                             value: _pepperVariety,
                             icon: Icons.local_florist_rounded,
-                            items: const [
-                              'Ceylon Pepper',
-                              'Panniyur-1',
-                              'Kuching',
-                              'Dingi Rala',
-                              'Kohukumbure Rala',
-                              'Bootawe Rala',
-                              'Malabar',
-                              'Unknown',
-                            ],
+                            items: _pepperVarietyItems,
                             onChanged: (value) =>
                                 setState(() => _pepperVariety = value!),
                           ),
@@ -232,11 +316,14 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                             desktop: 36,
                           ),
 
-                          // Harvest & Processing Section
+                          // Harvest & Processing
                           _buildSectionHeader(
                             responsive,
                             primary,
-                            'Harvest & Processing',
+                            _t(
+                              'Harvest & Processing',
+                              BatchDetailsScreenSi.harvestProcessing,
+                            ),
                             Icons.agriculture_rounded,
                           ),
 
@@ -250,7 +337,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                             context: context,
                             responsive: responsive,
                             primary: primary,
-                            label: 'Harvest Date',
+                            label: _t(
+                              'Harvest Date',
+                              BatchDetailsScreenSi.harvestDate,
+                            ),
                             selectedDate: _harvestDate,
                             onDateSelected: (date) =>
                                 setState(() => _harvestDate = date),
@@ -259,12 +349,14 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                           _buildDropdownField(
                             responsive,
                             primary,
-                            label: 'Drying Method',
-                            value: _dryingMethod,
+                            label: _t(
+                              'Drying Method',
+                              BatchDetailsScreenSi.dryingMethod,
+                            ),
+                            value: _localizedDryingMethod,
                             icon: Icons.wb_sunny_rounded,
-                            items: const ['Sun Dried', 'Machine Dried'],
-                            onChanged: (value) =>
-                                setState(() => _dryingMethod = value!),
+                            items: _dryingMethodItems,
+                            onChanged: _onDryingMethodChanged,
                           ),
 
                           ResponsiveSpacing(
@@ -273,11 +365,11 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                             desktop: 36,
                           ),
 
-                          // Quantity Section
+                          // Quantity
                           _buildSectionHeader(
                             responsive,
                             primary,
-                            'Quantity',
+                            _t('Quantity', BatchDetailsScreenSi.quantity),
                             Icons.scale_rounded,
                           ),
 
@@ -315,9 +407,13 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
 
                                 if (_harvestDate == null) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
+                                    SnackBar(
                                       content: Text(
-                                        "Please select harvest date",
+                                        _t(
+                                          'Please select harvest date',
+                                          BatchDetailsScreenSi
+                                              .pleaseSelectHarvestDate,
+                                        ),
                                       ),
                                     ),
                                   );
@@ -357,15 +453,6 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                                       result["qualityCheckId"] as String;
                                   final batchId = result["batchId"] as String;
 
-                                  // Navigator.push(
-                                  //   context,
-                                  //   MaterialPageRoute(
-                                  //     builder: (_) => BulkDensityScreen(
-                                  //       qualityCheckId: qualityCheckId,
-                                  //       batchId: batchId,
-                                  //     ),
-                                  //   ),
-                                  // );
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -397,7 +484,11 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Continue to Bulk Density",
+                                    _t(
+                                      'Continue to Bulk Density',
+                                      BatchDetailsScreenSi
+                                          .continueToBulkDensity,
+                                    ),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: responsive.titleFontSize,
@@ -431,6 +522,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
       ),
     );
   }
+
+  // ── Widgets ────────────────────────────────────────────────────────────────
 
   Widget _buildSectionHeader(
     Responsive responsive,
@@ -607,9 +700,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                   );
                 },
               );
-              if (pickedDate != null) {
-                onDateSelected(pickedDate);
-              }
+              if (pickedDate != null) onDateSelected(pickedDate);
             },
             borderRadius: BorderRadius.circular(12),
             child: Container(
@@ -636,7 +727,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                   ),
                   Text(
                     selectedDate == null
-                        ? 'Select harvest date'
+                        ? _t(
+                            'Select harvest date',
+                            BatchDetailsScreenSi.selectHarvestDate,
+                          )
                         : '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
                     style: TextStyle(
                       color: selectedDate == null
@@ -669,7 +763,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Batch Weight',
+            _t('Batch Weight', BatchDetailsScreenSi.batchWeight),
             style: TextStyle(
               color: Colors.grey[700],
               fontSize: responsive.bodyFontSize,
@@ -679,7 +773,6 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
           const SizedBox(height: 8),
           Row(
             children: [
-              // KG Field
               Expanded(
                 flex: 3,
                 child: TextFormField(
@@ -687,7 +780,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                   keyboardType: TextInputType.number,
                   style: TextStyle(fontSize: responsive.bodyFontSize + 1),
                   decoration: InputDecoration(
-                    hintText: 'Kilograms',
+                    hintText: _t('Kilograms', BatchDetailsScreenSi.kilograms),
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
                       fontSize: responsive.bodyFontSize + 1,
@@ -725,7 +818,6 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                 width: responsive.value(mobile: 12, tablet: 14, desktop: 16),
               ),
 
-              // G Field
               Expanded(
                 flex: 2,
                 child: TextFormField(
@@ -733,7 +825,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                   keyboardType: TextInputType.number,
                   style: TextStyle(fontSize: responsive.bodyFontSize + 1),
                   decoration: InputDecoration(
-                    hintText: 'Grams',
+                    hintText: _t('Grams', BatchDetailsScreenSi.grams),
                     hintStyle: TextStyle(
                       color: Colors.grey[400],
                       fontSize: responsive.bodyFontSize + 1,
@@ -769,7 +861,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
           ),
           const SizedBox(height: 6),
           Text(
-            'Enter weight in kg and/or grams',
+            _t(
+              'Enter weight in kg and/or grams',
+              BatchDetailsScreenSi.weightHint,
+            ),
             style: TextStyle(
               color: Colors.grey[500],
               fontSize: responsive.fontSize(

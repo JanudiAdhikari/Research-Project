@@ -9,6 +9,8 @@ import '../../services/quality_check_api.dart';
 import 'package:CeylonPepper/features/quality_grading/screens/quality_grading_dashboard.dart';
 import 'package:flutter/material.dart';
 import '../../../../utils/responsive.dart';
+import '../../../../utils/language_prefs.dart';
+import '../../../../utils/quality_grading/result_summary_screen_si.dart';
 import 'batch_details_screen.dart';
 import '../how_it_works_screen.dart';
 import '../../../../utils/web_download_stub.dart'
@@ -21,7 +23,7 @@ class _GradeTheme {
   final Color primary;
   final Color light;
   final Color border;
-  final Color onLight; // text on light bg
+  final Color onLight;
   final IconData icon;
   const _GradeTheme({
     required this.primary,
@@ -79,7 +81,6 @@ _GradeTheme _gradeTheme(String grade) {
       icon: Icons.cancel_rounded,
     );
   }
-  // Default green
   return _GradeTheme(
     primary: const Color(0xFF2E7D32),
     light: const Color(0xFFE8F5E9),
@@ -98,18 +99,19 @@ String _str(dynamic v, {String fallback = '—'}) {
   return s.isEmpty ? fallback : s;
 }
 
-String _mapPepperType(String v) {
+String _mapPepperType(String v, {bool sinhala = false}) {
   switch (v) {
     case 'black':
-      return 'Black Pepper';
+      return sinhala ? ResultSummaryScreenSi.blackPepper : 'Black Pepper';
     case 'white':
-      return 'White Pepper';
+      return sinhala ? ResultSummaryScreenSi.whitePepper : 'White Pepper';
     default:
       return v.isEmpty ? '—' : v;
   }
 }
 
 String _mapVariety(String v) {
+  // Proper names — kept in English.
   switch (v) {
     case 'ceylon_pepper':
       return 'Ceylon Pepper';
@@ -132,12 +134,12 @@ String _mapVariety(String v) {
   }
 }
 
-String _mapDrying(String v) {
+String _mapDrying(String v, {bool sinhala = false}) {
   switch (v) {
     case 'sun_dried':
-      return 'Sun Dried';
+      return sinhala ? ResultSummaryScreenSi.sunDried : 'Sun Dried';
     case 'machine_dried':
-      return 'Machine Dried';
+      return sinhala ? ResultSummaryScreenSi.machineDried : 'Machine Dried';
     default:
       return v.isEmpty ? '—' : v.replaceAll('_', ' ');
   }
@@ -154,7 +156,6 @@ String _formatDateIso(dynamic iso) {
   }
 }
 
-/// Backend stores weight as total grams (batchWeightGrams).
 String _formatGrams(dynamic totalGrams) {
   if (totalGrams == null) return '—';
   final g = (totalGrams as num).toInt();
@@ -202,18 +203,15 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
   bool _loadingBatch = true;
   String? _batchError;
   Map<String, dynamic>? _qc;
+  String _currentLanguage = 'en';
 
   bool _downloading = false;
   String? _lastPdfPath;
 
-  // ── Derived values — read from _qc using correct nested keys ─────────────
-  //
-  // Backend getQualityCheckById returns:
-  //   { batch: { pepperType, pepperVariety, dryingMethod,
-  //              harvestDate, batchWeightGrams },
-  //     density: { value, source, measuredAt },
-  //     certificatesSnapshot: { items: [ { certificationType,
-  //       certificateNumber, issuingBody, issueDate, expiryDate } ], count } }
+  bool get _isSinhala => _currentLanguage == 'si';
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
+
+  // ── Derived values ─────────────────────────────────────────────────────────
 
   Map<String, dynamic> get _batch =>
       (_qc?['batch'] as Map<String, dynamic>?) ?? {};
@@ -228,9 +226,11 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
         .cast<Map<String, dynamic>>();
   }
 
-  String get _pepperTypeUi => _mapPepperType(_str(_batch['pepperType']));
+  String get _pepperTypeUi =>
+      _mapPepperType(_str(_batch['pepperType']), sinhala: _isSinhala);
   String get _varietyUi => _mapVariety(_str(_batch['pepperVariety']));
-  String get _dryingUi => _mapDrying(_str(_batch['dryingMethod']));
+  String get _dryingUi =>
+      _mapDrying(_str(_batch['dryingMethod']), sinhala: _isSinhala);
   String get _harvestDateUi => _formatDateIso(_batch['harvestDate']);
   String get _weightUi => _formatGrams(_batch['batchWeightGrams']);
   String get _densityUi {
@@ -255,6 +255,11 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
           CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
         );
     _animationController.forward();
+
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
+
     _loadQualityCheck();
   }
 
@@ -336,14 +341,17 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
               (route) => false,
             ),
           ),
-          title: const Text(
-            'Quality Report',
-            style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+          title: Text(
+            _t('Quality Report', ResultSummaryScreenSi.qualityReport),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
           ),
           actions: [
             IconButton(
               icon: const Icon(Icons.share_rounded, color: Colors.white),
-              tooltip: 'Share report',
+              tooltip: _t('Share report', ResultSummaryScreenSi.shareReport),
               onPressed: _downloading ? null : _sharePdf,
             ),
           ],
@@ -372,7 +380,10 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                         _buildSectionHeader(
                           responsive,
                           primary,
-                          'Batch Information',
+                          _t(
+                            'Batch Information',
+                            ResultSummaryScreenSi.batchInformation,
+                          ),
                           Icons.info_rounded,
                         ),
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -384,7 +395,10 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                         _buildSectionHeader(
                           responsive,
                           primary,
-                          'Certificates',
+                          _t(
+                            'Certificates',
+                            ResultSummaryScreenSi.certificates,
+                          ),
                           Icons.verified_rounded,
                         ),
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -396,7 +410,10 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                         _buildSectionHeader(
                           responsive,
                           primary,
-                          'Quality Breakdown',
+                          _t(
+                            'Quality Breakdown',
+                            ResultSummaryScreenSi.qualityBreakdown,
+                          ),
                           Icons.analytics_rounded,
                         ),
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -408,7 +425,10 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                         _buildSectionHeader(
                           responsive,
                           primary,
-                          'Improvement Suggestions',
+                          _t(
+                            'Improvement Suggestions',
+                            ResultSummaryScreenSi.improvementSuggestions,
+                          ),
                           Icons.lightbulb_rounded,
                         ),
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -420,7 +440,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                         _buildSectionHeader(
                           responsive,
                           primary,
-                          'Next Steps',
+                          _t('Next Steps', ResultSummaryScreenSi.nextSteps),
                           Icons.explore_rounded,
                         ),
                         ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
@@ -431,7 +451,11 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                         // ── Download PDF ───────────────────────────────
                         Container(
                           width: double.infinity,
-                          height: responsive.buttonHeight,
+                          height: responsive.value(
+                            mobile: 60,
+                            tablet: 64,
+                            desktop: 68,
+                          ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(28),
                             boxShadow: [
@@ -463,23 +487,14 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                                       color: Colors.white,
                                     ),
                                   )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.download_rounded,
-                                        size: responsive.smallIconSize,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Download Report (PDF)',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: responsive.titleFontSize,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ],
+                                : _responsiveButtonRow(
+                                    responsive: responsive,
+                                    icon: Icons.download_rounded,
+                                    text: _t(
+                                      'Download Report (PDF)',
+                                      ResultSummaryScreenSi.downloadReportPdf,
+                                    ),
+                                    textColor: Colors.white,
                                   ),
                           ),
                         ),
@@ -488,7 +503,11 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
 
                         Container(
                           width: double.infinity,
-                          height: responsive.buttonHeight,
+                          height: responsive.value(
+                            mobile: 60,
+                            tablet: 64,
+                            desktop: 68,
+                          ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(color: primary, width: 2),
@@ -507,23 +526,14 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                                 borderRadius: BorderRadius.circular(28),
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.help_outline_rounded,
-                                  size: responsive.smallIconSize,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'How is Quality Calculated?',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: responsive.titleFontSize,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
+                            child: _responsiveButtonRow(
+                              responsive: responsive,
+                              icon: Icons.help_outline_rounded,
+                              text: _t(
+                                'How is Quality Calculated?',
+                                ResultSummaryScreenSi.howIsQualityCalculated,
+                              ),
+                              textColor: primary,
                             ),
                           ),
                         ),
@@ -541,9 +551,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Grade card — colour changes per grade
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Grade card ─────────────────────────────────────────────────────────────
 
   Widget _buildGradeCard(
     Responsive responsive,
@@ -572,7 +580,6 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
       ),
       child: Column(
         children: [
-          // Grade badge
           Row(
             children: [
               Container(
@@ -632,10 +639,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
               ),
             ],
           ),
-
           ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-          // Score circle
           Container(
             width: responsive.value(mobile: 140, tablet: 160, desktop: 180),
             height: responsive.value(mobile: 140, tablet: 160, desktop: 180),
@@ -682,11 +686,12 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
               ],
             ),
           ),
-
           ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
-
           Text(
-            'Overall Quality Score',
+            _t(
+              'Overall Quality Score',
+              ResultSummaryScreenSi.overallQualityScore,
+            ),
             style: TextStyle(
               fontSize: responsive.titleFontSize,
               color: theme.onLight,
@@ -698,9 +703,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Batch info card — reads from _batch / _density getters (correct keys)
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Batch card ─────────────────────────────────────────────────────────────
 
   Widget _buildBatchCard(Responsive responsive) {
     if (_loadingBatch) {
@@ -732,7 +735,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
             const SizedBox(width: 12),
             TextButton(
               onPressed: _loadQualityCheck,
-              child: const Text('Retry'),
+              child: Text(_t('Retry', ResultSummaryScreenSi.retry)),
             ),
           ],
         ),
@@ -756,42 +759,42 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
         children: [
           _buildInfoRow(
             responsive,
-            'Pepper Type',
+            _t('Pepper Type', ResultSummaryScreenSi.pepperType),
             _pepperTypeUi,
             Icons.grass_rounded,
           ),
           _buildDivider(responsive),
           _buildInfoRow(
             responsive,
-            'Pepper Variety',
+            _t('Pepper Variety', ResultSummaryScreenSi.pepperVariety),
             _varietyUi,
             Icons.local_florist_rounded,
           ),
           _buildDivider(responsive),
           _buildInfoRow(
             responsive,
-            'Drying Method',
+            _t('Drying Method', ResultSummaryScreenSi.dryingMethod),
             _dryingUi,
             Icons.wb_sunny_rounded,
           ),
           _buildDivider(responsive),
           _buildInfoRow(
             responsive,
-            'Harvest Date',
+            _t('Harvest Date', ResultSummaryScreenSi.harvestDate),
             _harvestDateUi,
             Icons.calendar_today_rounded,
           ),
           _buildDivider(responsive),
           _buildInfoRow(
             responsive,
-            'Batch Weight',
+            _t('Batch Weight', ResultSummaryScreenSi.batchWeight),
             _weightUi,
             Icons.scale_rounded,
           ),
           _buildDivider(responsive),
           _buildInfoRow(
             responsive,
-            'Bulk Density',
+            _t('Bulk Density', ResultSummaryScreenSi.bulkDensity),
             _densityUi,
             Icons.science_rounded,
             isLast: true,
@@ -801,9 +804,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Certificates card — reads from certificatesSnapshot.items
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Certificates card ──────────────────────────────────────────────────────
 
   Widget _buildCertificatesCard(Responsive responsive) {
     if (_loadingBatch) {
@@ -838,7 +839,10 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'No certificates were attached at grading time.',
+                _t(
+                  'No certificates were attached at grading time.',
+                  ResultSummaryScreenSi.noCertificatesAttached,
+                ),
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize,
                   color: Colors.grey[600],
@@ -923,7 +927,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                           if (number.isNotEmpty) ...[
                             const SizedBox(height: 3),
                             Text(
-                              'No: $number',
+                              '${_t('No:', ResultSummaryScreenSi.certNo)} $number',
                               style: TextStyle(
                                 fontSize: responsive.bodyFontSize - 1,
                                 color: Colors.grey[600],
@@ -943,7 +947,6 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                         ],
                       ),
                     ),
-                    // Expiry badge
                     if (cert['expiryDate'] != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -956,7 +959,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                           border: Border.all(color: Colors.green.shade200),
                         ),
                         child: Text(
-                          'Exp: ${_formatDateIso(cert["expiryDate"])}',
+                          '${_t('Exp:', ResultSummaryScreenSi.expLabel)} ${_formatDateIso(cert["expiryDate"])}',
                           style: TextStyle(
                             fontSize: responsive.bodyFontSize - 2,
                             color: Colors.green.shade700,
@@ -975,9 +978,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Quality breakdown
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Breakdown card ─────────────────────────────────────────────────────────
 
   Widget _buildBreakdownCard(
     Responsive responsive,
@@ -1005,37 +1006,37 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
         children: [
           _buildScoreBar(
             responsive,
-            'Density',
+            _t('Density', ResultSummaryScreenSi.density),
             _asInt(factorScores['density']),
             Colors.green,
           ),
           _buildScoreBar(
             responsive,
-            'Adulteration',
+            _t('Adulteration', ResultSummaryScreenSi.adulteration),
             _asInt(factorScores['adulteration']),
             Colors.teal,
           ),
           _buildScoreBar(
             responsive,
-            'Mold',
+            _t('Mold', ResultSummaryScreenSi.mold),
             _asInt(factorScores['mold']),
             Colors.purple,
           ),
           _buildScoreBar(
             responsive,
-            'Extraneous',
+            _t('Extraneous', ResultSummaryScreenSi.extraneous),
             _asInt(factorScores['extraneous']),
             Colors.orange,
           ),
           _buildScoreBar(
             responsive,
-            'Broken',
+            _t('Broken', ResultSummaryScreenSi.broken),
             _asInt(factorScores['broken']),
             Colors.blue,
           ),
           _buildScoreBar(
             responsive,
-            'Healthy Visual',
+            _t('Healthy Visual', ResultSummaryScreenSi.healthyVisual),
             _asInt(factorScores['healthyVisual']),
             Colors.indigo,
             isLast: true,
@@ -1045,9 +1046,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Improvements
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Improvements card ──────────────────────────────────────────────────────
 
   Widget _buildImprovementsCard(
     Responsive responsive,
@@ -1078,7 +1077,10 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'No improvements suggested. Your batch looks great!',
+                    _t(
+                      'No improvements suggested. Your batch looks great!',
+                      ResultSummaryScreenSi.noImprovements,
+                    ),
                     style: TextStyle(
                       fontSize: responsive.bodyFontSize,
                       color: Colors.green.shade800,
@@ -1105,9 +1107,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Quick actions
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Quick actions ──────────────────────────────────────────────────────────
 
   Widget _buildQuickActionsGrid(
     BuildContext context,
@@ -1120,8 +1120,14 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
           child: _buildQuickActionCard(
             context,
             responsive,
-            title: 'Check Market Price',
-            subtitle: 'Get current rates',
+            title: _t(
+              'Check Market Price',
+              ResultSummaryScreenSi.checkMarketPrice,
+            ),
+            subtitle: _t(
+              'Get current rates',
+              ResultSummaryScreenSi.getCurrentRates,
+            ),
             icon: Icons.trending_up_rounded,
             color: Colors.blue,
             onTap: () => Navigator.push(
@@ -1135,8 +1141,11 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
           child: _buildQuickActionCard(
             context,
             responsive,
-            title: 'Start New Test',
-            subtitle: 'Grade another batch',
+            title: _t('Start New Test', ResultSummaryScreenSi.startNewTest),
+            subtitle: _t(
+              'Grade another batch',
+              ResultSummaryScreenSi.gradeAnotherBatch,
+            ),
             icon: Icons.add_circle_outline_rounded,
             color: Colors.green,
             onTap: () => Navigator.push(
@@ -1225,9 +1234,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Shared helpers
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Shared helpers ─────────────────────────────────────────────────────────
 
   Widget _buildSectionHeader(
     Responsive responsive,
@@ -1420,9 +1427,51 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PDF helpers
-  // ─────────────────────────────────────────────────────────────────────────
+  Widget _responsiveButtonRow({
+    required Responsive responsive,
+    required IconData icon,
+    required String text,
+    Color? iconColor,
+    Color? textColor,
+    IconData? trailingIcon,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          icon,
+          size: responsive.smallIconSize,
+          color: iconColor ?? textColor,
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            softWrap: true,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: responsive.titleFontSize,
+              height: 1.1,
+              color: textColor,
+            ),
+          ),
+        ),
+        if (trailingIcon != null) ...[
+          const SizedBox(width: 8),
+          Icon(
+            trailingIcon,
+            size: responsive.smallIconSize,
+            color: iconColor ?? textColor,
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ── PDF helpers ────────────────────────────────────────────────────────────
 
   String _pdfFileName() => 'pepper_report_${widget.batchId}.pdf';
 
@@ -1437,9 +1486,13 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
       if (kIsWeb) {
         downloadBytesOnWeb(bytes, fileName);
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('PDF downloaded')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _t('PDF downloaded', ResultSummaryScreenSi.pdfDownloaded),
+              ),
+            ),
+          );
         }
         return;
       }

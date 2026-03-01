@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import '../App.css';
 
 export default function Login() {
@@ -18,17 +20,36 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      if (!email || !password) {
+        setError('Please enter both email and password.');
+        setLoading(false);
+        return;
+      }
 
-      // Basic validation for demo
-      if (email && password) {
+      // Log in via Firebase Auth direct web SDK
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+      // Extract the secure Firebase JWT to pass into our backend
+      const idToken = await userCredential.user.getIdToken();
+
+      if (idToken) {
+        localStorage.setItem('token', idToken);
         navigate('/dashboard');
       } else {
-        setError('Please enter both email and password.');
+        setError('Failed to retrieve authentication token.');
       }
+
     } catch (err) {
-      setError('An error occurred during login.');
+      console.error(err);
+
+      // Map Firebase Auth Errors
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('Invalid email or password. Please try again.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Access to this account has been temporarily disabled due to many failed login attempts.');
+      } else {
+        setError(err.message || 'An error occurred during login. Please ensure you have an active network connection.');
+      }
     } finally {
       setLoading(false);
     }

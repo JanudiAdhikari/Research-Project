@@ -36,3 +36,26 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+// --- Certificate Verification Endpoints ---
+
+export const fetchPendingCertificates = async () => {
+    const response = await api.get('/certifications/admin/all?status=pending');
+    return response.data;
+};
+
+export const verifyCertificate = async (id) => {
+    const response = await api.patch(`/certifications/admin/${id}/verify`, {
+        action: 'verify'
+    });
+    return response.data;
+};
+
+export const rejectCertificate = async (id, reason) => {
+    const response = await api.patch(`/certifications/admin/${id}/verify`, {
+        action: 'reject',
+        reason: reason
+    });
+    return response.data;
+};
+

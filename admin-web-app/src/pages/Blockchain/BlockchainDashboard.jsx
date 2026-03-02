@@ -1,97 +1,288 @@
-import { useNavigate } from 'react-router-dom';
-import { CheckCircle, QrCode, ArrowLeft, Info } from 'lucide-react';
-import '../../App.css';
+import { useNavigate } from "react-router-dom";
+import {
+  CheckCircle,
+  QrCode,
+  ArrowLeft,
+  Info,
+  ShieldCheck,
+  ChevronRight,
+} from "lucide-react";
+import "../../App.css";
 
 export default function BlockchainDashboard() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    return (
-        <div className="dashboard-layout">
-            <main className="main-content" style={{ marginLeft: 0, width: '100%', padding: '2rem' }}>
-                <header className="dashboard-header" style={{ marginBottom: '2rem' }}>
-                    <div className="header-text" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <button
-                            onClick={() => navigate('/dashboard')}
-                            className="btn btn-outline"
-                            style={{ padding: '0.5rem', borderRadius: '50%' }}
-                        >
-                            <ArrowLeft size={24} />
-                        </button>
-                        <div>
-                            <p className="greeting">Blockchain System</p>
-                            <h1>Process Management</h1>
-                        </div>
-                    </div>
-                </header>
+  // Theme colors
+  const colors = {
+    verify: {
+      accent: "#16a34a",
+      soft: "#dcfce7",
+      border: "#86efac",
+    },
+    qr: {
+      accent: "#2563eb",
+      soft: "#dbeafe",
+      border: "#93c5fd",
+    },
+    info: {
+      accent: "#d97706",
+      soft: "#ffffff",
+      border: "#fcd34d",
+    },
+  };
 
-                <div className="content-pad" style={{ maxWidth: '800px', margin: '0 auto' }}>
+  const cardBase = {
+    backgroundColor: "#ffffff",
+    borderRadius: "16px",
+    padding: "1.5rem 1.75rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "1.25rem",
+    cursor: "pointer",
+    boxShadow: "0 10px 26px rgba(0,0,0,0.10)",
+    transition: "transform 0.18s ease, box-shadow 0.18s ease",
+    position: "relative",
+    overflow: "hidden",
+  };
 
-                    {/* Information Banner */}
-                    <div className="notice-card" style={{
-                        backgroundColor: '#f0fdf4',
-                        border: '1px solid #bbf7d0',
-                        marginBottom: '2rem',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '1rem',
-                        padding: '1.5rem',
-                        borderRadius: '12px'
-                    }}>
-                        <Info size={24} color="#166534" style={{ flexShrink: 0 }} />
-                        <p style={{ color: '#14532d', margin: 0, lineHeight: 1.5 }}>
-                            Please verify pepper batches to ensure QR codes represent for approved products. Tap "Verify Pepper Batches" to proceed.
-                        </p>
-                    </div>
+  const iconWrapBase = {
+    width: "56px",
+    height: "56px",
+    borderRadius: "14px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    border: "1px solid #e5e7eb",
+  };
 
-                    <div className="feature-grid" style={{ gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-                        {/* Verify Batches Card */}
-                        <div
-                            className="feature-card"
-                            style={{
-                                '--card-color': 'var(--success)',
-                                display: 'flex',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: '1.5rem',
-                                padding: '1.5rem 2rem',
-                                minHeight: 'auto'
-                            }}
-                            onClick={() => navigate('/blockchain/verify-batches')}
-                        >
-                            <div className="card-icon-wrapper" style={{ margin: 0, width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <CheckCircle size={32} />
-                            </div>
-                            <div style={{ flex: 1, textAlign: 'left' }}>
-                                <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>Verify Pepper Batches</h3>
-                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.95rem' }}>Review submitted batches and mark as verified</p>
-                            </div>
-                        </div>
+  const onCardEnter = (e, accent) => {
+    e.currentTarget.style.transform = "translateY(-3px)";
+    e.currentTarget.style.boxShadow = `0 18px 38px rgba(0,0,0,0.14), 0 0 0 4px ${accent}22`;
+  };
 
-                        {/* Generate QR Card */}
-                        <div
-                            className="feature-card"
-                            style={{
-                                '--card-color': 'var(--info)',
-                                display: 'flex',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: '1.5rem',
-                                padding: '1.5rem 2rem',
-                                minHeight: 'auto'
-                            }}
-                            onClick={() => navigate('/blockchain/generate-qr')}
-                        >
-                            <div className="card-icon-wrapper" style={{ margin: 0, width: '60px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <QrCode size={32} />
-                            </div>
-                            <div style={{ flex: 1, textAlign: 'left' }}>
-                                <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>Generate QR Code</h3>
-                                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.95rem' }}>Create QR codes for verified batches</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
+  const onCardLeave = (e) => {
+    e.currentTarget.style.transform = "translateY(0px)";
+    e.currentTarget.style.boxShadow = "0 10px 26px rgba(0,0,0,0.10)";
+  };
+
+  return (
+    <div className="dashboard-layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="brand-logo-small">
+            <ShieldCheck size={24} color="#fff" />
+          </div>
+          <h2>Admin Portal</h2>
         </div>
-    );
+
+        <nav className="sidebar-nav">
+          <div
+            className="nav-item"
+            onClick={() => navigate("/dashboard")}
+            style={{ cursor: "pointer" }}
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Dashboard</span>
+          </div>
+
+          <div className="nav-item active">
+            <CheckCircle size={20} />
+            <span>Blockchain System</span>
+          </div>
+
+          <div
+            className="nav-item"
+            onClick={() => navigate("/blockchain/verify-batches")}
+            style={{ cursor: "pointer" }}
+          >
+            <CheckCircle size={20} />
+            <span>Verify Batches</span>
+          </div>
+
+          <div
+            className="nav-item"
+            onClick={() => navigate("/blockchain/generate-qr")}
+            style={{ cursor: "pointer" }}
+          >
+            <QrCode size={20} />
+            <span>Generate QR</span>
+          </div>
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="main-content">
+        <header
+          className="dashboard-header"
+          style={{ marginBottom: "1.75rem" }}
+        >
+          <div className="header-text">
+            <div className="greeting">Blockchain System</div>
+            <h1>Verification Process</h1>
+          </div>
+        </header>
+
+        <div className="content-pad" style={{ maxWidth: "900px" }}>
+          {/* Info banner */}
+          <div
+            className="notice-card"
+            style={{
+              backgroundColor: colors.info.soft,
+              border: `1px solid ${colors.info.border}`,
+              marginBottom: "1.5rem",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "1rem",
+              padding: "1.25rem",
+              borderRadius: "16px",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+            }}
+          >
+            <div
+              style={{
+                ...iconWrapBase,
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: "#fff",
+                border: `1px solid ${colors.info.border}`,
+              }}
+            >
+              <Info size={22} color={colors.info.accent} />
+            </div>
+
+            <p style={{ color: "#111827", margin: 0, lineHeight: 1.5 }}>
+              Please verify pepper batches to ensure QR codes represent{" "}
+              <b>approved products</b>. Tap <b>“Verify Pepper Batches”</b> to
+              proceed.
+            </p>
+          </div>
+
+          {/* Navigation cards */}
+          <div
+            className="feature-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: "1.25rem",
+            }}
+          >
+            {/* Verify Batches */}
+            <div
+              role="button"
+              tabIndex={0}
+              style={{
+                ...cardBase,
+                border: `1px solid ${colors.verify.border}`,
+              }}
+              onClick={() => navigate("/blockchain/verify-batches")}
+              onKeyDown={(e) =>
+                e.key === "Enter" && navigate("/blockchain/verify-batches")
+              }
+              onMouseEnter={(e) => onCardEnter(e, colors.verify.accent)}
+              onMouseLeave={onCardLeave}
+            >
+              {/* left accent bar */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: "6px",
+                  background: colors.verify.accent,
+                }}
+              />
+
+              <div
+                style={{
+                  ...iconWrapBase,
+                  background: colors.verify.soft,
+                  border: `1px solid ${colors.verify.border}`,
+                }}
+              >
+                <CheckCircle size={28} color={colors.verify.accent} />
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3
+                  style={{ margin: 0, color: "#111827", fontSize: "1.15rem" }}
+                >
+                  Verify Pepper Batches
+                </h3>
+                <p style={{ margin: "0.35rem 0 0 0", color: "#6b7280" }}>
+                  Review submitted batches and mark them as verified
+                </p>
+              </div>
+
+              <ChevronRight size={22} color={colors.verify.accent} />
+            </div>
+
+            {/* Generate QR */}
+            <div
+              role="button"
+              tabIndex={0}
+              style={{
+                ...cardBase,
+                border: `1px solid ${colors.qr.border}`,
+              }}
+              onClick={() => navigate("/blockchain/generate-qr")}
+              onKeyDown={(e) =>
+                e.key === "Enter" && navigate("/blockchain/generate-qr")
+              }
+              onMouseEnter={(e) => onCardEnter(e, colors.qr.accent)}
+              onMouseLeave={onCardLeave}
+            >
+              {/* left accent bar */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: "6px",
+                  background: colors.qr.accent,
+                }}
+              />
+
+              <div
+                style={{
+                  ...iconWrapBase,
+                  background: colors.qr.soft,
+                  border: `1px solid ${colors.qr.border}`,
+                }}
+              >
+                <QrCode size={28} color={colors.qr.accent} />
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3
+                  style={{ margin: 0, color: "#111827", fontSize: "1.15rem" }}
+                >
+                  Generate QR Code
+                </h3>
+                <p style={{ margin: "0.35rem 0 0 0", color: "#6b7280" }}>
+                  Create QR codes for admin-verified batches
+                </p>
+              </div>
+
+              <ChevronRight size={22} color={colors.qr.accent} />
+            </div>
+          </div>
+
+          <style>
+            {`
+              @media (max-width: 900px) {
+                .feature-grid {
+                  grid-template-columns: 1fr !important;
+                }
+              }
+            `}
+          </style>
+        </div>
+      </main>
+    </div>
+  );
 }

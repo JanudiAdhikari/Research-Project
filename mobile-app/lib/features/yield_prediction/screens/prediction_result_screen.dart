@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'xai_insights_screen.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class PredictionResultScreen extends StatefulWidget {
   final double predictedYield;
   final double soilMoisture;
   final double temperature;
   final dynamic imageFile; // XFile or File
+  final String language;
 
   const PredictionResultScreen({
     super.key,
@@ -17,6 +19,7 @@ class PredictionResultScreen extends StatefulWidget {
     required this.soilMoisture,
     required this.temperature,
     required this.imageFile,
+    this.language = 'en',
   });
 
   @override
@@ -26,8 +29,14 @@ class PredictionResultScreen extends StatefulWidget {
 class _PredictionResultScreenState extends State<PredictionResultScreen> {
   @override
   Widget build(BuildContext context) {
+    final isSi = widget.language == 'si';
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Prediction Result")),
+      appBar: AppBar(
+        title: Text(
+          isSi ? YieldPredictionSi.predictionResult : "Prediction Result",
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -40,14 +49,14 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
           const SizedBox(height: 24),
 
           // YIELD HERO
-          _buildYieldHero(),
+          _buildYieldHero(isSi),
 
           const SizedBox(height: 24),
 
           // SOIL
           _infoTile(
             Icons.water_drop_rounded,
-            "Soil Moisture",
+            isSi ? YieldPredictionSi.soilMoisture : "Soil Moisture",
             "${widget.soilMoisture.round()}%",
             Colors.blue,
           ),
@@ -55,7 +64,7 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
           // TEMPERATURE
           _infoTile(
             Icons.thermostat_rounded,
-            "Temperature",
+            isSi ? YieldPredictionSi.temperature : "Temperature",
             "${widget.temperature.round()}°C",
             Colors.orange,
           ),
@@ -68,7 +77,9 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
             height: 50,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.psychology_rounded),
-              label: const Text("View AI Insights"),
+              label: Text(
+                isSi ? YieldPredictionSi.viewAiInsights : "View AI Insights",
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -77,6 +88,7 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
                       imageFile: widget.imageFile,
                       soilMoisture: widget.soilMoisture,
                       temperature: widget.temperature,
+                      language: widget.language,
                     ),
                   ),
                 );
@@ -127,7 +139,7 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
     }
   }
 
-  Widget _buildYieldHero() {
+  Widget _buildYieldHero(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -139,13 +151,13 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Predicted Yield",
-            style: TextStyle(color: Colors.white70),
+          Text(
+            isSi ? YieldPredictionSi.estimatedYield : "Predicted Yield",
+            style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 8),
           Text(
-            "${widget.predictedYield} kg",
+            "${widget.predictedYield} ${isSi ? YieldPredictionSi.kilogramPerPlant : "kg"}",
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,

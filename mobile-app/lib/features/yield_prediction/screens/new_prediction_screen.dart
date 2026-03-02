@@ -4,9 +4,12 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/yield_prediction_provider.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class NewPredictionScreen extends StatefulWidget {
-  const NewPredictionScreen({super.key});
+  final String language;
+
+  const NewPredictionScreen({super.key, this.language = 'en'});
 
   @override
   State<NewPredictionScreen> createState() => _NewPredictionScreenState();
@@ -24,10 +27,16 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isSi = widget.language == 'si';
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("New Harvest Prediction"),
+        title: Text(
+          isSi
+              ? YieldPredictionSi.newHarvestPrediction
+              : "New Harvest Prediction",
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -40,8 +49,12 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
           children: [
             _stepHeader(
               icon: Icons.camera_alt_rounded,
-              title: "Step 1: Upload Plant Image",
-              subtitle: "Capture or select pepper plant image",
+              title: isSi
+                  ? YieldPredictionSi.step1UploadPlantImage
+                  : "Step 1: Upload Plant Image",
+              subtitle: isSi
+                  ? YieldPredictionSi.captureOrSelectPepperPlantImage
+                  : "Capture or select pepper plant image",
               color: Colors.green,
             ),
 
@@ -64,19 +77,21 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
                       : null,
                 ),
                 child: selectedImage == null
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.upload_rounded,
                               size: 40,
                               color: Colors.grey,
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
-                              "Tap to upload image",
-                              style: TextStyle(color: Colors.grey),
+                              isSi
+                                  ? YieldPredictionSi.tapToUploadImage
+                                  : "Tap to upload image",
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           ],
                         ),
@@ -87,49 +102,66 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
 
             _stepHeader(
               icon: Icons.sensors_rounded,
-              title: "Step 2: Soil Conditions",
-              subtitle: "Critical for yield estimation",
+              title: isSi
+                  ? YieldPredictionSi.step2SoilConditions
+                  : "Step 2: Soil Conditions",
+              subtitle: isSi
+                  ? YieldPredictionSi.criticalForYieldEstimation
+                  : "Critical for yield estimation",
               color: Colors.blue,
             ),
 
             const SizedBox(height: 8),
 
-            _iotToggle(),
+            _iotToggle(isSi),
 
             const SizedBox(height: 12),
 
             _sliderField(
-              label: "Soil Moisture (%)",
+              label: isSi
+                  ? YieldPredictionSi.soilMoisture
+                  : "Soil Moisture (%)",
               value: soilMoisture,
               max: 100,
               onChanged: (v) => setState(() => soilMoisture = v),
             ),
             _infoText(
-              "Optimal soil moisture improves nutrient absorption and yield accuracy.",
+              isSi
+                  ? YieldPredictionSi
+                        .optimalSoilMoistureImprovesNutrientAbsorption
+                  : "Optimal soil moisture improves nutrient absorption and yield accuracy.",
             ),
 
             const SizedBox(height: 24),
             _stepHeader(
               icon: Icons.thermostat_rounded,
-              title: "Step 3: Temperature",
-              subtitle: "Environmental temperature in °C",
+              title: isSi
+                  ? YieldPredictionSi.step3Temperature
+                  : "Step 3: Temperature",
+              subtitle: isSi
+                  ? YieldPredictionSi.environmentalTemperatureInCelsius
+                  : "Environmental temperature in °C",
               color: Colors.orange,
             ),
 
             const SizedBox(height: 12),
 
             _sliderField(
-              label: "Temperature (°C)",
+              label: isSi ? YieldPredictionSi.temperature : "Temperature (°C)",
               value: temperature,
               max: 50,
               onChanged: (v) => setState(() => temperature = v),
             ),
 
-            _infoText("Temperature affects growth rate and fruit development."),
+            _infoText(
+              isSi
+                  ? YieldPredictionSi.temperatureAffectsGrowthRate
+                  : "Temperature affects growth rate and fruit development.",
+            ),
 
             const SizedBox(height: 28),
 
-            _confidencePreview(),
+            _confidencePreview(isSi),
 
             const SizedBox(height: 20),
 
@@ -137,9 +169,12 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
               height: 54,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.analytics_rounded),
-                label: const Text(
-                  "Predict Yield",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                label: Text(
+                  isSi ? YieldPredictionSi.predictYield : "Predict Yield",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
@@ -149,8 +184,12 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
                 onPressed: () async {
                   if (selectedImage == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Please upload a plant image"),
+                      SnackBar(
+                        content: Text(
+                          isSi
+                              ? YieldPredictionSi.pleaseUploadAPlantImage
+                              : "Please upload a plant image",
+                        ),
                       ),
                     );
                     return;
@@ -185,13 +224,19 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
                           soilMoisture: soilMoisture,
                           temperature: temperature,
                           imageFile: selectedImage!,
+                          language: widget.language,
                         ),
                       ),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(provider.error ?? "Prediction failed"),
+                        content: Text(
+                          provider.error ??
+                              (isSi
+                                  ? YieldPredictionSi.predictionFailed
+                                  : "Prediction failed"),
+                        ),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -250,30 +295,43 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
     );
   }
 
-  Widget _dropdownField() {
+  Widget _dropdownField(bool isSi) {
     return DropdownButtonFormField<String>(
       value: plantAge,
-      items: const [
-        DropdownMenuItem(value: "3–5 months", child: Text("3–5 months")),
-        DropdownMenuItem(value: "6–8 months", child: Text("6–8 months")),
-        DropdownMenuItem(value: "9+ months", child: Text("9+ months")),
+      items: [
+        DropdownMenuItem(
+          value: "3–5 months",
+          child: Text(
+            isSi ? YieldPredictionSi.threeToFiveMonths : "3–5 months",
+          ),
+        ),
+        DropdownMenuItem(
+          value: "6–8 months",
+          child: Text(isSi ? YieldPredictionSi.sixToEightMonths : "6–8 months"),
+        ),
+        DropdownMenuItem(
+          value: "9+ months",
+          child: Text(isSi ? YieldPredictionSi.ninePlusMonths : "9+ months"),
+        ),
       ],
       onChanged: (v) => setState(() => plantAge = v!),
       decoration: InputDecoration(
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        labelText: "Plant Age",
-        helperText: "Older plants usually produce higher yields",
+        labelText: isSi ? YieldPredictionSi.plantAgeLabel : "Plant Age",
+        helperText: isSi
+            ? YieldPredictionSi.plantAgeHelper
+            : "Older plants usually produce higher yields",
       ),
     );
   }
 
-  Widget _iotToggle() {
+  Widget _iotToggle(bool isSi) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          "Use IoT Sensor Data",
-          style: TextStyle(fontWeight: FontWeight.w600),
+        Text(
+          isSi ? YieldPredictionSi.useIoTSensorData : "Use IoT Sensor Data",
+          style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         Switch(
           value: useIoT,
@@ -318,7 +376,7 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
     );
   }
 
-  Widget _confidencePreview() {
+  Widget _confidencePreview(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -326,13 +384,15 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
-        children: const [
-          Icon(Icons.insights_rounded, color: Colors.green),
-          SizedBox(width: 12),
+        children: [
+          const Icon(Icons.insights_rounded, color: Colors.green),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Based on provided inputs, prediction confidence is expected to be high.",
-              style: TextStyle(fontSize: 13),
+              isSi
+                  ? YieldPredictionSi.basedOnProvidedInputs
+                  : "Based on provided inputs, prediction confidence is expected to be high.",
+              style: const TextStyle(fontSize: 13),
             ),
           ),
         ],

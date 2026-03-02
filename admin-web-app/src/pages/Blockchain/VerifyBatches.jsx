@@ -27,7 +27,8 @@ export default function VerifyBatches() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  // default to showing batches that need verification
+  const [statusFilter, setStatusFilter] = useState("NOT_VERIFIED");
 
   const loadBatches = async () => {
     setLoading(true);
@@ -47,16 +48,29 @@ export default function VerifyBatches() {
     loadBatches();
   }, []);
 
+  // Filter data based on search query and status filter
   const applyFilters = (data, search, status) => {
-    let filtered = data;
+    // Exclude QR_GENERATED records — they are considered already verified
+    let filtered = (data || []).filter(
+      (b) => (b.currentStatus || "").toUpperCase() !== "QR_GENERATED",
+    );
     const searchLower = (search || "").toLowerCase();
 
-    if (status !== "ALL") {
-      filtered = filtered.filter(
-        (b) => (b.currentStatus || "").toUpperCase() === status,
-      );
+    if (status && status !== "ALL") {
+      if (status === "NOT_VERIFIED") {
+        // include statuses that still require verification
+        filtered = filtered.filter((b) =>
+          ["BATCH_CREATED", "MARKETPLACE_LISTED"].includes(
+            (b.currentStatus || "").toUpperCase(),
+          ),
+        );
+      } else if (status === "VERIFIED") {
+        filtered = filtered.filter(
+          (b) => (b.currentStatus || "").toUpperCase() === "VERIFIED",
+        );
+      }
     }
-
+    // Apply search filter across multiple fields
     if (searchLower) {
       filtered = filtered.filter(
         (b) =>
@@ -75,15 +89,22 @@ export default function VerifyBatches() {
     applyFilters(batches, searchQuery, statusFilter);
   }, [searchQuery, statusFilter]);
 
+  // Total records
+  const totalAvailable = (batches || []).filter(
+    (b) => (b.currentStatus || "").toUpperCase() !== "QR_GENERATED",
+  ).length;
+
   // Helper to get color based on status
   const getStatusColor = (status) => {
     switch ((status || "").toUpperCase()) {
       case "BATCH_CREATED":
-        return "#3b82f6";
+        return "#05388a";
       case "MARKETPLACE_LISTED":
-        return "#8b5cf6";
+        return "#655193";
       case "VERIFIED":
-        return "#22c55e";
+        return "#2E7D32";
+      case "NOT_VERIFIED":
+        return "#e4b643";
       default:
         return "#64748b";
     }
@@ -254,36 +275,34 @@ export default function VerifyBatches() {
                 flexWrap: "wrap",
               }}
             >
-              {["ALL", "BATCH_CREATED", "MARKETPLACE_LISTED", "VERIFIED"].map(
-                (status) => (
-                  <button
-                    key={status}
-                    onClick={() => setStatusFilter(status)}
-                    style={{
-                      padding: "0.5rem 1rem",
-                      borderRadius: "999px",
-                      border: `1px solid ${
-                        statusFilter === status
-                          ? getStatusColor(status)
-                          : "#e2e8f0"
-                      }`,
-                      backgroundColor:
-                        statusFilter === status
-                          ? `${getStatusColor(status)}18`
-                          : "white",
-                      color:
-                        statusFilter === status
-                          ? getStatusColor(status)
-                          : "#0f172a",
-                      fontWeight: statusFilter === status ? "800" : "600",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    {status === "ALL" ? "All" : formatStatus(status)}
-                  </button>
-                ),
-              )}
+              {["VERIFIED", "NOT_VERIFIED"].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    borderRadius: "999px",
+                    border: `1px solid ${
+                      statusFilter === status
+                        ? getStatusColor(status)
+                        : "#e2e8f0"
+                    }`,
+                    backgroundColor:
+                      statusFilter === status
+                        ? `${getStatusColor(status)}18`
+                        : "white",
+                    color:
+                      statusFilter === status
+                        ? getStatusColor(status)
+                        : "#0f172a",
+                    fontWeight: statusFilter === status ? "800" : "600",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {status === "VERIFIED" ? "Verified" : "Not Verified"}
+                </button>
+              ))}
             </div>
 
             {/* Refresh Button */}
@@ -299,7 +318,7 @@ export default function VerifyBatches() {
             >
               <div style={{ color: "#64748b", fontSize: "0.9rem" }}>
                 Showing <b>{filteredBatches.length}</b> of{" "}
-                <b>{batches.length}</b> batches
+                <b>{totalAvailable}</b> batches
               </div>
 
               <button

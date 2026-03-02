@@ -15,7 +15,7 @@
   --border-color: #e5e7eb;
 
   --error: #ef4444;
-  --success: #10b981;
+  --success: #2E7D32;
   --warning: #f59e0b;
   --info: #3b82f6;
 
@@ -686,6 +686,30 @@ a:hover {
   padding: 4rem;
   color: var(--text-muted);
   font-size: 1.25rem;
+}
+
+/* Toast (bottom-right) */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  min-width: 240px;
+  max-width: 360px;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.2);
+  animation: toastSlide 220ms ease;
+}
+
+@keyframes toastSlide {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .empty-state {

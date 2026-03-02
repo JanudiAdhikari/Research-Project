@@ -13,7 +13,7 @@ class ActualPriceDataSi {
   static const String enterPriceDetails =
       'ඔබේ ගම්මිරිස් තොගයේ මිල විස්තර ඇතුළත් කරන්න';
 
-  static const String viewPastRecords = 'පැරණි වාර්තා බලන්න';
+  static const String viewMyRecords = 'මගේ වාර්තා බලන්න';
 
   static const String priceDetails = 'මිල විස්තර';
   static const String batchId = 'බැච් අංකය';
@@ -62,14 +62,17 @@ class ActualPriceDataSi {
   static const String priceDataSubmitted =
       'ඔබගේ මිල දත්ත සාර්ථකව ඉදිරිපත් කරන ලදි.';
   static const String addToMarketplace = 'වෙළඳපොළට එකතු කරන්නද?';
-  static const String listProductForSale =
-      'මෙම නිෂ්පාදනය වෙළඳපොළේ විකිණීමට ලැයිස්තුගත කරන්න';
+  static const String listProductForSale = 'වෙළඳපොළේ විකිණීමට ලැයිස්තුගත කරන්න';
   static const String noThanks = 'නැහැ, ස්තුතියි';
   static const String yesAdd = 'එක් කරන්න';
+  static const String addToMarketplaceConfirm =
+      'ඔබට මෙම නිෂ්පාදනය වෙළඳපොළට එකතු කිරීමට අවශ්‍යද? එකතු කිරීමට පෙර අනුමැතියක් අවශ්‍ය වේ.';
+  static const String addToMarketplaceRequestSent =
+      'ඔබගේ ඉල්ලීම සාර්ථකව යවා ඇත.';
 
-  // Past Price Reports
-  static const String pastPriceDetails = 'පැරණි මිල වාර්තා විස්තර';
-  static const String recentSales = 'මෑත විකුණුම්';
+  // Past documents
+  static const String pastPriceDetails = 'ගම්මිරිස් තොගවල විස්තර';
+  static const String recentSales = 'මුළු වාර්තා';
   static const String oldestFirst = 'පැරණිම මුලින්';
   static const String newestFirst = 'අලුත්ම මුලින්';
   static const String deleteRecord = 'වාර්තාව ඉවත් කරන්න';
@@ -82,8 +85,7 @@ class ActualPriceDataSi {
 
   // Summary statistics
   static const String mySubmissions = 'මගේ වාර්තා';
-  static const String trackHistorical =
-      'ඉතිහාස මිල ඉදිරිපත් කිරීම් නිරීක්ෂණය කරන්න';
+  static const String trackHistorical = 'මිල ඉදිරිපත් කිරීම් නිරීක්ෂණය කරන්න';
   static const String totalRecords = 'මුළු වාර්තා';
   static const String avgPrice = 'සාමාන්‍ය මිල';
   static const String totalQty = 'මුළු ප්‍රමාණය';

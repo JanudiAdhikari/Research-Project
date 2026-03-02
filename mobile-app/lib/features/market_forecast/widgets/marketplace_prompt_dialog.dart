@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// Sinhala localization temporarily removed; dialog defaults to English
+import '../../../utils/market forecast/actual_price_data_si.dart';
 
 class MarketplacePromptDialog extends StatelessWidget {
   final VoidCallback onNoThanks;
@@ -47,9 +47,11 @@ class MarketplacePromptDialog extends StatelessWidget {
               ),
               const SizedBox(height: 18),
 
-              const Text(
-                'Add to Marketplace?',
-                style: TextStyle(
+              Text(
+                language == 'si'
+                    ? ActualPriceDataSi.addToMarketplace
+                    : 'Add to Marketplace?',
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: Colors.black87,
@@ -57,10 +59,12 @@ class MarketplacePromptDialog extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
-              const Text(
-                'Are you sure you want to add this product to the marketplace?\nApproval is required before it becomes visible.',
+              Text(
+                language == 'si'
+                    ? ActualPriceDataSi.addToMarketplaceConfirm
+                    : 'Are you sure you want to add this product to the marketplace?\nApproval is required before it becomes visible.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black54,
                   height: 1.4,
@@ -84,9 +88,9 @@ class MarketplacePromptDialog extends StatelessWidget {
                           width: 1.5,
                         ),
                       ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
+                      child: Text(
+                        language == 'si' ? ActualPriceDataSi.cancel : 'Cancel',
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: Colors.black54,
@@ -117,19 +121,30 @@ class MarketplacePromptDialog extends StatelessWidget {
                                   size: 28,
                                 ),
                                 const SizedBox(width: 8),
-                                const Text(
-                                  'Success',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                Text(
+                                  language == 'si'
+                                      ? ActualPriceDataSi.success
+                                      : 'Success',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ],
                             ),
-                            content: const Text(
-                              'Your request has been successfully sent. Approval is required.',
+                            content: Text(
+                              language == 'si'
+                                  ? ActualPriceDataSi
+                                        .addToMarketplaceRequestSent
+                                  : 'Your request has been successfully sent. Approval is required.',
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx),
-                                child: const Text('OK'),
+                                child: Text(
+                                  language == 'si'
+                                      ? ActualPriceDataSi.ok
+                                      : 'OK',
+                                ),
                               ),
                             ],
                           ),
@@ -143,9 +158,11 @@ class MarketplacePromptDialog extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'Yes, Add',
-                        style: TextStyle(
+                      child: Text(
+                        language == 'si'
+                            ? ActualPriceDataSi.yesAdd
+                            : 'Yes, Add',
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,

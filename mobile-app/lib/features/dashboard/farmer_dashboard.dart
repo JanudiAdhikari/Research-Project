@@ -15,7 +15,6 @@ import '../chatbot/chatbot_screen.dart';
 import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
 import 'package:flutter/services.dart';
 
-
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
   final alpha = (opacity * 255).round().clamp(0, 255);
@@ -977,7 +976,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => const HarvestPredictionDashboard(),
+              builder: (_) =>
+                  HarvestPredictionDashboard(language: _currentLanguage),
             ),
           );
         },

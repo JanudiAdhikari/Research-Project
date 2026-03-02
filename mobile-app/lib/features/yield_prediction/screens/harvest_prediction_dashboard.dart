@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 import '../screens/new_prediction_screen.dart';
 import '../screens/prediction_history_screen.dart';
 import '../screens/how_prediction_works_screen.dart';
@@ -8,10 +9,10 @@ import '../screens/iot_sensor_setup_screen.dart';
 import '../screens/weather_impact_screen.dart';
 import '../screens/yield_tips_screen.dart';
 
-
-
 class HarvestPredictionDashboard extends StatefulWidget {
-  const HarvestPredictionDashboard({super.key});
+  final String language;
+
+  const HarvestPredictionDashboard({super.key, this.language = 'en'});
 
   @override
   State<HarvestPredictionDashboard> createState() =>
@@ -28,8 +29,10 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
   void initState() {
     super.initState();
 
-    _animationController =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
 
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
@@ -37,8 +40,8 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -53,15 +56,19 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
   Widget build(BuildContext context) {
     final responsive = context.responsive;
     const primary = Color(0xFF2E7D32);
+    final isSi = widget.language == 'si';
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: primary,
         elevation: 0,
-        title: const Text(
-          "Harvest Prediction",
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          isSi ? YieldPredictionSi.harvestPrediction : "Harvest Prediction",
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
         actions: [
           IconButton(
@@ -70,7 +77,8 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const PredictionHistoryScreen(),
+                  builder: (_) =>
+                      PredictionHistoryScreen(language: widget.language),
                 ),
               );
             },
@@ -84,19 +92,25 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(responsive, primary),
+              _buildHeader(responsive, primary, isSi),
               const SizedBox(height: 16),
-              _buildStatusBanner(responsive),
+              _buildStatusBanner(responsive, isSi),
               const SizedBox(height: 20),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
-                child: _buildSummaryGrid(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.pagePadding,
+                ),
+                child: _buildSummaryGrid(isSi),
               ),
               const SizedBox(height: 28),
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
+                padding: EdgeInsets.symmetric(
+                  horizontal: responsive.pagePadding,
+                ),
                 child: Text(
-                  "What would you like to do?",
+                  isSi
+                      ? YieldPredictionSi.whatWouldYouLikeToDo
+                      : "What would you like to do?",
                   style: TextStyle(
                     fontSize: responsive.headingFontSize,
                     fontWeight: FontWeight.w700,
@@ -104,9 +118,9 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
                 ),
               ),
               const SizedBox(height: 16),
-              _buildActions(responsive),
+              _buildActions(responsive, isSi),
               const SizedBox(height: 28),
-              _buildResources(responsive),
+              _buildResources(responsive, isSi),
               const SizedBox(height: 36),
             ],
           ),
@@ -116,7 +130,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
   }
 
   // ================= HEADER =================
-  Widget _buildHeader(Responsive responsive, Color primary) {
+  Widget _buildHeader(Responsive responsive, Color primary, bool isSi) {
     return Container(
       width: double.infinity,
       padding: responsive.padding(
@@ -125,9 +139,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
         desktop: const EdgeInsets.fromLTRB(40, 48, 40, 48),
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [primary, primary.withOpacity(0.85)],
-        ),
+        gradient: LinearGradient(colors: [primary, primary.withOpacity(0.85)]),
         borderRadius: BorderRadius.vertical(
           bottom: Radius.circular(
             responsive.value(mobile: 32, tablet: 36, desktop: 40),
@@ -142,22 +154,29 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(Icons.analytics_rounded,
-                color: Colors.white, size: 36),
+            child: const Icon(
+              Icons.analytics_rounded,
+              color: Colors.white,
+              size: 36,
+            ),
           ),
           const SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "AI-Based Yield Forecast",
+                isSi
+                    ? YieldPredictionSi.whatWouldYouLikeToDo
+                    : "What would you like to do?",
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.9),
                   fontSize: responsive.bodyFontSize,
                 ),
               ),
               Text(
-                "Predict Your Harvest",
+                isSi
+                    ? YieldPredictionSi.predictYourHarvest
+                    : "Predict Your Harvest",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: responsive.headingFontSize,
@@ -172,7 +191,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
   }
 
   // ================= STATUS =================
-  Widget _buildStatusBanner(Responsive responsive) {
+  Widget _buildStatusBanner(Responsive responsive, bool isSi) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
       child: Container(
@@ -188,7 +207,9 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                "Crop condition looks healthy. No immediate action required.",
+                isSi
+                    ? YieldPredictionSi.cropConditionHealthy
+                    : "Crop condition looks healthy. No immediate action required.",
                 style: TextStyle(
                   fontSize: responsive.bodyFontSize,
                   fontWeight: FontWeight.w500,
@@ -203,21 +224,40 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
   }
 
   // ================= SUMMARY =================
-  Widget _buildSummaryGrid() {
+  Widget _buildSummaryGrid(bool isSi) {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       children: [
-        _summaryCard("Predictions", "5", Icons.analytics_rounded, Colors.blue),
-        _summaryCard("Avg Yield", "35 kg", Icons.trending_up_rounded, Colors.green),
-        _summaryCard("Best Yield", "41 kg", Icons.star_rounded, Colors.amber),
-        _summaryCard("Last Run", "Jan 6th", Icons.schedule_rounded, Colors.purple),
+        _summaryCard(
+          isSi ? YieldPredictionSi.predictions : "Predictions",
+          "5",
+          Icons.analytics_rounded,
+          Colors.blue,
+        ),
+        _summaryCard(
+          isSi ? YieldPredictionSi.avgYield : "Avg Yield",
+          "35 ${isSi ? YieldPredictionSi.kg : 'kg'}",
+          Icons.trending_up_rounded,
+          Colors.green,
+        ),
+        _summaryCard(
+          isSi ? YieldPredictionSi.bestYield : "Best Yield",
+          "41 ${isSi ? YieldPredictionSi.kg : 'kg'}",
+          Icons.star_rounded,
+          Colors.amber,
+        ),
+        _summaryCard(
+          isSi ? YieldPredictionSi.lastRun : "Last Run",
+          "Jan 6th",
+          Icons.schedule_rounded,
+          Colors.purple,
+        ),
       ],
     );
   }
 
-  Widget _summaryCard(
-      String title, String value, IconData icon, Color color) {
+  Widget _summaryCard(String title, String value, IconData icon, Color color) {
     return Container(
       width: 160,
       padding: const EdgeInsets.all(14),
@@ -239,18 +279,18 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
             child: Icon(icon, color: color),
           ),
           const SizedBox(height: 8),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(title,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         ],
       ),
     );
   }
 
   // ================= ACTIONS =================
-  Widget _buildActions(Responsive responsive) {
+  Widget _buildActions(Responsive responsive, bool isSi) {
     return SlideTransition(
       position: _slideAnimation,
       child: Padding(
@@ -264,8 +304,8 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
           childAspectRatio: 0.95,
           children: [
             _actionCard(
-              "New\nPrediction",
-              "Estimate yield",
+              isSi ? YieldPredictionSi.newPrediction : "New\nPrediction",
+              isSi ? YieldPredictionSi.estimateYield : "Estimate yield",
               Icons.add_chart_rounded,
               true,
               LinearGradient(
@@ -273,12 +313,16 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
               ),
               () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const NewPredictionScreen()),
+                MaterialPageRoute(
+                  builder: (_) =>
+                      NewPredictionScreen(language: widget.language),
+                ),
               ),
+              isSi,
             ),
             _actionCard(
-              "Past\nPredictions",
-              "View history",
+              isSi ? YieldPredictionSi.pastPredictions : "Past\nPredictions",
+              isSi ? YieldPredictionSi.viewHistory : "View history",
               Icons.history_rounded,
               false,
               LinearGradient(
@@ -287,44 +331,49 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
               () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => const PredictionHistoryScreen()),
+                  builder: (_) =>
+                      PredictionHistoryScreen(language: widget.language),
+                ),
               ),
+              isSi,
             ),
             _actionCard(
-  "Weather\nImpact",
-  "View factors",
-  Icons.cloud_rounded,
-  false,
-  LinearGradient(
-    colors: [Colors.orange.shade400, Colors.orange.shade600],
-  ),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const WeatherImpactScreen(),
-      ),
-    );
-  },
-),
-
-_actionCard(
-  "Yield\nTips",
-  "Improve output",
-  Icons.lightbulb_outline_rounded,
-  false,
-  LinearGradient(
-    colors: [Colors.purple.shade400, Colors.purple.shade600],
-  ),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const YieldTipsScreen(),
-      ),
-    );
-  },
-),
+              isSi ? YieldPredictionSi.weatherImpactCard : "Weather\nImpact",
+              isSi ? YieldPredictionSi.viewFactors : "View factors",
+              Icons.cloud_rounded,
+              false,
+              LinearGradient(
+                colors: [Colors.orange.shade400, Colors.orange.shade600],
+              ),
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        WeatherImpactScreen(language: widget.language),
+                  ),
+                );
+              },
+              isSi,
+            ),
+            _actionCard(
+              isSi ? YieldPredictionSi.yieldTipsCard : "Yield\nTips",
+              isSi ? YieldPredictionSi.improveOutput : "Improve output",
+              Icons.lightbulb_outline_rounded,
+              false,
+              LinearGradient(
+                colors: [Colors.purple.shade400, Colors.purple.shade600],
+              ),
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => YieldTipsScreen(language: widget.language),
+                  ),
+                );
+              },
+              isSi,
+            ),
           ],
         ),
       ),
@@ -338,6 +387,7 @@ _actionCard(
     bool badge,
     Gradient gradient,
     VoidCallback onTap,
+    bool isSi,
   ) {
     return InkWell(
       onTap: onTap,
@@ -353,7 +403,10 @@ _actionCard(
               Positioned(
                 top: 12,
                 right: 12,
-                child: _badge("Recommended"),
+                child: _badge(
+                  isSi ? YieldPredictionSi.recommended : "Recommended",
+                  isSi: isSi,
+                ),
               ),
             Positioned(
               right: -12,
@@ -367,12 +420,14 @@ _actionCard(
                 children: [
                   Icon(icon, color: Colors.white),
                   const Spacer(),
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white)),
-                  Text(subtitle,
-                      style: const TextStyle(color: Colors.white70)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(subtitle, style: const TextStyle(color: Colors.white70)),
                 ],
               ),
             ),
@@ -383,68 +438,79 @@ _actionCard(
   }
 
   // ================= RESOURCES =================
-  Widget _buildResources(Responsive responsive) {
+  Widget _buildResources(Responsive responsive, bool isSi) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Resources & Support",
+            isSi ? YieldPredictionSi.resourcesSupport : "Resources & Support",
             style: TextStyle(
               fontSize: responsive.headingFontSize,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 16),
-      _resourceTile(
-  "How Yield Prediction Works",
-  "Understand the AI model",
-  Icons.school_rounded,
-  Colors.indigo,
-  "Recommended",
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const HowPredictionWorksScreen(),
-      ),
-    );
-  },
-),
-
-_resourceTile(
-  "Image Capture Guide",
-  "Improve image quality",
-  Icons.camera_alt_rounded,
-  Colors.teal,
-  "Improves Accuracy",
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ImageCaptureGuideScreen(),
-      ),
-    );
-  },
-),
-
-_resourceTile(
-  "IoT Sensor Setup",
-  "Connect soil sensor",
-  Icons.sensors_rounded,
-  Colors.deepPurple,
-  "Required",
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const IotSensorSetupScreen(),
-      ),
-    );
-  },
-),
-
+          _resourceTile(
+            isSi
+                ? YieldPredictionSi.howYieldPredictionWorksTitle
+                : "How Yield Prediction Works",
+            isSi
+                ? YieldPredictionSi.understandAiModel
+                : "Understand the AI model",
+            Icons.school_rounded,
+            Colors.indigo,
+            isSi ? YieldPredictionSi.recommended : "Recommended",
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      HowPredictionWorksScreen(language: widget.language),
+                ),
+              );
+            },
+            isSi,
+          ),
+          _resourceTile(
+            isSi
+                ? YieldPredictionSi.imageCaptureGuideTitle
+                : "Image Capture Guide",
+            isSi
+                ? YieldPredictionSi.improveImageQuality
+                : "Improve image quality",
+            Icons.camera_alt_rounded,
+            Colors.teal,
+            isSi ? YieldPredictionSi.improvesAccuracy : "Improves Accuracy",
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ImageCaptureGuideScreen(language: widget.language),
+                ),
+              );
+            },
+            isSi,
+          ),
+          _resourceTile(
+            isSi ? YieldPredictionSi.iotSensorSetupTitle : "IoT Sensor Setup",
+            isSi ? YieldPredictionSi.connectSoilSensor : "Connect soil sensor",
+            Icons.sensors_rounded,
+            Colors.deepPurple,
+            isSi ? YieldPredictionSi.required : "Required",
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      IotSensorSetupScreen(language: widget.language),
+                ),
+              );
+            },
+            isSi,
+          ),
         ],
       ),
     );
@@ -457,6 +523,7 @@ _resourceTile(
     Color color,
     String badge,
     VoidCallback onTap,
+    bool isSi,
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -469,7 +536,7 @@ _resourceTile(
         title: Row(
           children: [
             Expanded(child: Text(title)),
-            _badge(badge, color: color),
+            _badge(badge, color: color, isSi: isSi),
           ],
         ),
         subtitle: Text(subtitle),
@@ -479,7 +546,7 @@ _resourceTile(
     );
   }
 
-  Widget _badge(String text, {Color color = Colors.green}) {
+  Widget _badge(String text, {Color color = Colors.green, bool isSi = false}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -493,64 +560,6 @@ _resourceTile(
           fontWeight: FontWeight.w600,
           color: color,
         ),
-      ),
-    );
-  }
-
-  // ================= DIALOGS =================
-  void _showHowPredictionWorks(BuildContext context) {
-    _infoDialog(
-      context,
-      "How Yield Prediction Works",
-      "Images of pepper plants are analyzed using deep learning models.\n\nSoil moisture and weather data are combined with visual features to estimate final yield.",
-    );
-  }
-
-  void _showImageCaptureGuide(BuildContext context) {
-    _infoDialog(
-      context,
-      "Image Capture Guide",
-      "• Use natural light\n• Avoid shadows\n• Capture from multiple angles\n• Keep camera 20–30cm away",
-    );
-  }
-
-  void _showIoTGuide(BuildContext context) {
-    _infoDialog(
-      context,
-      "IoT Sensor Setup",
-      "Place soil moisture sensor firmly in soil and allow readings to stabilize before prediction.",
-    );
-  }
-
-  void _showWeatherDialog(BuildContext context) {
-    _infoDialog(
-      context,
-      "Weather Impact",
-      "Current weather conditions are favorable for pepper cultivation.",
-    );
-  }
-
-  void _showYieldTips(BuildContext context) {
-    _infoDialog(
-      context,
-      "Yield Improvement Tips",
-      "• Maintain optimal irrigation\n• Avoid waterlogging\n• Monitor soil moisture weekly",
-    );
-  }
-
-  void _infoDialog(BuildContext context, String title, String content) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
       ),
     );
   }

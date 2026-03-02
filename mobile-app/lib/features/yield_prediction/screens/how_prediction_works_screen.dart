@@ -1,45 +1,70 @@
 import 'package:flutter/material.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class HowPredictionWorksScreen extends StatelessWidget {
-  const HowPredictionWorksScreen({super.key});
+  final String language;
+
+  const HowPredictionWorksScreen({super.key, this.language = 'en'});
 
   @override
   Widget build(BuildContext context) {
+    final isSi = language == 'si';
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("How Yield Prediction Works"),
+        title: Text(
+          isSi
+              ? YieldPredictionSi.howYieldPredictionWorks
+              : "How Yield Prediction Works",
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _header(
             icon: Icons.analytics_rounded,
-            title: "AI-Based Yield Estimation",
-            subtitle: "How the system predicts harvest output",
+            title: isSi
+                ? YieldPredictionSi.aiBasedYieldEstimationTitle
+                : "AI-Based Yield Estimation",
+            subtitle: isSi
+                ? YieldPredictionSi.howSystemPredicts
+                : "How the system predicts harvest output",
             color: Colors.indigo,
           ),
 
           const SizedBox(height: 20),
 
           _stepCard(
-            "1. Image Analysis",
-            "Plant and pepper cone images are analyzed using deep learning models to extract visual features.",
+            isSi ? YieldPredictionSi.imageAnalysisStep : "1. Image Analysis",
+            isSi
+                ? YieldPredictionSi.imageAnalysisStepDesc
+                : "Plant and pepper cone images are analyzed using deep learning models to extract visual features.",
             Icons.image_rounded,
           ),
           _stepCard(
-            "2. Soil Data Integration",
-            "Soil moisture values are collected via IoT sensor or manual input.",
+            isSi
+                ? YieldPredictionSi.soilDataIntegrationStep
+                : "2. Soil Data Integration",
+            isSi
+                ? YieldPredictionSi.soilDataIntegrationStepDesc
+                : "Soil moisture values are collected via IoT sensor or manual input.",
             Icons.sensors_rounded,
           ),
           _stepCard(
-            "3. Weather Fusion",
-            "Temperature and rainfall data are integrated into the prediction.",
+            isSi ? YieldPredictionSi.weatherFusionStep : "3. Weather Fusion",
+            isSi
+                ? YieldPredictionSi.weatherFusionStepDesc
+                : "Temperature and rainfall data are integrated into the prediction.",
             Icons.cloud_rounded,
           ),
           _stepCard(
-            "4. Yield Estimation",
-            "All features are combined to estimate the final yield value.",
+            isSi
+                ? YieldPredictionSi.yieldEstimationStep
+                : "4. Yield Estimation",
+            isSi
+                ? YieldPredictionSi.yieldEstimationStepDesc
+                : "All features are combined to estimate the final yield value.",
             Icons.trending_up_rounded,
           ),
 
@@ -47,7 +72,9 @@ class HowPredictionWorksScreen extends StatelessWidget {
 
           _infoBox(
             Icons.info_rounded,
-            "Accurate input data leads to better yield prediction accuracy.",
+            isSi
+                ? YieldPredictionSi.accurateInputData
+                : "Accurate input data leads to better yield prediction accuracy.",
             Colors.blue,
           ),
         ],
@@ -55,6 +82,7 @@ class HowPredictionWorksScreen extends StatelessWidget {
     );
   }
 }
+
 Widget _header({
   required IconData icon,
   required String title,
@@ -78,12 +106,18 @@ Widget _header({
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+              ),
             ],
           ),
         ),

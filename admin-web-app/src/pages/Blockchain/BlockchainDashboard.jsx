@@ -20,7 +20,7 @@ export default function BlockchainDashboard() {
       border: "#86efac",
     },
     qr: {
-      accent: "#2563eb",
+      accent: "#8da0d2",
       soft: "#dbeafe",
       border: "#93c5fd",
     },

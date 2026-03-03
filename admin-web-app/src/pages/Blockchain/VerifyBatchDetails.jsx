@@ -13,6 +13,8 @@ import {
   DollarSign,
   Target,
   Package,
+  X,
+  AlertTriangle,
 } from "lucide-react";
 import "../../App.css";
 
@@ -26,7 +28,16 @@ export default function VerifyBatchDetails() {
   const [loadingQc, setLoadingQc] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState(null); // {type:'success'|'error', title, message}
 
+  // Toast message handler
+  const showToast = (payload) => {
+    setToast(payload);
+    window.clearTimeout(showToast._t);
+    showToast._t = window.setTimeout(() => setToast(null), 3800);
+  };
+
+  // Load quality check details for the batch
   const loadQualityChecks = async () => {
     if (!batch || !batch.batchId) return;
     setLoadingQc(true);
@@ -49,6 +60,7 @@ export default function VerifyBatchDetails() {
     }
   }, [batch]);
 
+  // Handle batch verification
   const handleVerify = async () => {
     if (verifying || isAlreadyVerified || isQrGenerated) return;
 
@@ -61,7 +73,7 @@ export default function VerifyBatchDetails() {
         statusHistory: updated.statusHistory,
         marketplaceProductId: updated.marketplaceProductId,
       }));
-      alert("Batch Verified Successfully!");
+      showToast({ type: "success", title: "Batch verified successfully!" });
     } catch (err) {
       alert("Verify failed: " + (err.message || "Unknown Error"));
     } finally {
@@ -91,13 +103,11 @@ export default function VerifyBatchDetails() {
   const getStatusColor = (status) => {
     switch ((status || "").toUpperCase()) {
       case "BATCH_CREATED":
-        return "#3b82f6";
+        return "#05388a";
       case "MARKETPLACE_LISTED":
-        return "#8b5cf6";
+        return "#655193";
       case "VERIFIED":
-        return "#22c55e";
-      case "RECEIVED":
-        return "#f97316";
+        return "#2E7D32";
       default:
         return "#64748b";
     }
@@ -128,44 +138,6 @@ export default function VerifyBatchDetails() {
               <h1>{batch.batchId || "Unknown Batch"}</h1>
             </div>
           </div>
-
-          <button
-            className="btn btn-primary"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              backgroundColor:
-                isAlreadyVerified || isQrGenerated
-                  ? "#ffffff"
-                  : "var(--success)",
-              cursor:
-                isAlreadyVerified || isQrGenerated || verifying
-                  ? "not-allowed"
-                  : "pointer",
-              opacity: isAlreadyVerified || isQrGenerated ? 0.8 : 1,
-            }}
-            onClick={handleVerify}
-            disabled={isAlreadyVerified || isQrGenerated || verifying}
-          >
-            {verifying ? (
-              <>
-                <RefreshCw className="spin" size={20} /> Verifying...
-              </>
-            ) : isAlreadyVerified ? (
-              <>
-                <CheckCircle size={20} /> Verified
-              </>
-            ) : isQrGenerated ? (
-              <>
-                <CheckCircle size={20} /> QR Generated
-              </>
-            ) : (
-              <>
-                <CheckCircle size={20} /> Verify Batch
-              </>
-            )}
-          </button>
         </header>
 
         <div
@@ -231,13 +203,12 @@ export default function VerifyBatchDetails() {
                   </div>
 
                   <div
-                    style={{ marginTop: 6, color: "#475569", lineHeight: 1.5 }}
+                    style={{ marginTop: 6, color: "#475569", lineHeight: 2.0 }}
                   >
-                    Currently marked as{" "}
+                    Current Status:{" "}
                     <span style={{ color: statusColor, fontWeight: 600 }}>
                       {batch.currentStatus || "Unknown"}
                     </span>
-                    .
                   </div>
 
                   <div
@@ -247,7 +218,6 @@ export default function VerifyBatchDetails() {
                     <span style={{ color: "#0f172a", fontWeight: 600 }}>
                       {formatDate(batch.saleDate)}
                     </span>
-                    .
                   </div>
                 </div>
               </div>
@@ -336,6 +306,48 @@ export default function VerifyBatchDetails() {
               <div style={{ color: "#475569", lineHeight: 1.6 }}>
                 {batch.notes ? batch.notes : "-"}
               </div>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                marginTop: "1rem",
+              }}
+            >
+              <button
+                className="btn btn-primary"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  backgroundColor:
+                    isAlreadyVerified || isQrGenerated
+                      ? "#e1e1e1"
+                      : "var(--success)",
+                  cursor:
+                    isAlreadyVerified || isQrGenerated || verifying
+                      ? "not-allowed"
+                      : "pointer",
+                  opacity: isAlreadyVerified || isQrGenerated ? 0.8 : 1,
+                }}
+                onClick={handleVerify}
+                disabled={isAlreadyVerified || isQrGenerated || verifying}
+              >
+                {verifying ? (
+                  <>
+                    <RefreshCw className="spin" size={20} /> Verifying...
+                  </>
+                ) : isAlreadyVerified ? (
+                  <>
+                    <CheckCircle size={20} /> Verified
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={20} /> Verify Batch
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
@@ -533,6 +545,81 @@ export default function VerifyBatchDetails() {
             </div>
           </div>
         </div>
+
+        {/* Toast message */}
+        {toast && (
+          <div
+            style={{
+              position: "fixed",
+              right: 18,
+              bottom: 18,
+              zIndex: 2000,
+              width: "min(420px, calc(100vw - 36px))",
+              background: "#fff",
+              border: "1px solid #e5e7eb",
+              borderRadius: 14,
+              boxShadow: "0 18px 40px rgba(0,0,0,0.16)",
+              padding: "0.9rem 1rem",
+              display: "flex",
+              gap: "0.75rem",
+              alignItems: "flex-start",
+            }}
+          >
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: toast.type === "success" ? "#ecfdf5" : "#fef2f2",
+                border: `1px solid ${
+                  toast.type === "success" ? "#bbf7d0" : "#fecaca"
+                }`,
+                flexShrink: 0,
+              }}
+            >
+              {toast.type === "success" ? (
+                <CheckCircle size={18} color="#16a34a" />
+              ) : (
+                <AlertTriangle size={18} color="#dc2626" />
+              )}
+            </div>
+
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ color: "#0f172a", fontWeight: 600 }}>
+                {toast.title}
+              </div>
+              {toast.message && (
+                <div
+                  style={{ marginTop: 2, color: "#475569", lineHeight: 1.45 }}
+                >
+                  {toast.message}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setToast(null)}
+              style={{
+                border: "none",
+                background: "#f1f5f9",
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+              title="Close"
+            >
+              <X size={18} color="#475569" />
+            </button>
+          </div>
+        )}
 
         {/* Responsive */}
         <style>

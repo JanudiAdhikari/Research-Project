@@ -1011,8 +1011,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             ? FarmerDashboardSi.qualityGrading
             : _translate('quality_grading'),
         subtitle: _currentLanguage == 'si'
-            ? FarmerDashboardSi.isoStandards
-            : _translate('iso_standards'),
+            ? FarmerDashboardSi.gradeYourHarvest
+            : _translate('grade_your_harvest'),
         iconPath: "assets/images/icons/check.png",
 
         gradient: LinearGradient(

@@ -9,7 +9,7 @@ import '../../utils/localization.dart';
 import '../../utils/language_prefs.dart';
 import '../../utils/farmer_dashboard_si.dart';
 import '../auth/login_page.dart';
-import '../marketplace/marketplace_screen.dart';
+import '../marketplace/market_screen.dart';
 import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
@@ -1101,7 +1101,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => MarketplaceScreen()),
+                      MaterialPageRoute(builder: (_) => MarketScreen()),
                     );
                   },
                 ),

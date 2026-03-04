@@ -58,7 +58,10 @@ class _MarketScreenState extends State<MarketScreen>
   }
 
   Future<void> _loadProducts() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await _service.fetchProducts();
       if (mounted) {
@@ -68,15 +71,21 @@ class _MarketScreenState extends State<MarketScreen>
     } catch (e) {
       if (mounted) {
         setState(() => _error = e.toString());
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to load products: $e'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          action: SnackBarAction(
-              label: 'Retry', textColor: Colors.white, onPressed: _loadProducts),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load products: $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _loadProducts,
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -86,77 +95,93 @@ class _MarketScreenState extends State<MarketScreen>
   List<MarketProduct> get _filteredProducts {
     if (_searchQuery.isEmpty) return _products;
     return _products
-        .where((p) =>
-            p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
   }
 
   // ── Dialogs ────────────────────────────────────────────────────────────
 
   Future<void> _showProductForm([MarketProduct? product]) async {
-    final nameCtrl  = TextEditingController(text: product?.name ?? '');
+    final nameCtrl = TextEditingController(text: product?.name ?? '');
     final priceCtrl = TextEditingController(
-        text: product != null ? product.price.toString() : '');
-    final unitCtrl  = TextEditingController(text: product?.unit ?? 'kg');
-    final formKey   = GlobalKey<FormState>();
+      text: product != null ? product.price.toString() : '',
+    );
+    final unitCtrl = TextEditingController(text: product?.unit ?? 'kg');
+    final formKey = GlobalKey<FormState>();
 
-    final Map<String, dynamic>? result =
-        await showDialog<Map<String, dynamic>?>(
+    final Map<String, dynamic>?
+    result = await showDialog<Map<String, dynamic>?>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Row(children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorWithOpacity(_primary, 0.1),
-              borderRadius: BorderRadius.circular(10),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorWithOpacity(_primary, 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                product == null
+                    ? Icons.add_shopping_cart_outlined
+                    : Icons.edit_outlined,
+                color: _primary,
+                size: 20,
+              ),
             ),
-            child: Icon(
-              product == null
-                  ? Icons.add_shopping_cart_outlined
-                  : Icons.edit_outlined,
-              color: _primary,
-              size: 20,
+            const SizedBox(width: 12),
+            Text(
+              product == null ? 'Add New Product' : 'Edit Product',
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            product == null ? 'Add New Product' : 'Edit Product',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ]),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          ],
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Form(
           key: formKey,
           child: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              _dialogField(nameCtrl, 'Product Name',
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _dialogField(
+                  nameCtrl,
+                  'Product Name',
                   Icons.shopping_basket_outlined,
                   hint: 'e.g., Rice, Wheat',
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Product name is required'
-                      : null),
-              const SizedBox(height: 14),
-              _dialogField(priceCtrl, 'Price', Icons.attach_money_outlined,
+                      : null,
+                ),
+                const SizedBox(height: 14),
+                _dialogField(
+                  priceCtrl,
+                  'Price',
+                  Icons.attach_money_outlined,
                   hint: '0.00',
                   prefixText: 'Rs ',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty)
                       return 'Price is required';
                     final n = double.tryParse(v.trim());
                     if (n == null || n <= 0) return 'Enter a valid price';
                     return null;
-                  }),
-              const SizedBox(height: 14),
-              _dialogField(unitCtrl, 'Unit', Icons.scale_outlined,
+                  },
+                ),
+                const SizedBox(height: 14),
+                _dialogField(
+                  unitCtrl,
+                  'Unit',
+                  Icons.scale_outlined,
                   hint: 'kg, lbs, pcs',
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Unit is required'
-                      : null),
-            ]),
+                      : null,
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -178,7 +203,8 @@ class _MarketScreenState extends State<MarketScreen>
               backgroundColor: _primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: Text(product == null ? 'Add Product' : 'Save'),
           ),
@@ -186,7 +212,9 @@ class _MarketScreenState extends State<MarketScreen>
       ),
     );
 
-    nameCtrl.dispose(); priceCtrl.dispose(); unitCtrl.dispose();
+    nameCtrl.dispose();
+    priceCtrl.dispose();
+    unitCtrl.dispose();
 
     if (result != null) {
       try {
@@ -197,25 +225,33 @@ class _MarketScreenState extends State<MarketScreen>
         }
         if (mounted) {
           await _loadProducts();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(product == null
-                ? 'Product added successfully'
-                : 'Product updated successfully'),
-            backgroundColor: _primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                product == null
+                    ? 'Product added successfully'
+                    : 'Product updated successfully',
+              ),
+              backgroundColor: _primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Failed to save product: $e'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to save product: $e'),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
         }
       }
     }
@@ -260,17 +296,16 @@ class _MarketScreenState extends State<MarketScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Product',
-            style: TextStyle(fontWeight: FontWeight.w700)),
-        content:
-            Text('Are you sure you want to delete "${product.name}"?'),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Delete Product',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
+        content: Text('Are you sure you want to delete "${product.name}"?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child:
-                Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -278,7 +313,8 @@ class _MarketScreenState extends State<MarketScreen>
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Delete'),
           ),
@@ -289,24 +325,30 @@ class _MarketScreenState extends State<MarketScreen>
       try {
         // await _service.deleteProduct(product.id!);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('Product deleted'),
-            backgroundColor: _primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Product deleted'),
+              backgroundColor: _primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
           await _loadProducts();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Failed to delete: $e'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete: $e'),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
         }
       }
     }
@@ -355,8 +397,7 @@ class _MarketScreenState extends State<MarketScreen>
                   // ── Search ──────────────────────────────────────────
                   Padding(
                     padding: EdgeInsets.symmetric(
-                      horizontal:
-                          r.value(mobile: 16, tablet: 24, desktop: 32),
+                      horizontal: r.value(mobile: 16, tablet: 24, desktop: 32),
                     ),
                     child: _buildSearchBar(r),
                   ),
@@ -365,7 +406,10 @@ class _MarketScreenState extends State<MarketScreen>
 
                   // ── Section title ────────────────────────────────────
                   _buildSectionTitle(
-                      r, 'Available Products', Icons.store_rounded),
+                    r,
+                    'Available Products',
+                    Icons.store_rounded,
+                  ),
 
                   ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
@@ -385,8 +429,10 @@ class _MarketScreenState extends State<MarketScreen>
           : FloatingActionButton.extended(
               onPressed: () => _showProductForm(),
               icon: const Icon(Icons.add_shopping_cart_outlined),
-              label: const Text('Add Product',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              label: const Text(
+                'Add Product',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
               backgroundColor: _primary,
               foregroundColor: Colors.white,
               elevation: 4,
@@ -410,10 +456,12 @@ class _MarketScreenState extends State<MarketScreen>
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft:
-              Radius.circular(r.value(mobile: 28, tablet: 36, desktop: 40)),
-          bottomRight:
-              Radius.circular(r.value(mobile: 28, tablet: 36, desktop: 40)),
+          bottomLeft: Radius.circular(
+            r.value(mobile: 28, tablet: 36, desktop: 40),
+          ),
+          bottomRight: Radius.circular(
+            r.value(mobile: 28, tablet: 36, desktop: 40),
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -459,8 +507,6 @@ class _MarketScreenState extends State<MarketScreen>
     );
   }
 
-
-
   // ── Search bar ─────────────────────────────────────────────────────────
 
   Widget _buildSearchBar(Responsive r) {
@@ -468,9 +514,9 @@ class _MarketScreenState extends State<MarketScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(
-            r.value(mobile: 14, tablet: 16, desktop: 18)),
-        border: Border.all(
-            color: colorWithOpacity(_primary, 0.12), width: 1.5),
+          r.value(mobile: 14, tablet: 16, desktop: 18),
+        ),
+        border: Border.all(color: colorWithOpacity(_primary, 0.12), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: colorWithOpacity(Colors.black, 0.05),
@@ -485,13 +531,21 @@ class _MarketScreenState extends State<MarketScreen>
         decoration: InputDecoration(
           hintText: 'Search products...',
           hintStyle: TextStyle(
-              fontSize: r.bodyFontSize, color: Colors.grey[400]),
-          prefixIcon: Icon(Icons.search_rounded,
-              color: _primary, size: r.mediumIconSize),
+            fontSize: r.bodyFontSize,
+            color: Colors.grey[400],
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: _primary,
+            size: r.mediumIconSize,
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.clear_rounded,
-                      size: r.smallIconSize, color: Colors.grey[500]),
+                  icon: Icon(
+                    Icons.clear_rounded,
+                    size: r.smallIconSize,
+                    color: Colors.grey[500],
+                  ),
                   onPressed: () => setState(() => _searchQuery = ''),
                 )
               : null,
@@ -512,28 +566,34 @@ class _MarketScreenState extends State<MarketScreen>
       padding: EdgeInsets.symmetric(
         horizontal: r.value(mobile: 16, tablet: 24, desktop: 32),
       ),
-      child: Row(children: [
-        Container(
-          width: r.value(mobile: 4, tablet: 5, desktop: 6),
-          height: r.value(mobile: 20, tablet: 22, desktop: 24),
-          decoration: BoxDecoration(
-            color: _primary,
-            borderRadius: BorderRadius.circular(2),
+      child: Row(
+        children: [
+          Container(
+            width: r.value(mobile: 4, tablet: 5, desktop: 6),
+            height: r.value(mobile: 20, tablet: 22, desktop: 24),
+            decoration: BoxDecoration(
+              color: _primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
-        ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
-        Expanded(
-          child: Text(title,
+          ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
+          Expanded(
+            child: Text(
+              title,
               style: TextStyle(
                 fontSize: r.fontSize(mobile: 17, tablet: 20, desktop: 22),
                 fontWeight: FontWeight.w700,
                 color: Colors.black87,
-              )),
-        ),
-        Icon(icon,
+              ),
+            ),
+          ),
+          Icon(
+            icon,
             color: _primary,
-            size: r.value(mobile: 22, tablet: 24, desktop: 26)),
-      ]),
+            size: r.value(mobile: 22, tablet: 24, desktop: 26),
+          ),
+        ],
+      ),
     );
   }
 
@@ -545,7 +605,8 @@ class _MarketScreenState extends State<MarketScreen>
         height: 280,
         child: Center(
           child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32))),
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2E7D32)),
+          ),
         ),
       );
     }
@@ -585,46 +646,63 @@ class _MarketScreenState extends State<MarketScreen>
     return Padding(
       padding: EdgeInsets.all(r.largeSpacing),
       child: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            padding: EdgeInsets.all(
-                r.value(mobile: 20, tablet: 24, desktop: 28)),
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.error_outline_rounded,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(
+                r.value(mobile: 20, tablet: 24, desktop: 28),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
                 size: r.value(mobile: 48, tablet: 56, desktop: 64),
-                color: Colors.red.shade300),
-          ),
-          SizedBox(height: r.mediumSpacing),
-          Text('Failed to load products',
+                color: Colors.red.shade300,
+              ),
+            ),
+            SizedBox(height: r.mediumSpacing),
+            Text(
+              'Failed to load products',
               style: TextStyle(
-                  fontSize: r.titleFontSize,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[800])),
-          SizedBox(height: r.smallSpacing),
-          Text(_error!,
+                fontSize: r.titleFontSize,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: r.smallSpacing),
+            Text(
+              _error!,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: r.bodyFontSize, color: Colors.grey[600])),
-          SizedBox(height: r.largeSpacing),
-          ElevatedButton.icon(
-            onPressed: _loadProducts,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try Again',
-                style: TextStyle(fontWeight: FontWeight.w700)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(
-                  horizontal: r.largeSpacing,
-                  vertical: r.mediumSpacing),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                fontSize: r.bodyFontSize,
+                color: Colors.grey[600],
+              ),
             ),
-          ),
-        ]),
+            SizedBox(height: r.largeSpacing),
+            ElevatedButton.icon(
+              onPressed: _loadProducts,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text(
+                'Try Again',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.largeSpacing,
+                  vertical: r.mediumSpacing,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -633,58 +711,68 @@ class _MarketScreenState extends State<MarketScreen>
     return Padding(
       padding: EdgeInsets.all(r.largeSpacing),
       child: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            padding: EdgeInsets.all(
-                r.value(mobile: 24, tablet: 28, desktop: 32)),
-            decoration: BoxDecoration(
-              color: colorWithOpacity(_primary, 0.07),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              _searchQuery.isEmpty
-                  ? Icons.shopping_bag_outlined
-                  : Icons.search_off_rounded,
-              size: r.value(mobile: 56, tablet: 68, desktop: 80),
-              color: colorWithOpacity(_primary, 0.4),
-            ),
-          ),
-          SizedBox(height: r.largeSpacing),
-          Text(
-            _searchQuery.isEmpty ? 'No products yet' : 'No products found',
-            style: TextStyle(
-              fontSize: r.headingFontSize,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey[800],
-            ),
-          ),
-          SizedBox(height: r.smallSpacing),
-          Text(
-            _searchQuery.isEmpty
-                ? 'Start by adding your first product'
-                : 'Try a different search term',
-            style: TextStyle(
-                fontSize: r.bodyFontSize, color: Colors.grey[600]),
-          ),
-          if (_searchQuery.isEmpty) ...[
-            SizedBox(height: r.largeSpacing),
-            ElevatedButton.icon(
-              onPressed: () => _showProductForm(),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add Product',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primary,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(
-                    horizontal: r.largeSpacing,
-                    vertical: r.mediumSpacing),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(
+                r.value(mobile: 24, tablet: 28, desktop: 32),
+              ),
+              decoration: BoxDecoration(
+                color: colorWithOpacity(_primary, 0.07),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _searchQuery.isEmpty
+                    ? Icons.shopping_bag_outlined
+                    : Icons.search_off_rounded,
+                size: r.value(mobile: 56, tablet: 68, desktop: 80),
+                color: colorWithOpacity(_primary, 0.4),
               ),
             ),
+            SizedBox(height: r.largeSpacing),
+            Text(
+              _searchQuery.isEmpty ? 'No products yet' : 'No products found',
+              style: TextStyle(
+                fontSize: r.headingFontSize,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: r.smallSpacing),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'Start by adding your first product'
+                  : 'Try a different search term',
+              style: TextStyle(
+                fontSize: r.bodyFontSize,
+                color: Colors.grey[600],
+              ),
+            ),
+            if (_searchQuery.isEmpty) ...[
+              SizedBox(height: r.largeSpacing),
+              ElevatedButton.icon(
+                onPressed: () => _showProductForm(),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text(
+                  'Add Product',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primary,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: r.largeSpacing,
+                    vertical: r.mediumSpacing,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -699,8 +787,11 @@ class _ProductCard extends StatefulWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _ProductCard(
-      {required this.product, required this.onEdit, required this.onDelete});
+  const _ProductCard({
+    required this.product,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   State<_ProductCard> createState() => _ProductCardState();
@@ -713,27 +804,30 @@ class _ProductCardState extends State<_ProductCard> {
 
   @override
   Widget build(BuildContext context) {
-    final p     = widget.product;
+    final p = widget.product;
     final theme = Theme.of(context);
-    final r     = context.responsive;
+    final r = context.responsive;
 
-    final imageContainerHeight =
-        r.value(mobile: 105.0, tablet: 125.0, desktop: 140.0);
-    final imageSize  = r.value(mobile: 75.0, tablet: 88.0, desktop: 100.0);
-    final nameSize   = r.value(mobile: 13.0, tablet: 14.0, desktop: 16.0);
-    final unitSize   = r.value(mobile: 11.0, tablet: 12.0, desktop: 13.0);
-    final priceSize  = r.value(mobile: 12.0, tablet: 14.0, desktop: 16.0);
-    final qtyIcon    = r.value(mobile: 13.0, tablet: 15.0, desktop: 17.0);
-    final pad        = r.value(mobile: 8.0, tablet: 10.0, desktop: 12.0);
-    final favBtn     = r.value(mobile: 28.0, tablet: 32.0, desktop: 36.0);
+    final imageContainerHeight = r.value(
+      mobile: 105.0,
+      tablet: 125.0,
+      desktop: 140.0,
+    );
+    final imageSize = r.value(mobile: 75.0, tablet: 88.0, desktop: 100.0);
+    final nameSize = r.value(mobile: 13.0, tablet: 14.0, desktop: 16.0);
+    final unitSize = r.value(mobile: 11.0, tablet: 12.0, desktop: 13.0);
+    final priceSize = r.value(mobile: 12.0, tablet: 14.0, desktop: 16.0);
+    final qtyIcon = r.value(mobile: 13.0, tablet: 15.0, desktop: 17.0);
+    final pad = r.value(mobile: 8.0, tablet: 10.0, desktop: 12.0);
+    final favBtn = r.value(mobile: 28.0, tablet: 32.0, desktop: 36.0);
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(
-            r.value(mobile: 16, tablet: 18, desktop: 20)),
-        border: Border.all(
-            color: colorWithOpacity(_primary, 0.12), width: 1.5),
+          r.value(mobile: 16, tablet: 18, desktop: 20),
+        ),
+        border: Border.all(color: colorWithOpacity(_primary, 0.12), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: colorWithOpacity(Colors.black, 0.05),
@@ -746,68 +840,80 @@ class _ProductCardState extends State<_ProductCard> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(
-              r.value(mobile: 16, tablet: 18, desktop: 20)),
+            r.value(mobile: 16, tablet: 18, desktop: 20),
+          ),
           onTap: () {},
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Image ──────────────────────────────────────────────
-              Stack(children: [
-                Container(
-                  height: imageContainerHeight,
-                  decoration: BoxDecoration(
-                    color: colorWithOpacity(_primary, 0.06),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(
-                          r.value(mobile: 16, tablet: 18, desktop: 20)),
-                      topRight: Radius.circular(
-                          r.value(mobile: 16, tablet: 18, desktop: 20)),
-                    ),
-                  ),
-                  child: Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: p.imageUrl != null && p.imageUrl!.isNotEmpty
-                          ? Image.network(p.imageUrl!,
-                              width: imageSize, height: imageSize,
-                              fit: BoxFit.cover,
-                              errorBuilder: (c, e, s) =>
-                                  _placeholder(p, theme, imageSize))
-                          : Image.asset(
-                              'images/market_place/${p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), "_")}.png',
-                              width: imageSize, height: imageSize,
-                              fit: BoxFit.cover,
-                              errorBuilder: (c, e, s) =>
-                                  _placeholder(p, theme, imageSize)),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 6, right: 6,
-                  child: Container(
-                    width: favBtn, height: favBtn,
+              Stack(
+                children: [
+                  Container(
+                    height: imageContainerHeight,
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorWithOpacity(Colors.black, 0.1),
-                          blurRadius: 6,
-                        )
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        _fav ? Icons.favorite_rounded : Icons.favorite_border,
-                        color: _fav ? Colors.redAccent : Colors.grey[400],
-                        size: favBtn * 0.55,
+                      color: colorWithOpacity(_primary, 0.06),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(
+                          r.value(mobile: 16, tablet: 18, desktop: 20),
+                        ),
+                        topRight: Radius.circular(
+                          r.value(mobile: 16, tablet: 18, desktop: 20),
+                        ),
                       ),
-                      onPressed: () => setState(() => _fav = !_fav),
-                      padding: EdgeInsets.zero,
+                    ),
+                    child: Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: p.imageUrl != null && p.imageUrl!.isNotEmpty
+                            ? Image.network(
+                                p.imageUrl!,
+                                width: imageSize,
+                                height: imageSize,
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) =>
+                                    _placeholder(p, theme, imageSize),
+                              )
+                            : Image.asset(
+                                'images/market_place/${p.name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), "_")}.png',
+                                width: imageSize,
+                                height: imageSize,
+                                fit: BoxFit.cover,
+                                errorBuilder: (c, e, s) =>
+                                    _placeholder(p, theme, imageSize),
+                              ),
+                      ),
                     ),
                   ),
-                ),
-              ]),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Container(
+                      width: favBtn,
+                      height: favBtn,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorWithOpacity(Colors.black, 0.1),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          _fav ? Icons.favorite_rounded : Icons.favorite_border,
+                          color: _fav ? Colors.redAccent : Colors.grey[400],
+                          size: favBtn * 0.55,
+                        ),
+                        onPressed: () => setState(() => _fav = !_fav),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
               // ── Info ───────────────────────────────────────────────
               Expanded(
@@ -816,18 +922,24 @@ class _ProductCardState extends State<_ProductCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(p.name,
-                          style: TextStyle(
-                              fontSize: nameSize,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.grey[800]),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        p.name,
+                        style: TextStyle(
+                          fontSize: nameSize,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey[800],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 2),
-                      Text('Per ${p.unit}',
-                          style: TextStyle(
-                              fontSize: unitSize,
-                              color: Colors.grey[500])),
+                      Text(
+                        'Per ${p.unit}',
+                        style: TextStyle(
+                          fontSize: unitSize,
+                          color: Colors.grey[500],
+                        ),
+                      ),
                       const Spacer(),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -848,8 +960,9 @@ class _ProductCardState extends State<_ProductCard> {
                           _QtyRow(
                             qty: _qty,
                             iconSize: qtyIcon,
-                            onDecrement: () =>
-                                setState(() { if (_qty > 1) _qty--; }),
+                            onDecrement: () => setState(() {
+                              if (_qty > 1) _qty--;
+                            }),
                             onIncrement: () => setState(() => _qty++),
                           ),
                         ],
@@ -859,39 +972,61 @@ class _ProductCardState extends State<_ProductCard> {
                         child: Align(
                           alignment: Alignment.centerRight,
                           child: PopupMenuButton<String>(
-                            icon: Icon(Icons.more_horiz_rounded,
-                                color: Colors.grey[400], size: 18),
+                            icon: Icon(
+                              Icons.more_horiz_rounded,
+                              color: Colors.grey[400],
+                              size: 18,
+                            ),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                             padding: EdgeInsets.zero,
                             elevation: 4,
                             onSelected: (v) {
-                              if (v == 'edit') widget.onEdit();
-                              else if (v == 'delete') widget.onDelete();
+                              if (v == 'edit')
+                                widget.onEdit();
+                              else if (v == 'delete')
+                                widget.onDelete();
                             },
                             itemBuilder: (_) => [
                               PopupMenuItem(
                                 value: 'edit',
-                                child: Row(children: [
-                                  Icon(Icons.edit_outlined,
-                                      size: 18, color: _primary),
-                                  const SizedBox(width: 10),
-                                  const Text('Edit',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.edit_outlined,
+                                      size: 18,
+                                      color: _primary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Edit',
                                       style: TextStyle(
-                                          fontWeight: FontWeight.w600)),
-                                ]),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               PopupMenuItem(
                                 value: 'delete',
-                                child: Row(children: [
-                                  const Icon(Icons.delete_outline,
-                                      size: 18, color: Colors.redAccent),
-                                  const SizedBox(width: 10),
-                                  const Text('Delete',
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.delete_outline,
+                                      size: 18,
+                                      color: Colors.redAccent,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    const Text(
+                                      'Delete',
                                       style: TextStyle(
-                                          color: Colors.redAccent,
-                                          fontWeight: FontWeight.w600)),
-                                ]),
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -910,7 +1045,8 @@ class _ProductCardState extends State<_ProductCard> {
 
   Widget _placeholder(MarketProduct p, ThemeData theme, double size) {
     return Container(
-      width: size, height: size,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         color: colorWithOpacity(_primary, 0.12),
         borderRadius: BorderRadius.circular(10),
@@ -954,27 +1090,35 @@ class _QtyRow extends StatelessWidget {
         color: colorWithOpacity(const Color(0xFF2E7D32), 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        _Btn(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _Btn(
             icon: Icons.remove_rounded,
             size: iconSize,
             btnSize: btnSize,
-            onPressed: onDecrement),
-        SizedBox(
-          width: 20,
-          child: Text('$qty',
+            onPressed: onDecrement,
+          ),
+          SizedBox(
+            width: 20,
+            child: Text(
+              '$qty',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: iconSize,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF2E7D32))),
-        ),
-        _Btn(
+                fontSize: iconSize,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF2E7D32),
+              ),
+            ),
+          ),
+          _Btn(
             icon: Icons.add_rounded,
             size: iconSize,
             btnSize: btnSize,
-            onPressed: onIncrement),
-      ]),
+            onPressed: onIncrement,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -995,7 +1139,8 @@ class _Btn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: btnSize, height: btnSize,
+      width: btnSize,
+      height: btnSize,
       child: IconButton(
         onPressed: onPressed,
         icon: Icon(icon, size: size),

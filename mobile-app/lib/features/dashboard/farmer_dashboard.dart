@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:CeylonPepper/features/market_forecast/screens/navigation.dart';
+import '../auth/login_page.dart';
 import '../disease_detection/screens/home_screen.dart';
 import '../disease_detection/services/weather_service.dart';
 import '../disease_detection/services/location_service.dart';
@@ -8,7 +9,6 @@ import '../../utils/responsive.dart';
 import '../../utils/localization.dart';
 import '../../utils/language_prefs.dart';
 import '../../utils/farmer_dashboard_si.dart';
-import '../auth/login_page.dart';
 import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
@@ -501,6 +501,115 @@ class _FarmerDashboardState extends State<FarmerDashboard>
     );
   }
 
+  // ── Logout Confirmation Dialog ────────────────────────────────────────────
+  void _showLogoutDialog(BuildContext context, Color primary) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Avatar + name
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colorWithOpacity(primary, 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.person_rounded, color: primary, size: 36),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _userName,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _currentLanguage == 'si'
+                    ? 'ඔබට ඇත්තටම පිටවීමට අවශ්‍යද?'
+                    : 'Are you sure you want to log out?',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              // Log out button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await _authService.logout();
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  label: Text(
+                    _currentLanguage == 'si'
+                        ? FarmerDashboardSi.logout
+                        : _translate('logout'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[600],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Cancel button
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    _currentLanguage == 'si' ? 'අවලංගු කරන්න' : 'Cancel',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader(Responsive responsive, Color primary) {
     return Container(
       padding: responsive.padding(
@@ -599,8 +708,10 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                     ),
                   ),
                   ResponsiveSpacing(mobile: 10, tablet: 12, desktop: 14),
-                  PopupMenuButton<String>(
-                    icon: Container(
+                  // Tap avatar → logout confirmation dialog
+                  GestureDetector(
+                    onTap: () => _showLogoutDialog(context, primary),
+                    child: Container(
                       padding: EdgeInsets.all(
                         responsive.value(mobile: 2, tablet: 3, desktop: 4),
                       ),
@@ -609,7 +720,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Colors.black.withValues(alpha: 0.12),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -633,63 +744,6 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                         ),
                       ),
                     ),
-                    onSelected: (value) async {
-                      if (value == 'logout') {
-                        await _authService.logout();
-                        if (!mounted) return;
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(builder: (_) => const LoginPage()),
-                          (route) => false,
-                        );
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'profile',
-                        child: Row(
-                          children: [
-                            Icon(Icons.person_outline, size: 20),
-                            SizedBox(width: 12),
-                            Text(
-                              _currentLanguage == 'si'
-                                  ? FarmerDashboardSi.profile
-                                  : _translate('profile'),
-                            ),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'settings',
-                        child: Row(
-                          children: [
-                            Icon(Icons.settings_outlined, size: 20),
-                            SizedBox(width: 12),
-                            Text(
-                              _currentLanguage == 'si'
-                                  ? FarmerDashboardSi.settings
-                                  : _translate('settings'),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuDivider(),
-                      PopupMenuItem(
-                        value: 'logout',
-                        child: Row(
-                          children: [
-                            Icon(Icons.logout, color: Colors.red, size: 20),
-                            SizedBox(width: 12),
-                            Text(
-                              _currentLanguage == 'si'
-                                  ? FarmerDashboardSi.logout
-                                  : _translate('logout'),
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),

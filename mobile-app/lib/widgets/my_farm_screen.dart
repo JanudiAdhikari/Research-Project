@@ -56,7 +56,10 @@ class _MyFarmScreenState extends State<MyFarmScreen>
   }
 
   Future<void> _loadPlots() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await _service.fetchPlots();
       if (mounted) {
@@ -66,14 +69,21 @@ class _MyFarmScreenState extends State<MyFarmScreen>
     } catch (e) {
       if (mounted) {
         setState(() => _error = e.toString());
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to load plots: $e'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          action: SnackBarAction(
-              label: 'Retry', textColor: Colors.white, onPressed: _loadPlots),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load plots: $e'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _loadPlots,
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -84,57 +94,79 @@ class _MyFarmScreenState extends State<MyFarmScreen>
     final nameCtrl = TextEditingController(text: plot?.name ?? '');
     final cropCtrl = TextEditingController(text: plot?.crop ?? '');
     final areaCtrl = TextEditingController(
-        text: plot != null ? plot.area.toString() : '');
+      text: plot != null ? plot.area.toString() : '',
+    );
     final formKey = GlobalKey<FormState>();
 
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Row(children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorWithOpacity(_primary, 0.1),
-              borderRadius: BorderRadius.circular(10),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorWithOpacity(_primary, 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                plot == null
+                    ? Icons.add_location_alt_outlined
+                    : Icons.edit_outlined,
+                color: _primary,
+                size: 20,
+              ),
             ),
-            child: Icon(
-              plot == null ? Icons.add_location_alt_outlined : Icons.edit_outlined,
-              color: _primary,
-              size: 20,
+            const SizedBox(width: 12),
+            Text(
+              plot == null ? 'Add New Plot' : 'Edit Plot',
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            plot == null ? 'Add New Plot' : 'Edit Plot',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ]),
+          ],
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Form(
           key: formKey,
           child: SingleChildScrollView(
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              _dialogField(nameCtrl, 'Plot Location', Icons.label_outline,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _dialogField(
+                  nameCtrl,
+                  'Plot Location',
+                  Icons.label_outline,
                   hint: 'e.g., Kegalle',
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Plot name is required'
-                      : null),
-              const SizedBox(height: 14),
-              _dialogField(cropCtrl, 'Crop Type', Icons.grass_outlined,
-                  hint: 'e.g., Black Pepper'),
-              const SizedBox(height: 14),
-              _dialogField(areaCtrl, 'Area (hectares)', Icons.straighten_outlined,
+                      : null,
+                ),
+                const SizedBox(height: 14),
+                _dialogField(
+                  cropCtrl,
+                  'Crop Type',
+                  Icons.grass_outlined,
+                  hint: 'e.g., Black Pepper',
+                ),
+                const SizedBox(height: 14),
+                _dialogField(
+                  areaCtrl,
+                  'Area (hectares)',
+                  Icons.straighten_outlined,
                   hint: '0.0',
                   suffixText: 'ha',
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Area is required';
+                    if (v == null || v.trim().isEmpty)
+                      return 'Area is required';
                     final n = double.tryParse(v.trim());
                     if (n == null || n <= 0) return 'Enter a valid area';
                     return null;
-                  }),
-            ]),
+                  },
+                ),
+              ],
+            ),
           ),
         ),
         actions: [
@@ -158,26 +190,34 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                   await _service.updatePlot(plot.id, body);
                 }
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(plot == null
-                        ? 'Plot added successfully'
-                        : 'Plot updated successfully'),
-                    backgroundColor: _primary,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        plot == null
+                            ? 'Plot added successfully'
+                            : 'Plot updated successfully',
+                      ),
+                      backgroundColor: _primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
                   await _loadPlots();
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Error: $e'),
-                    backgroundColor: Colors.redAccent,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $e'),
+                      backgroundColor: Colors.redAccent,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  );
                 }
               }
             },
@@ -185,7 +225,8 @@ class _MyFarmScreenState extends State<MyFarmScreen>
               backgroundColor: _primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: Text(plot == null ? 'Add Plot' : 'Save'),
           ),
@@ -237,11 +278,12 @@ class _MyFarmScreenState extends State<MyFarmScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Plot',
-            style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Delete Plot',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         content: Text('Are you sure you want to delete "${plot.name}"?'),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -253,7 +295,8 @@ class _MyFarmScreenState extends State<MyFarmScreen>
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: const Text('Delete'),
           ),
@@ -265,31 +308,36 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       try {
         // await _service.deletePlot(plot.id);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: const Text('Plot deleted'),
-            backgroundColor: _primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Plot deleted'),
+              backgroundColor: _primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
           await _loadPlots();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Failed to delete: $e'),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete: $e'),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
         }
       }
     }
   }
 
-  double get _totalArea =>
-      _plots.fold(0.0, (sum, p) => sum + p.area);
+  double get _totalArea => _plots.fold(0.0, (sum, p) => sum + p.area);
 
   @override
   Widget build(BuildContext context) {
@@ -328,8 +376,10 @@ class _MyFarmScreenState extends State<MyFarmScreen>
           : FloatingActionButton.extended(
               onPressed: () => _showPlotForm(),
               icon: const Icon(Icons.add_location_alt_outlined),
-              label: const Text('Add Plot',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              label: const Text(
+                'Add Plot',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
               backgroundColor: _primary,
               foregroundColor: Colors.white,
               elevation: 4,
@@ -353,10 +403,12 @@ class _MyFarmScreenState extends State<MyFarmScreen>
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft:
-              Radius.circular(r.value(mobile: 28, tablet: 36, desktop: 40)),
-          bottomRight:
-              Radius.circular(r.value(mobile: 28, tablet: 36, desktop: 40)),
+          bottomLeft: Radius.circular(
+            r.value(mobile: 28, tablet: 36, desktop: 40),
+          ),
+          bottomRight: Radius.circular(
+            r.value(mobile: 28, tablet: 36, desktop: 40),
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -409,28 +461,34 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       padding: EdgeInsets.symmetric(
         horizontal: r.value(mobile: 16, tablet: 24, desktop: 32),
       ),
-      child: Row(children: [
-        Container(
-          width: r.value(mobile: 4, tablet: 5, desktop: 6),
-          height: r.value(mobile: 20, tablet: 22, desktop: 24),
-          decoration: BoxDecoration(
-            color: _primary,
-            borderRadius: BorderRadius.circular(2),
+      child: Row(
+        children: [
+          Container(
+            width: r.value(mobile: 4, tablet: 5, desktop: 6),
+            height: r.value(mobile: 20, tablet: 22, desktop: 24),
+            decoration: BoxDecoration(
+              color: _primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
-        ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
-        Expanded(
-          child: Text(title,
+          ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
+          Expanded(
+            child: Text(
+              title,
               style: TextStyle(
                 fontSize: r.fontSize(mobile: 17, tablet: 20, desktop: 22),
                 fontWeight: FontWeight.w700,
                 color: Colors.black87,
-              )),
-        ),
-        Icon(icon,
+              ),
+            ),
+          ),
+          Icon(
+            icon,
             color: _primary,
-            size: r.value(mobile: 22, tablet: 24, desktop: 26)),
-      ]),
+            size: r.value(mobile: 22, tablet: 24, desktop: 26),
+          ),
+        ],
+      ),
     );
   }
 
@@ -442,7 +500,8 @@ class _MyFarmScreenState extends State<MyFarmScreen>
         height: 280,
         child: Center(
           child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(_primary)),
+            valueColor: AlwaysStoppedAnimation<Color>(_primary),
+          ),
         ),
       );
     }
@@ -475,9 +534,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
               horizontal: r.value(mobile: 16, tablet: 24, desktop: 32),
             ),
             child: Column(
-              children: _plots
-                  .map((plot) => _buildPlotCard(plot, r))
-                  .toList(),
+              children: _plots.map((plot) => _buildPlotCard(plot, r)).toList(),
             ),
           ),
         ],
@@ -488,29 +545,35 @@ class _MyFarmScreenState extends State<MyFarmScreen>
   // ── Summary row — matches Dashboard's quick-stats row ──────────────────
 
   Widget _buildSummaryRow(Responsive r) {
-    return Row(children: [
-      Expanded(
-        child: _buildStatCard(
-          r,
-          Icons.grid_on_rounded,
-          'Total Plots',
-          _plots.length.toString(),
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            r,
+            Icons.grid_on_rounded,
+            'Total Plots',
+            _plots.length.toString(),
+          ),
         ),
-      ),
-      ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
-      Expanded(
-        child: _buildStatCard(
-          r,
-          Icons.landscape_rounded,
-          'Total Area',
-          '${_totalArea.toStringAsFixed(1)} ha',
+        ResponsiveSpacing.horizontal(mobile: 12, tablet: 16, desktop: 20),
+        Expanded(
+          child: _buildStatCard(
+            r,
+            Icons.landscape_rounded,
+            'Total Area',
+            '${_totalArea.toStringAsFixed(1)} ha',
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 
   Widget _buildStatCard(
-      Responsive r, IconData icon, String label, String value) {
+    Responsive r,
+    IconData icon,
+    String label,
+    String value,
+  ) {
     return Container(
       padding: r.padding(
         mobile: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -519,8 +582,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(r.value(mobile: 14, tablet: 18, desktop: 20)),
+        borderRadius: BorderRadius.circular(
+          r.value(mobile: 14, tablet: 18, desktop: 20),
+        ),
         border: Border.all(color: colorWithOpacity(_primary, 0.12), width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -530,39 +594,49 @@ class _MyFarmScreenState extends State<MyFarmScreen>
           ),
         ],
       ),
-      child: Row(children: [
-        Container(
-          padding: EdgeInsets.all(r.value(mobile: 10, tablet: 12, desktop: 14)),
-          decoration: BoxDecoration(
-            color: colorWithOpacity(_primary, 0.08),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon,
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(
+              r.value(mobile: 10, tablet: 12, desktop: 14),
+            ),
+            decoration: BoxDecoration(
+              color: colorWithOpacity(_primary, 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
               color: _primary,
-              size: r.value(mobile: 22, tablet: 24, desktop: 26)),
-        ),
-        SizedBox(width: r.value(mobile: 12, tablet: 14, desktop: 16)),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value,
+              size: r.value(mobile: 22, tablet: 24, desktop: 26),
+            ),
+          ),
+          SizedBox(width: r.value(mobile: 12, tablet: 14, desktop: 16)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
                   style: TextStyle(
                     fontSize: r.fontSize(mobile: 20, tablet: 22, desktop: 24),
                     fontWeight: FontWeight.w700,
                     color: Colors.grey[800],
-                  )),
-              const SizedBox(height: 2),
-              Text(label,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
                   style: TextStyle(
                     fontSize: r.fontSize(mobile: 11, tablet: 12, desktop: 13),
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
-                  )),
-            ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -570,11 +644,14 @@ class _MyFarmScreenState extends State<MyFarmScreen>
 
   Widget _buildPlotCard(FarmPlot plot, Responsive r) {
     return Container(
-      margin: EdgeInsets.only(bottom: r.value(mobile: 12, tablet: 14, desktop: 16)),
+      margin: EdgeInsets.only(
+        bottom: r.value(mobile: 12, tablet: 14, desktop: 16),
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(r.value(mobile: 16, tablet: 18, desktop: 20)),
+        borderRadius: BorderRadius.circular(
+          r.value(mobile: 16, tablet: 18, desktop: 20),
+        ),
         border: Border.all(color: colorWithOpacity(_primary, 0.12), width: 1.5),
         boxShadow: [
           BoxShadow(
@@ -587,108 +664,139 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius:
-              BorderRadius.circular(r.value(mobile: 16, tablet: 18, desktop: 20)),
+          borderRadius: BorderRadius.circular(
+            r.value(mobile: 16, tablet: 18, desktop: 20),
+          ),
           onTap: () => _showPlotForm(plot),
           child: Padding(
-            padding: EdgeInsets.all(r.value(mobile: 14, tablet: 16, desktop: 18)),
-            child: Row(children: [
-              // Icon container
-              Container(
-                padding: EdgeInsets.all(
-                    r.value(mobile: 12, tablet: 14, desktop: 16)),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_primary, colorWithOpacity(_primary, 0.75)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+            padding: EdgeInsets.all(
+              r.value(mobile: 14, tablet: 16, desktop: 18),
+            ),
+            child: Row(
+              children: [
+                // Icon container
+                Container(
+                  padding: EdgeInsets.all(
+                    r.value(mobile: 12, tablet: 14, desktop: 16),
                   ),
-                  borderRadius: BorderRadius.circular(
-                      r.value(mobile: 14, tablet: 16, desktop: 18)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorWithOpacity(_primary, 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_primary, colorWithOpacity(_primary, 0.75)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(
+                      r.value(mobile: 14, tablet: 16, desktop: 18),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorWithOpacity(_primary, 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.agriculture_rounded,
+                    size: r.value(mobile: 28, tablet: 32, desktop: 36),
+                    color: Colors.white,
+                  ),
+                ),
+
+                SizedBox(width: r.value(mobile: 14, tablet: 16, desktop: 18)),
+
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        plot.name,
+                        style: TextStyle(
+                          fontSize: r.fontSize(
+                            mobile: 15,
+                            tablet: 16,
+                            desktop: 17,
+                          ),
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.grass_outlined,
+                            size: r.value(mobile: 14, tablet: 15, desktop: 16),
+                            color: Colors.grey[500],
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              plot.crop.isNotEmpty ? plot.crop : 'No crop',
+                              style: TextStyle(
+                                fontSize: r.fontSize(
+                                  mobile: 12,
+                                  tablet: 13,
+                                  desktop: 14,
+                                ),
+                                color: Colors.grey[600],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(
+                            width: r.value(mobile: 12, tablet: 14, desktop: 16),
+                          ),
+                          Icon(
+                            Icons.straighten_outlined,
+                            size: r.value(mobile: 14, tablet: 15, desktop: 16),
+                            color: Colors.grey[500],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${plot.area} ha',
+                            style: TextStyle(
+                              fontSize: r.fontSize(
+                                mobile: 12,
+                                tablet: 13,
+                                desktop: 14,
+                              ),
+                              color: _primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Actions
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _actionBtn(
+                      icon: Icons.edit_outlined,
+                      color: _primary,
+                      bgColor: colorWithOpacity(_primary, 0.08),
+                      size: r.value(mobile: 18, tablet: 20, desktop: 22),
+                      onPressed: () => _showPlotForm(plot),
+                    ),
+                    SizedBox(
+                      height: r.value(mobile: 6, tablet: 8, desktop: 10),
+                    ),
+                    _actionBtn(
+                      icon: Icons.delete_outline,
+                      color: Colors.redAccent,
+                      bgColor: colorWithOpacity(Colors.redAccent, 0.08),
+                      size: r.value(mobile: 18, tablet: 20, desktop: 22),
+                      onPressed: () => _confirmDelete(plot),
                     ),
                   ],
                 ),
-                child: Icon(
-                  Icons.agriculture_rounded,
-                  size: r.value(mobile: 28, tablet: 32, desktop: 36),
-                  color: Colors.white,
-                ),
-              ),
-
-              SizedBox(width: r.value(mobile: 14, tablet: 16, desktop: 18)),
-
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(plot.name,
-                        style: TextStyle(
-                          fontSize: r.fontSize(mobile: 15, tablet: 16, desktop: 17),
-                          fontWeight: FontWeight.w700,
-                          color: Colors.grey[800],
-                        )),
-                    const SizedBox(height: 6),
-                    Row(children: [
-                      Icon(Icons.grass_outlined,
-                          size: r.value(mobile: 14, tablet: 15, desktop: 16),
-                          color: Colors.grey[500]),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          plot.crop.isNotEmpty ? plot.crop : 'No crop',
-                          style: TextStyle(
-                            fontSize: r.fontSize(mobile: 12, tablet: 13, desktop: 14),
-                            color: Colors.grey[600],
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      SizedBox(width: r.value(mobile: 12, tablet: 14, desktop: 16)),
-                      Icon(Icons.straighten_outlined,
-                          size: r.value(mobile: 14, tablet: 15, desktop: 16),
-                          color: Colors.grey[500]),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${plot.area} ha',
-                        style: TextStyle(
-                          fontSize: r.fontSize(mobile: 12, tablet: 13, desktop: 14),
-                          color: _primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ]),
-                  ],
-                ),
-              ),
-
-              // Actions
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _actionBtn(
-                    icon: Icons.edit_outlined,
-                    color: _primary,
-                    bgColor: colorWithOpacity(_primary, 0.08),
-                    size: r.value(mobile: 18, tablet: 20, desktop: 22),
-                    onPressed: () => _showPlotForm(plot),
-                  ),
-                  SizedBox(height: r.value(mobile: 6, tablet: 8, desktop: 10)),
-                  _actionBtn(
-                    icon: Icons.delete_outline,
-                    color: Colors.redAccent,
-                    bgColor: colorWithOpacity(Colors.redAccent, 0.08),
-                    size: r.value(mobile: 18, tablet: 20, desktop: 22),
-                    onPressed: () => _confirmDelete(plot),
-                  ),
-                ],
-              ),
-            ]),
+              ],
+            ),
           ),
         ),
       ),
@@ -722,44 +830,63 @@ class _MyFarmScreenState extends State<MyFarmScreen>
     return Padding(
       padding: EdgeInsets.all(r.largeSpacing),
       child: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            padding: EdgeInsets.all(r.value(mobile: 20, tablet: 24, desktop: 28)),
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.error_outline_rounded,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(
+                r.value(mobile: 20, tablet: 24, desktop: 28),
+              ),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.error_outline_rounded,
                 size: r.value(mobile: 48, tablet: 56, desktop: 64),
-                color: Colors.red.shade300),
-          ),
-          SizedBox(height: r.mediumSpacing),
-          Text('Failed to load farm data',
+                color: Colors.red.shade300,
+              ),
+            ),
+            SizedBox(height: r.mediumSpacing),
+            Text(
+              'Failed to load farm data',
               style: TextStyle(
-                  fontSize: r.titleFontSize,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[800])),
-          SizedBox(height: r.smallSpacing),
-          Text(_error!,
+                fontSize: r.titleFontSize,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: r.smallSpacing),
+            Text(
+              _error!,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: r.bodyFontSize, color: Colors.grey[600])),
-          SizedBox(height: r.largeSpacing),
-          ElevatedButton.icon(
-            onPressed: _loadPlots,
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Try Again',
-                style: TextStyle(fontWeight: FontWeight.w700)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(
-                  horizontal: r.largeSpacing, vertical: r.mediumSpacing),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                fontSize: r.bodyFontSize,
+                color: Colors.grey[600],
+              ),
             ),
-          ),
-        ]),
+            SizedBox(height: r.largeSpacing),
+            ElevatedButton.icon(
+              onPressed: _loadPlots,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text(
+                'Try Again',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.largeSpacing,
+                  vertical: r.mediumSpacing,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -770,43 +897,62 @@ class _MyFarmScreenState extends State<MyFarmScreen>
     return Padding(
       padding: EdgeInsets.all(r.largeSpacing),
       child: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            padding: EdgeInsets.all(r.value(mobile: 24, tablet: 28, desktop: 32)),
-            decoration: BoxDecoration(
-              color: colorWithOpacity(_primary, 0.07),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.park_outlined,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(
+                r.value(mobile: 24, tablet: 28, desktop: 32),
+              ),
+              decoration: BoxDecoration(
+                color: colorWithOpacity(_primary, 0.07),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.park_outlined,
                 size: r.value(mobile: 56, tablet: 68, desktop: 80),
-                color: colorWithOpacity(_primary, 0.4)),
-          ),
-          SizedBox(height: r.largeSpacing),
-          Text('No plots yet',
-              style: TextStyle(
-                  fontSize: r.headingFontSize,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.grey[800])),
-          SizedBox(height: r.smallSpacing),
-          Text('Start by adding your first plot',
-              style: TextStyle(
-                  fontSize: r.bodyFontSize, color: Colors.grey[600])),
-          SizedBox(height: r.largeSpacing),
-          ElevatedButton.icon(
-            onPressed: () => _showPlotForm(),
-            icon: const Icon(Icons.add_location_alt_outlined),
-            label: const Text('Add Plot',
-                style: TextStyle(fontWeight: FontWeight.w700)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(
-                  horizontal: r.largeSpacing, vertical: r.mediumSpacing),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                color: colorWithOpacity(_primary, 0.4),
+              ),
             ),
-          ),
-        ]),
+            SizedBox(height: r.largeSpacing),
+            Text(
+              'No plots yet',
+              style: TextStyle(
+                fontSize: r.headingFontSize,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+            SizedBox(height: r.smallSpacing),
+            Text(
+              'Start by adding your first plot',
+              style: TextStyle(
+                fontSize: r.bodyFontSize,
+                color: Colors.grey[600],
+              ),
+            ),
+            SizedBox(height: r.largeSpacing),
+            ElevatedButton.icon(
+              onPressed: () => _showPlotForm(),
+              icon: const Icon(Icons.add_location_alt_outlined),
+              label: const Text(
+                'Add Plot',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.largeSpacing,
+                  vertical: r.mediumSpacing,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

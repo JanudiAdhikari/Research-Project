@@ -1,7 +1,7 @@
 // Sinhala translations for Farmer Dashboard
 class FarmerDashboardSi {
   // Header / App
-  static const String ceylonPepper = 'Ceylon Pepper';
+  static const String ceylonPepper = 'CeylonPepper';
   static const String hello = 'hello';
 
   // Weather / location

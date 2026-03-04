@@ -314,7 +314,9 @@ class PriceReportCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onUpdate,
                   icon: const Icon(Icons.edit_rounded, size: 16),
-                  label: const Text('Update'),
+                  label: Text(
+                    language == 'si' ? ActualPriceDataSi.update : 'Update',
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF2E7D32),
                     side: const BorderSide(color: Color(0xFF2E7D32)),
@@ -327,7 +329,9 @@ class PriceReportCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_rounded, size: 16),
-                  label: const Text('Delete'),
+                  label: Text(
+                    language == 'si' ? ActualPriceDataSi.deleteBtn : 'Delete',
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red),
@@ -347,7 +351,11 @@ class PriceReportCard extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: onAddToMarketplace,
               icon: const Icon(Icons.storefront_rounded, size: 16),
-              label: const Text('Add to Marketplace'),
+              label: Text(
+                language == 'si'
+                    ? ActualPriceDataSi.listProductForSale
+                    : 'Add to Marketplace',
+              ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.blue.shade700,
                 side: BorderSide(color: Colors.blue.shade700),

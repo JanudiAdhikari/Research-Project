@@ -103,8 +103,10 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
             _currentLanguage == 'si'
                 ? ExportDetailsByCountrySi.title
                 : 'Export Details by Country',
+            style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: const Color(0xFF2E7D32),
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -118,8 +120,10 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
             _currentLanguage == 'si'
                 ? ExportDetailsByCountrySi.title
                 : 'Export Details by Country',
+            style: const TextStyle(color: Colors.white),
           ),
           backgroundColor: const Color(0xFF2E7D32),
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         body: Center(
           child: Column(
@@ -159,14 +163,16 @@ class _ExportDetailsByCountryState extends State<ExportDetailsByCountry> {
           _currentLanguage == 'si'
               ? ExportDetailsByCountrySi.title
               : 'Export Details by Country',
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF2E7D32),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         leading: selectedCountry == null
             ? null
             : IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
-                color: Colors.black87,
+                color: Colors.white,
                 onPressed: () {
                   setState(() {
                     selectedCountry = null;

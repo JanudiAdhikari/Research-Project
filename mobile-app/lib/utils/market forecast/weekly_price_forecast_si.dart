@@ -44,6 +44,7 @@ class WeeklyPriceForecastSi {
     'scattered clouds': 'විහිදුණු වලාකුළු',
     'few clouds': 'අඩු වලාකුළු',
     'broken clouds': 'බිඳුණු වලාකුළු',
+    'overcast clouds': 'අඳුරු වලාකුළු',
     'clear sky': 'පැහැදිලි ආකාශය',
     'light rain': 'සුළු වැසි',
     'moderate rain': 'මධ්‍යම වැසි',

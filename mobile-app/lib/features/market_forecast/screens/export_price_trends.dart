@@ -226,8 +226,10 @@ class _ExportPriceTrendsState extends State<ExportPriceTrends> {
           _currentLanguage == 'si'
               ? ExportPriceTrendsSi.pageTitle
               : 'Past Export Price Trends',
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF2E7D32),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
       body: SingleChildScrollView(

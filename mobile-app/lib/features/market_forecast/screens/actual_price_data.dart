@@ -93,10 +93,38 @@ class _ActualPriceDataState extends State<ActualPriceData> {
   // Load batch Ids
   Future<void> _loadBatches() async {
     try {
+      // Fetch quality check batches available to the user
       final items = await _qualityCheckService.fetchMyQualityChecks();
+
+      // Fetch existing actual price records to avoid duplicate batch entries
+      List<Map<String, dynamic>> existingReports = [];
+      try {
+        existingReports = await _actualPriceDataService.fetchActualPriceData();
+      } catch (e) {
+        // If fetching existing reports fails, proceed without filtering
+        debugPrint('Could not fetch existing actual price data: $e');
+      }
+
+      final existingBatchIds = existingReports
+          .map((r) => (r['batchId'] as String?))
+          .where((id) => id != null)
+          .map((id) => id!)
+          .toSet();
+
+      // Exclude batches that already have a record
+      final filteredItems = items.where((b) {
+        final bid = b['batchId'] as String?;
+        if (bid == null) return false;
+        if (_reportId != null && _selectedBatchId != null) {
+          // in edit mode keep the currently selected batch even if it exists
+          if (bid == _selectedBatchId) return true;
+        }
+        return !existingBatchIds.contains(bid);
+      }).toList();
+
       if (!mounted) return;
       setState(() {
-        _batches = items;
+        _batches = filteredItems;
       });
     } catch (e) {
       debugPrint('Failed to load batches: $e');
@@ -187,12 +215,14 @@ class _ActualPriceDataState extends State<ActualPriceData> {
           _isEditMode
               ? (_currentLanguage == 'si'
                     ? ActualPriceDataSi.updatePriceDetails
-                    : 'Update Price Details')
+                    : 'Update Batch Details')
               : (_currentLanguage == 'si'
                     ? ActualPriceDataSi.realPriceDetails
-                    : 'Real Price Details'),
+                    : 'Pepper Batch Details'),
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF2E7D32),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           IconButton(
@@ -200,7 +230,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
                 ? ActualPriceDataSi.reset
                 : 'Reset',
             onPressed: _resetForm,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
           ),
         ],
       ),
@@ -250,7 +280,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
         icon: const Icon(Icons.history_rounded, size: 20),
         label: Text(
           _currentLanguage == 'si'
-              ? ActualPriceDataSi.viewPastRecords
+              ? ActualPriceDataSi.viewMyRecords
               : 'View My Records',
           style: TextStyle(
             fontSize: responsive.bodyFontSize,
@@ -951,7 +981,7 @@ class _ActualPriceDataState extends State<ActualPriceData> {
             ),
             content: Text(
               _currentLanguage == 'si'
-                  ? 'වාර්තාව සාර්ථකව සුරකින ලදි.'
+                  ? ActualPriceDataSi.priceDataSubmitted
                   : 'Record saved successfully.',
             ),
             actions: [

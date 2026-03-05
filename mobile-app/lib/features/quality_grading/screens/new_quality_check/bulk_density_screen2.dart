@@ -174,7 +174,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                       ),
                       ResponsiveSpacing(mobile: 4, tablet: 6, desktop: 8),
                       Text(
-                        "Enter the bulk density manually until the IoT device is available.",
+                        "Measure and enter the bulk density of the pepper sample manually.",
                         style: TextStyle(
                           fontSize: responsive.bodyFontSize,
                           color: Colors.grey[600],
@@ -199,7 +199,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
 
-                          // ── Instructions Card (matches reference page) ────
+                          // ── Instructions Card ─────────────────────────────
                           Container(
                             padding: responsive.padding(
                               mobile: const EdgeInsets.all(20),
@@ -293,57 +293,6 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                   text:
                                       'Accepted range is 200–900 g/L. Double-check before saving.',
                                   responsive: responsive,
-                                ),
-
-                                ResponsiveSpacing(
-                                  mobile: 12,
-                                  tablet: 14,
-                                  desktop: 16,
-                                ),
-
-                                // IoT note chip
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: responsive.value(
-                                      mobile: 12,
-                                      tablet: 14,
-                                      desktop: 16,
-                                    ),
-                                    vertical: responsive.value(
-                                      mobile: 8,
-                                      tablet: 9,
-                                      desktop: 10,
-                                    ),
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.amber.shade50,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.amber.shade200,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.sensors_rounded,
-                                        color: Colors.amber.shade800,
-                                        size: responsive.smallIconSize,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Flexible(
-                                        child: Text(
-                                          'IoT integration coming soon – manual entry for now.',
-                                          style: TextStyle(
-                                            fontSize:
-                                                responsive.bodyFontSize - 1,
-                                            color: Colors.amber.shade900,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
                                 ),
                               ],
                             ),

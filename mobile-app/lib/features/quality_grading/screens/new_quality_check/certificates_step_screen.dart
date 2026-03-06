@@ -244,21 +244,6 @@ class _CertificatesStepScreenState extends State<CertificatesStepScreen>
     );
   }
 
-  // ── Step indicator row ────────────────────────────────────────────────────
-  Widget _buildStepIndicatorRow(Responsive responsive) {
-    return Row(
-      children: [
-        _buildStepBubble(1, true, responsive),
-        _buildStepConnector(true),
-        _buildStepBubble(2, true, responsive),
-        _buildStepConnector(true),
-        _buildStepBubble(3, true, responsive),
-        _buildStepConnector(false),
-        _buildStepBubble(4, false, responsive),
-      ],
-    );
-  }
-
   Widget _buildStepBubble(int step, bool isActive, Responsive responsive) {
     final isCompleted = step < 3;
     final size = responsive.value(mobile: 34.0, tablet: 38.0, desktop: 42.0);

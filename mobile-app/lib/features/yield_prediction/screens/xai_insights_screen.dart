@@ -2,11 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../../utils/yield_prediction/yield_prediction_si.dart';
+import '../../../models/prediction_response.dart';
 
 class XAIInsightsScreen extends StatelessWidget {
-  final File imageFile;
+  final dynamic imageFile; // Can be File or XFile
   final double soilMoisture;
   final double temperature;
+  final List<String> insights;
+  final TopFactors? topFactors;
   final String language;
 
   const XAIInsightsScreen({
@@ -14,6 +17,8 @@ class XAIInsightsScreen extends StatelessWidget {
     required this.imageFile,
     required this.soilMoisture,
     required this.temperature,
+    this.insights = const [],
+    this.topFactors,
     this.language = 'en',
   });
 
@@ -36,34 +41,137 @@ class XAIInsightsScreen extends StatelessWidget {
           const SizedBox(height: 20),
           _imageInsightCard(),
           const SizedBox(height: 16),
+          // Display soil moisture impact with SHAP value
           _factorCard(
             icon: Icons.water_drop_rounded,
             title: isSi
                 ? YieldPredictionSi.soilMoistureImpact
                 : "Soil Moisture Impact",
             value: "${soilMoisture.round()}%",
-            description:
-                "Optimal soil moisture level contributed positively to nutrient uptake and fruit development.",
+            description: _getSoilMoistureDescription(isSi),
             color: Colors.blue,
             progress: soilMoisture / 100,
+            shapValue: topFactors?.soilMoistureImpact.toStringAsFixed(4),
           ),
           const SizedBox(height: 16),
+          // Display temperature impact with SHAP value
           _factorCard(
             icon: Icons.thermostat_rounded,
             title: isSi
                 ? YieldPredictionSi.temperatureImpact
                 : "Temperature Impact",
             value: "${temperature.round()}°C",
-            description:
-                "Temperature is within the favorable range for pepper growth, supporting healthy cone formation.",
+            description: _getTemperatureDescription(isSi),
             color: Colors.orange,
             progress: temperature / 50,
+            shapValue: topFactors?.temperatureImpact.toStringAsFixed(4),
           ),
           const SizedBox(height: 20),
-          _finalExplanationCard(),
+          // Display dynamic insights from backend
+          if (insights.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.info_rounded, color: Colors.amber),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          isSi
+                              ? "AI වලින් අනුমාන කරන ලද අවබෝධතා"
+                              : "AI-Generated Insights",
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...insights
+                      .map(
+                        (insight) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(top: 4),
+                                child: Icon(
+                                  Icons.check_circle_rounded,
+                                  color: Colors.amber,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  insight,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+          _finalExplanationCard(isSi),
         ],
       ),
     );
+  }
+
+  String _getSoilMoistureDescription(bool isSi) {
+    if (isSi) {
+      if (soilMoisture < 40) {
+        return "පසු ගෙඩි ජලය අඩුය. වඩා השקיה අවශ්‍ය විය හැක.";
+      } else if (soilMoisture > 70) {
+        return "පසු ගෙඩි ජලය ඉතා ඉහල ය, එමඟින් ශක්තිමත් ශාක වර්ධනයට සහාය විය පුළුවන්.";
+      } else {
+        return "පසු ගෙඩි ජලය සර්वෝත්තම මට්ටමේ ඇති අතර, පෝෂක ගතිර සහ ගෙඩි සම්පූර්ණතාවට ධනাත්මක ඉපදෙයි.";
+      }
+    } else {
+      if (soilMoisture < 40) {
+        return "Soil moisture is quite low. Increasing irrigation may improve yield.";
+      } else if (soilMoisture > 70) {
+        return "Soil moisture levels are high which may support strong plant growth.";
+      } else {
+        return "Optimal soil moisture level contributed positively to nutrient uptake and fruit development.";
+      }
+    }
+  }
+
+  String _getTemperatureDescription(bool isSi) {
+    if (isSi) {
+      if (temperature < 20) {
+        return "උෂ්ණත්වය අඩුය සහ සිටි්ගේ වර්ධනයට බාධා විය පුළුවන්.";
+      } else if (temperature > 35) {
+        return "උෂ්ණත්වය ඉතා ඉහල ය. ශාක ගෝ විරජනයට ලක්ව අස්වැන්ම අඩු විය පුළුවන්.";
+      } else {
+        return "උෂ්ණත්වය තිබෙන්නේ වඩු සිටි්ගේ වර්ධනයට සනිටින අවස්ථාවෙහි ඇති අතර, සුස්ថ කේතු සෙවණ සඳහා ආධාර දෙයි.";
+      }
+    } else {
+      if (temperature < 20) {
+        return "Temperature is quite low. Crop growth may be slow with these conditions.";
+      } else if (temperature > 35) {
+        return "High temperature detected. Crop stress may reduce yield.";
+      } else {
+        return "Temperature is within the favorable range for pepper growth, supporting healthy cone formation.";
+      }
+    }
   }
 
   // ================= UI COMPONENTS =================
@@ -104,17 +212,40 @@ class XAIInsightsScreen extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: kIsWeb
-              ? Image.network(
-                  imageFile.path,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                )
+              ? (imageFile is String
+                    ? Image.network(
+                        imageFile,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Icon(Icons.broken_image),
+                            ),
+                          );
+                        },
+                      )
+                    : Image.memory(
+                        imageFile,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ))
               : Image.file(
                   imageFile,
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 200,
+                      color: Colors.grey[300],
+                      child: const Center(child: Icon(Icons.broken_image)),
+                    );
+                  },
                 ),
         ),
         const SizedBox(height: 8),
@@ -133,6 +264,7 @@ class XAIInsightsScreen extends StatelessWidget {
     required String description,
     required Color color,
     required double progress,
+    String? shapValue,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -181,12 +313,30 @@ class XAIInsightsScreen extends StatelessWidget {
             description,
             style: const TextStyle(fontSize: 13, color: Colors.grey),
           ),
+          if (shapValue != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                "SHAP Impact: $shapValue",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _finalExplanationCard() {
+  Widget _finalExplanationCard(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -195,13 +345,15 @@ class XAIInsightsScreen extends StatelessWidget {
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Icon(Icons.lightbulb_rounded, color: Colors.deepPurple),
-          SizedBox(width: 12),
+        children: [
+          const Icon(Icons.lightbulb_rounded, color: Colors.deepPurple),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Overall, the combination of healthy visual growth indicators, optimal soil moisture, and favorable temperature conditions led the model to predict a higher yield.",
-              style: TextStyle(fontSize: 14),
+              isSi
+                  ? "සම්පූර්ණ වශයෙන් නම්, සුස්ථ දෘශ්‍ය වර්ධන සూචක, සර්වෝත්තම පසු ගෙඩි ජලය සහ සනිටින උෂ්ණත්වයේ තත්වයන් එකතු වී ශාක අස්වැන්ම ඉහලට පෙන්වීමට ප්‍රමුණ විය."
+                  : "Overall, the combination of healthy visual growth indicators, optimal soil moisture, and favorable temperature conditions led the model to predict a higher yield.",
+              style: const TextStyle(fontSize: 14),
             ),
           ),
         ],

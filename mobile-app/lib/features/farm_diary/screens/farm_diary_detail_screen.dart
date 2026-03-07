@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../models/farm_diary.dart';
 import '../../../providers/app_providers.dart';
 import '../../../providers/farm_diary_provider.dart';
@@ -22,7 +23,7 @@ class _FarmDiaryDetailScreenState extends State<FarmDiaryDetailScreen> {
   void initState() {
     super.initState();
     _provider = AppProviders.farmDiary;
-    _loadEntry();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadEntry());
   }
 
   void _loadEntry() {
@@ -41,13 +42,12 @@ class _FarmDiaryDetailScreenState extends State<FarmDiaryDetailScreen> {
           PopupMenuButton(
             itemBuilder: (context) => [
               PopupMenuItem(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        FarmDiaryFormScreen(entry: _provider.selectedEntry),
-                  ),
-                ),
+                onTap: () {
+                  final entry = Provider.of<FarmDiaryProvider>(context, listen: false).selectedEntry;
+                  if (entry != null) {
+                    context.navigateToFarmDiaryForm(entry: entry);
+                  }
+                },
                 child: const Row(
                   children: [
                     Icon(Icons.edit),
@@ -70,10 +70,13 @@ class _FarmDiaryDetailScreenState extends State<FarmDiaryDetailScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _provider.selectedEntry == null
-          ? Center(
+      body: Consumer<FarmDiaryProvider>(
+        builder: (context, provider, child) {
+          if (_isLoading || provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (provider.selectedEntry == null) {
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -87,10 +90,13 @@ class _FarmDiaryDetailScreenState extends State<FarmDiaryDetailScreen> {
                   ),
                 ],
               ),
-            )
-          : SingleChildScrollView(
-              child: _buildDetailContent(_provider.selectedEntry!),
-            ),
+            );
+          }
+          return SingleChildScrollView(
+            child: _buildDetailContent(provider.selectedEntry!),
+          );
+        },
+      ),
     );
   }
 

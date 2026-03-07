@@ -61,6 +61,26 @@ class FarmDiaryProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    // First, check local list (handles offline entries and avoids fetch if already present)
+    final localEntry = _diaryEntries.firstWhere(
+      (e) => e.id == id || e.offlineSyncId == id,
+      orElse: () => FarmDiary(
+        id: '',
+        title: '',
+        description: '',
+        activityType: '',
+        diaryDate: DateTime.now(),
+        farmPlotId: '',
+      ),
+    );
+
+    if (localEntry.id.isNotEmpty || (localEntry.offlineSyncId?.isNotEmpty ?? false)) {
+      _selectedEntry = localEntry;
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     try {
       _selectedEntry = await _service.getDiaryEntry(id);
       _error = null;

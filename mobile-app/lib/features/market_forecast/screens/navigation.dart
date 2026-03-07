@@ -112,107 +112,7 @@ class _PriceNavigationState extends State<PriceNavigation>
                   height: responsive.value(mobile: 10, tablet: 12, desktop: 16),
                 ),
 
-                // First Navigation Card: Weekly Price Forecast
-                _buildNavigationCard(
-                  responsive,
-                  title: _currentLanguage == 'si'
-                      ? NavigationSi.weeklyLocalPriceForecast
-                      : 'Weekly Local Price Forecast',
-                  subtitle: _currentLanguage == 'si'
-                      ? NavigationSi.viewWeeklyPredictions
-                      : 'View weekly predictions',
-                  icon: Icons.trending_up_rounded,
-                  gradient: LinearGradient(
-                    colors: [Colors.white, Color(0xFFF7F7F8)],
-                  ),
-                  iconColor: Colors.deepOrange,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WeeklyPriceForecast(),
-                      ),
-                    );
-                  },
-                ),
-
-                SizedBox(height: responsive.mediumSpacing),
-
-                // Second Navigation Card: Export Price Trends
-                _buildNavigationCard(
-                  responsive,
-                  title: _currentLanguage == 'si'
-                      ? NavigationSi.pastExportPriceTrends
-                      : 'Past Export Price Trends',
-                  subtitle: _currentLanguage == 'si'
-                      ? NavigationSi.analyzeTrends
-                      : 'Analyze trends',
-                  icon: Icons.assessment_rounded,
-                  gradient: LinearGradient(
-                    colors: [Colors.white, Color(0xFFF7F7F8)],
-                  ),
-                  iconColor: Colors.indigo,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ExportPriceTrends(),
-                      ),
-                    );
-                  },
-                ),
-
-                SizedBox(height: responsive.mediumSpacing),
-
-                // Third Navigation Card: Export Details by Country
-                _buildNavigationCard(
-                  responsive,
-                  title: _currentLanguage == 'si'
-                      ? NavigationSi.exportDetailsByCountry
-                      : 'Export Details by Country',
-                  subtitle: _currentLanguage == 'si'
-                      ? NavigationSi.trackGlobalExports
-                      : 'Track global exports',
-                  icon: Icons.public_rounded,
-                  gradient: LinearGradient(
-                    colors: [Colors.white, Color(0xFFF7F7F8)],
-                  ),
-                  iconColor: Colors.blue,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ExportDetailsByCountry(),
-                      ),
-                    );
-                  },
-                ),
-
-                SizedBox(height: responsive.mediumSpacing),
-
-                // Fourth Navigation Card: Real Price Data
-                _buildNavigationCard(
-                  responsive,
-                  title: _currentLanguage == 'si'
-                      ? NavigationSi.realMarketPrices
-                      : 'Create the Pepper Batch',
-                  subtitle: _currentLanguage == 'si'
-                      ? NavigationSi.enterPriceDetails
-                      : 'Enter price details of your pepper batch',
-                  icon: Icons.receipt_long_rounded,
-                  gradient: LinearGradient(
-                    colors: [Colors.white, Color(0xFFF7F7F8)],
-                  ),
-                  iconColor: Colors.amber,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ActualPriceData(),
-                      ),
-                    );
-                  },
-                ),
+                _buildNavigationCardsGrid(responsive),
 
                 SizedBox(height: responsive.largeSpacing),
               ],
@@ -232,6 +132,223 @@ class _PriceNavigationState extends State<PriceNavigation>
             ); // Go back and let NavigationWrapper handle it
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildNavigationCardsGrid(Responsive responsive) {
+    final cards = [
+      _buildNavigationCard(
+        responsive,
+        title: _currentLanguage == 'si'
+            ? NavigationSi.weeklyLocalPriceForecast
+            : 'Weekly Local Price Forecast',
+        subtitle: _currentLanguage == 'si'
+            ? NavigationSi.viewWeeklyPredictions
+            : 'View weekly predictions',
+        icon: Icons.trending_up_rounded,
+        iconColor: Colors.deepOrange,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const WeeklyPriceForecast()),
+        ),
+      ),
+      _buildNavigationCard(
+        responsive,
+        title: _currentLanguage == 'si'
+            ? NavigationSi.pastExportPriceTrends
+            : 'Past Export Price Trends',
+        subtitle: _currentLanguage == 'si'
+            ? NavigationSi.analyzeTrends
+            : 'Analyze trends',
+        icon: Icons.assessment_rounded,
+        iconColor: Colors.indigo,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ExportPriceTrends()),
+        ),
+      ),
+      _buildNavigationCard(
+        responsive,
+        title: _currentLanguage == 'si'
+            ? NavigationSi.exportDetailsByCountry
+            : 'Export Details by Country',
+        subtitle: _currentLanguage == 'si'
+            ? NavigationSi.trackGlobalExports
+            : 'Track global exports',
+        icon: Icons.public_rounded,
+        iconColor: Colors.blue,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ExportDetailsByCountry(),
+          ),
+        ),
+      ),
+      _buildNavigationCard(
+        responsive,
+        title: _currentLanguage == 'si'
+            ? NavigationSi.realMarketPrices
+            : 'Create the Pepper Batch',
+        subtitle: _currentLanguage == 'si'
+            ? NavigationSi.enterPriceDetails
+            : 'Enter the details',
+        icon: Icons.receipt_long_rounded,
+        iconColor: Colors.amber,
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ActualPriceData()),
+        ),
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = responsive.value(
+          mobile: 12.0,
+          tablet: 16.0,
+          desktop: 20.0,
+        );
+        final itemWidth = (constraints.maxWidth - spacing) / 2;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: cards
+              .map(
+                (card) => SizedBox(
+                  width: itemWidth,
+                  height: responsive.value(
+                    mobile: 170,
+                    tablet: 200,
+                    desktop: 220,
+                  ),
+                  child: card,
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildNavigationCard(
+    Responsive responsive, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(
+          responsive.value(mobile: 16, tablet: 18, desktop: 20),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Colors.white, Color(0xFFF7F7F8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(
+              responsive.value(mobile: 16, tablet: 18, desktop: 20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(
+              responsive.value(mobile: 14, tablet: 16, desktop: 18),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Icon box
+                Container(
+                  padding: EdgeInsets.all(
+                    responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                  ),
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: responsive.value(mobile: 26, tablet: 30, desktop: 34),
+                    color: iconColor,
+                  ),
+                ),
+
+                SizedBox(
+                  height: responsive.value(mobile: 10, tablet: 12, desktop: 14),
+                ),
+
+                // Title
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: responsive.value(
+                      mobile: 13,
+                      tablet: 15,
+                      desktop: 16,
+                    ),
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                SizedBox(
+                  height: responsive.value(mobile: 4, tablet: 5, desktop: 6),
+                ),
+
+                // Subtitle + arrow
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: responsive.value(
+                            mobile: 11,
+                            tablet: 13,
+                            desktop: 14,
+                          ),
+                          color: Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.grey[600],
+                      size: responsive.value(
+                        mobile: 14,
+                        tablet: 16,
+                        desktop: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -301,156 +418,6 @@ class _PriceNavigationState extends State<PriceNavigation>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildNavigationCard(
-    Responsive responsive, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Gradient gradient,
-    required Color iconColor,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(
-          responsive.value(mobile: 16, tablet: 18, desktop: 20),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(
-              responsive.value(mobile: 16, tablet: 18, desktop: 20),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.12),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -12,
-                bottom: -12,
-                child: Icon(
-                  icon,
-                  size: responsive.value(mobile: 65, tablet: 75, desktop: 85),
-                  color: iconColor.withOpacity(0.12),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(
-                  responsive.value(mobile: 16, tablet: 18, desktop: 20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(
-                        responsive.value(mobile: 8, tablet: 9, desktop: 10),
-                      ),
-                      decoration: BoxDecoration(
-                        color: iconColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        icon,
-                        size: responsive.value(
-                          mobile: 22,
-                          tablet: 26,
-                          desktop: 30,
-                        ),
-                        color: iconColor,
-                      ),
-                    ),
-                    SizedBox(
-                      height: responsive.value(
-                        mobile: 16,
-                        tablet: 18,
-                        desktop: 20,
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: responsive.value(
-                              mobile: 16,
-                              tablet: 18,
-                              desktop: 20,
-                            ),
-                            fontWeight: FontWeight.w800,
-                            color: Colors.black87,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(
-                          height: responsive.value(
-                            mobile: 6,
-                            tablet: 8,
-                            desktop: 10,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                subtitle,
-                                style: TextStyle(
-                                  fontSize: responsive.value(
-                                    mobile: 12,
-                                    tablet: 15,
-                                    desktop: 16,
-                                  ),
-                                  color: Colors.grey[800],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            // Forward arrow icon
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              color: Colors.grey[700],
-                              size: responsive.value(
-                                mobile: 14,
-                                tablet: 16,
-                                desktop: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

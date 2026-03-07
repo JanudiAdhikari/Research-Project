@@ -1,13 +1,20 @@
-import 'dart:io';
+import 'dart:io' as io;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'xai_insights_screen.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
+import '../../../providers/yield_prediction_provider.dart';
+import '../../../models/prediction_response.dart';
 
-class PredictionResultScreen extends StatelessWidget {
+class PredictionResultScreen extends StatefulWidget {
   final double predictedYield;
   final double soilMoisture;
   final double temperature;
-  final File imageFile;
+  final dynamic imageFile; // XFile or File
+  final String language;
 
   const PredictionResultScreen({
     super.key,
@@ -15,53 +22,53 @@ class PredictionResultScreen extends StatelessWidget {
     required this.soilMoisture,
     required this.temperature,
     required this.imageFile,
+    this.language = 'en',
   });
 
   @override
+  State<PredictionResultScreen> createState() => _PredictionResultScreenState();
+}
+
+class _PredictionResultScreenState extends State<PredictionResultScreen> {
+  @override
   Widget build(BuildContext context) {
+    final isSi = widget.language == 'si';
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Prediction Result")),
+      appBar: AppBar(
+        title: Text(
+          isSi ? YieldPredictionSi.predictionResult : "Prediction Result",
+        ),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           // IMAGE
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: kIsWeb
-                ? Image.network(
-                    imageFile.path,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  )
-                : Image.file(
-                    imageFile,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+            child: _buildImageWidget(),
           ),
 
           const SizedBox(height: 24),
 
           // YIELD HERO
-          _yieldHero(),
+          _buildYieldHero(isSi),
 
           const SizedBox(height: 24),
 
           // SOIL
           _infoTile(
             Icons.water_drop_rounded,
-            "Soil Moisture",
-            "${soilMoisture.round()}%",
+            isSi ? YieldPredictionSi.soilMoisture : "Soil Moisture",
+            "${widget.soilMoisture.round()}%",
             Colors.blue,
           ),
 
           // TEMPERATURE
           _infoTile(
             Icons.thermostat_rounded,
-            "Temperature",
-            "${temperature.round()}°C",
+            isSi ? YieldPredictionSi.temperature : "Temperature",
+            "${widget.temperature.round()}°C",
             Colors.orange,
           ),
 
@@ -73,15 +80,21 @@ class PredictionResultScreen extends StatelessWidget {
             height: 50,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.psychology_rounded),
-              label: const Text("View AI Insights"),
+              label: Text(
+                isSi ? YieldPredictionSi.viewAiInsights : "View AI Insights",
+              ),
               onPressed: () {
+                final provider = context.read<YieldPredictionProvider>();
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => XAIInsightsScreen(
-                      imageFile: imageFile,
-                      soilMoisture: soilMoisture,
-                      temperature: temperature,
+                      imageFile: widget.imageFile,
+                      soilMoisture: widget.soilMoisture,
+                      temperature: widget.temperature,
+                      insights: provider.insights,
+                      topFactors: provider.topFactors,
+                      language: widget.language,
                     ),
                   ),
                 );
@@ -95,7 +108,44 @@ class PredictionResultScreen extends StatelessWidget {
 
   // ================= UI COMPONENTS =================
 
-  Widget _yieldHero() {
+  Widget _buildImageWidget() {
+    if (widget.imageFile is XFile) {
+      return FutureBuilder<Uint8List>(
+        future: (widget.imageFile as XFile).readAsBytes(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return Image.memory(
+              snapshot.data!,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            );
+          } else if (snapshot.hasError) {
+            return Container(
+              height: 200,
+              color: Colors.grey[200],
+              child: const Center(child: Text('Error loading image')),
+            );
+          }
+          return Container(
+            height: 200,
+            color: Colors.grey[200],
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        },
+      );
+    } else {
+      // Handle dart:io.File
+      return Image.file(
+        widget.imageFile,
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
+    }
+  }
+
+  Widget _buildYieldHero(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -107,13 +157,13 @@ class PredictionResultScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Predicted Yield",
-            style: TextStyle(color: Colors.white70),
+          Text(
+            isSi ? YieldPredictionSi.estimatedYield : "Predicted Yield",
+            style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 8),
           Text(
-            "${predictedYield.round()}3 kg",
+            "${widget.predictedYield} ${isSi ? YieldPredictionSi.kilogramPerPlant : "kg"}",
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -125,12 +175,7 @@ class PredictionResultScreen extends StatelessWidget {
     );
   }
 
-  Widget _infoTile(
-    IconData icon,
-    String title,
-    String value,
-    Color color,
-  ) {
+  Widget _infoTile(IconData icon, String title, String value, Color color) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(

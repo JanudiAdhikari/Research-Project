@@ -1,15 +1,22 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class PredictionHistoryScreen extends StatelessWidget {
-  const PredictionHistoryScreen({super.key});
+  final String language;
+
+  const PredictionHistoryScreen({super.key, this.language = 'en'});
 
   @override
   Widget build(BuildContext context) {
+    final isSi = language == 'si';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Prediction History"),
+        title: Text(
+          isSi ? YieldPredictionSi.predictionHistory : "Prediction History",
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -62,9 +69,7 @@ class PredictionHistoryScreen extends StatelessWidget {
         ],
       ),
       child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
@@ -74,7 +79,6 @@ class PredictionHistoryScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-
                 const SizedBox(width: 14),
 
                 // INFO
@@ -84,8 +88,11 @@ class PredictionHistoryScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.trending_up_rounded,
-                              color: Colors.green, size: 18),
+                          const Icon(
+                            Icons.trending_up_rounded,
+                            color: Colors.green,
+                            size: 18,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             yieldValue,
@@ -102,10 +109,16 @@ class PredictionHistoryScreen extends StatelessWidget {
                       Row(
                         children: [
                           _miniChip(
-                              Icons.water_drop_rounded, soil, Colors.blue),
+                            Icons.water_drop_rounded,
+                            soil,
+                            Colors.blue,
+                          ),
                           const SizedBox(width: 6),
-                          _miniChip(Icons.thermostat_rounded, temp,
-                              Colors.orange),
+                          _miniChip(
+                            Icons.thermostat_rounded,
+                            temp,
+                            Colors.orange,
+                          ),
                         ],
                       ),
 
@@ -113,13 +126,18 @@ class PredictionHistoryScreen extends StatelessWidget {
 
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today_rounded,
-                              size: 14, color: Colors.grey),
+                          const Icon(
+                            Icons.calendar_today_rounded,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             date,
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
                           ),
                         ],
                       ),
@@ -127,8 +145,11 @@ class PredictionHistoryScreen extends StatelessWidget {
                   ),
                 ),
 
-                const Icon(Icons.arrow_forward_ios_rounded,
-                    size: 16, color: Colors.grey),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: Colors.grey,
+                ),
               ],
             ),
           ),

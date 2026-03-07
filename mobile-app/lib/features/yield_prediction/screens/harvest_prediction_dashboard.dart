@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 import '../screens/new_prediction_screen.dart';
 import '../screens/prediction_history_screen.dart';
 import '../screens/how_prediction_works_screen.dart';
@@ -8,10 +9,15 @@ import '../screens/iot_sensor_setup_screen.dart';
 import '../screens/weather_impact_screen.dart';
 import '../screens/yield_tips_screen.dart';
 
-
+Color _withOpacity(Color c, double opacity) {
+  final alpha = (opacity * 255).round().clamp(0, 255);
+  return c.withAlpha(alpha);
+}
 
 class HarvestPredictionDashboard extends StatefulWidget {
-  const HarvestPredictionDashboard({super.key});
+  final String language;
+
+  const HarvestPredictionDashboard({super.key, this.language = 'en'});
 
   @override
   State<HarvestPredictionDashboard> createState() =>
@@ -24,12 +30,18 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  bool get _isSi => widget.language == 'si';
+
+  String _t(String english, String sinhala) => _isSi ? sinhala : english;
+
   @override
   void initState() {
     super.initState();
 
-    _animationController =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
 
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
@@ -37,8 +49,8 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
   }
@@ -59,9 +71,12 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
       appBar: AppBar(
         backgroundColor: primary,
         elevation: 0,
-        title: const Text(
-          "Harvest Prediction",
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          _t("Harvest Prediction", YieldPredictionSi.harvestPrediction),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
         actions: [
           IconButton(
@@ -70,487 +85,720 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const PredictionHistoryScreen(),
+                  builder: (_) =>
+                      PredictionHistoryScreen(language: widget.language),
                 ),
               );
             },
           ),
         ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(responsive, primary),
-              const SizedBox(height: 16),
-              _buildStatusBanner(responsive),
-              const SizedBox(height: 20),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
-                child: _buildSummaryGrid(),
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: responsive.pagePadding,
               ),
-              const SizedBox(height: 28),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
-                child: Text(
-                  "What would you like to do?",
-                  style: TextStyle(
-                    fontSize: responsive.headingFontSize,
-                    fontWeight: FontWeight.w700,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 16,
+                      tablet: 20,
+                      desktop: 24,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildActions(responsive),
-              const SizedBox(height: 28),
-              _buildResources(responsive),
-              const SizedBox(height: 36),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  // ================= HEADER =================
-  Widget _buildHeader(Responsive responsive, Color primary) {
-    return Container(
-      width: double.infinity,
-      padding: responsive.padding(
-        mobile: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-        tablet: const EdgeInsets.fromLTRB(32, 40, 32, 40),
-        desktop: const EdgeInsets.fromLTRB(40, 48, 40, 48),
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [primary, primary.withOpacity(0.85)],
-        ),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(
-            responsive.value(mobile: 32, tablet: 36, desktop: 40),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.analytics_rounded,
-                color: Colors.white, size: 36),
-          ),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "AI-Based Yield Forecast",
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: responsive.bodyFontSize,
-                ),
-              ),
-              Text(
-                "Predict Your Harvest",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: responsive.headingFontSize,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+                  // ── Status banner ──────────────────────────────────────
+                  _buildStatusBanner(responsive),
 
-  // ================= STATUS =================
-  Widget _buildStatusBanner(Responsive responsive) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.green.shade200),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.check_circle_rounded, color: Colors.green.shade700),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                "Crop condition looks healthy. No immediate action required.",
-                style: TextStyle(
-                  fontSize: responsive.bodyFontSize,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.green.shade900,
-                ),
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 16,
+                      tablet: 20,
+                      desktop: 24,
+                    ),
+                  ),
+
+                  // ── Summary grid ───────────────────────────────────────
+                  _buildSummaryGrid(responsive),
+
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 24,
+                      tablet: 28,
+                      desktop: 32,
+                    ),
+                  ),
+
+                  // ── Actions section ────────────────────────────────────
+                  _buildSectionTitle(
+                    responsive,
+                    primary,
+                    _t(
+                      "Prediction Actions",
+                      YieldPredictionSi.whatWouldYouLikeToDo,
+                    ),
+                    Icons.agriculture_rounded,
+                  ),
+
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 14,
+                      tablet: 18,
+                      desktop: 22,
+                    ),
+                  ),
+
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: _buildActionCardsGrid(responsive, primary),
+                  ),
+
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 24,
+                      tablet: 28,
+                      desktop: 32,
+                    ),
+                  ),
+
+                  // ── Resources section ──────────────────────────────────
+                  _buildSectionTitle(
+                    responsive,
+                    primary,
+                    _t(
+                      "Resources & Support",
+                      YieldPredictionSi.resourcesSupport,
+                    ),
+                    Icons.dashboard_customize_rounded,
+                  ),
+
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 14,
+                      tablet: 18,
+                      desktop: 22,
+                    ),
+                  ),
+
+                  _buildResourceCards(responsive),
+
+                  SizedBox(
+                    height: responsive.value(
+                      mobile: 32,
+                      tablet: 40,
+                      desktop: 48,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  // ================= SUMMARY =================
-  Widget _buildSummaryGrid() {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+  // ── Section title ────────────────────────────────────────────────────────
+
+  Widget _buildSectionTitle(
+    Responsive responsive,
+    Color primary,
+    String title,
+    IconData icon,
+  ) {
+    return Row(
       children: [
-        _summaryCard("Predictions", "5", Icons.analytics_rounded, Colors.blue),
-        _summaryCard("Avg Yield", "35 kg", Icons.trending_up_rounded, Colors.green),
-        _summaryCard("Best Yield", "41 kg", Icons.star_rounded, Colors.amber),
-        _summaryCard("Last Run", "Jan 6th", Icons.schedule_rounded, Colors.purple),
+        Container(
+          width: responsive.value(mobile: 4, tablet: 5, desktop: 6),
+          height: responsive.value(mobile: 20, tablet: 22, desktop: 24),
+          decoration: BoxDecoration(
+            color: primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        SizedBox(width: responsive.value(mobile: 10, tablet: 12, desktop: 14)),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: responsive.fontSize(
+                mobile: 17,
+                tablet: 20,
+                desktop: 22,
+              ),
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        Icon(
+          icon,
+          color: primary,
+          size: responsive.value(mobile: 22, tablet: 24, desktop: 26),
+        ),
       ],
     );
   }
 
-  Widget _summaryCard(
-      String title, String value, IconData icon, Color color) {
+  // ── Status banner ────────────────────────────────────────────────────────
+
+  Widget _buildStatusBanner(Responsive responsive) {
     return Container(
-      width: 160,
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(
+        responsive.value(mobile: 12, tablet: 14, desktop: 16),
+      ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.green.shade50,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.green.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: _withOpacity(Colors.black, 0.04),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: Column(
+      child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: color.withOpacity(0.15),
-            child: Icon(icon, color: color),
+          Icon(Icons.check_circle_rounded, color: Colors.green.shade700),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _t(
+                "Crop condition looks healthy. No immediate action required.",
+                YieldPredictionSi.cropConditionHealthy,
+              ),
+              style: TextStyle(
+                fontSize: responsive.bodyFontSize,
+                fontWeight: FontWeight.w500,
+                color: Colors.green.shade900,
+              ),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(title,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         ],
       ),
     );
   }
 
-  // ================= ACTIONS =================
-  Widget _buildActions(Responsive responsive) {
-    return SlideTransition(
-      position: _slideAnimation,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
-        child: GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.95,
-          children: [
-            _actionCard(
-              "New\nPrediction",
-              "Estimate yield",
-              Icons.add_chart_rounded,
-              true,
-              LinearGradient(
-                colors: [Colors.green.shade400, Colors.green.shade600],
-              ),
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NewPredictionScreen()),
-              ),
-            ),
-            _actionCard(
-              "Past\nPredictions",
-              "View history",
-              Icons.history_rounded,
-              false,
-              LinearGradient(
-                colors: [Colors.blue.shade400, Colors.blue.shade600],
-              ),
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => const PredictionHistoryScreen()),
-              ),
-            ),
-            _actionCard(
-  "Weather\nImpact",
-  "View factors",
-  Icons.cloud_rounded,
-  false,
-  LinearGradient(
-    colors: [Colors.orange.shade400, Colors.orange.shade600],
-  ),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const WeatherImpactScreen(),
-      ),
-    );
-  },
-),
+  // ── Summary grid ─────────────────────────────────────────────────────────
 
-_actionCard(
-  "Yield\nTips",
-  "Improve output",
-  Icons.lightbulb_outline_rounded,
-  false,
-  LinearGradient(
-    colors: [Colors.purple.shade400, Colors.purple.shade600],
-  ),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const YieldTipsScreen(),
-      ),
-    );
-  },
-),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildSummaryGrid(Responsive responsive) {
+    final crossAxisCount = responsive
+        .value(mobile: 2, tablet: 4, desktop: 4)
+        .toInt();
 
-  Widget _actionCard(
-    String title,
-    String subtitle,
-    IconData icon,
-    bool badge,
-    Gradient gradient,
-    VoidCallback onTap,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Stack(
-          children: [
-            if (badge)
-              Positioned(
-                top: 12,
-                right: 12,
-                child: _badge("Recommended"),
-              ),
-            Positioned(
-              right: -12,
-              bottom: -12,
-              child: Icon(icon, size: 90, color: Colors.white24),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(icon, color: Colors.white),
-                  const Spacer(),
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white)),
-                  Text(subtitle,
-                      style: const TextStyle(color: Colors.white70)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = responsive.value(mobile: 10, tablet: 12, desktop: 14);
+        final itemWidth =
+            (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+            crossAxisCount;
 
-  // ================= RESOURCES =================
-  Widget _buildResources(Responsive responsive) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Resources & Support",
-            style: TextStyle(
-              fontSize: responsive.headingFontSize,
-              fontWeight: FontWeight.w700,
-            ),
+        final cards = [
+          _summaryCard(
+            responsive,
+            title: _t("Predictions", YieldPredictionSi.predictions),
+            value: "5",
+            icon: Icons.analytics_rounded,
+            color: Colors.blue,
           ),
-          const SizedBox(height: 16),
-      _resourceTile(
-  "How Yield Prediction Works",
-  "Understand the AI model",
-  Icons.school_rounded,
-  Colors.indigo,
-  "Recommended",
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const HowPredictionWorksScreen(),
-      ),
-    );
-  },
-),
+          _summaryCard(
+            responsive,
+            title: _t(
+              "Avg Yield",
+              YieldPredictionSi.avgYield,
+            ),
+            value: "35 ${_t('kg', YieldPredictionSi.kg)}",
+            icon: Icons.trending_up_rounded,
+            color: Colors.green,
+          ),
+          _summaryCard(
+            responsive,
+            title: _t("Best Yield", YieldPredictionSi.bestYield),
+            value: "41 ${_t('kg', YieldPredictionSi.kg)}",
+            icon: Icons.star_rounded,
+            color: Colors.amber,
+          ),
+          _summaryCard(
+            responsive,
+            title: _t("Last Run", YieldPredictionSi.lastRun),
+            value: "Jan 6th",
+            icon: Icons.schedule_rounded,
+            color: Colors.purple,
+          ),
+        ];
 
-_resourceTile(
-  "Image Capture Guide",
-  "Improve image quality",
-  Icons.camera_alt_rounded,
-  Colors.teal,
-  "Improves Accuracy",
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ImageCaptureGuideScreen(),
-      ),
-    );
-  },
-),
-
-_resourceTile(
-  "IoT Sensor Setup",
-  "Connect soil sensor",
-  Icons.sensors_rounded,
-  Colors.deepPurple,
-  "Required",
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const IotSensorSetupScreen(),
-      ),
-    );
-  },
-),
-
-        ],
-      ),
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: cards.map((card) {
+            return SizedBox(width: itemWidth, child: card);
+          }).toList(),
+        );
+      },
     );
   }
 
-  Widget _resourceTile(
-    String title,
-    String subtitle,
-    IconData icon,
-    Color color,
-    String badge,
-    VoidCallback onTap,
-  ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
-          child: Icon(icon, color: color),
-        ),
-        title: Row(
-          children: [
-            Expanded(child: Text(title)),
-            _badge(badge, color: color),
-          ],
-        ),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-        onTap: onTap,
-      ),
-    );
-  }
-
-  Widget _badge(String text, {Color color = Colors.green}) {
+  Widget _summaryCard(
+    Responsive responsive, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: _withOpacity(Colors.black, 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
+      padding: EdgeInsets.all(
+        responsive.value(mobile: 10, tablet: 12, desktop: 14),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(
+              responsive.value(mobile: 7, tablet: 8, desktop: 9),
+            ),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: responsive.value(mobile: 20, tablet: 22, desktop: 24),
+            ),
+          ),
+          SizedBox(height: responsive.value(mobile: 5, tablet: 6, desktop: 8)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: responsive.value(
+                  mobile: 15,
+                  tablet: 16,
+                  desktop: 18,
+                ),
+                fontWeight: FontWeight.w800,
+                color: Colors.grey[800],
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
+          ),
+          SizedBox(height: responsive.value(mobile: 2, tablet: 3, desktop: 4)),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: responsive.value(mobile: 10, tablet: 11, desktop: 12),
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Action cards grid ────────────────────────────────────────────────────
+
+  Widget _buildActionCardsGrid(Responsive responsive, Color primary) {
+    final crossAxisCount = responsive
+        .value(mobile: 2, tablet: 2, desktop: 4)
+        .toInt();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = responsive.value(mobile: 12, tablet: 16, desktop: 20);
+        final itemWidth =
+            (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+            crossAxisCount;
+
+        final cards = _buildActionCards(responsive);
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: cards.map((card) {
+            return SizedBox(width: itemWidth, child: card);
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildActionCards(Responsive responsive) {
+    return [
+      _featureCard(
+        responsive,
+        title: _t("New\nPrediction", YieldPredictionSi.newPrediction),
+        subtitle: _t("Estimate yield", YieldPredictionSi.estimateYield),
+        iconData: Icons.add_chart_rounded,
+        iconBgColor: const Color(0xFFE8F5E9),
+        iconColor: const Color(0xFF2E7D32),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => NewPredictionScreen(language: widget.language),
+          ),
+        ),
+      ),
+      _featureCard(
+        responsive,
+        title: _t("Past\nPredictions", YieldPredictionSi.pastPredictions),
+        subtitle: _t("View history", YieldPredictionSi.viewHistory),
+        iconData: Icons.history_rounded,
+        iconBgColor: const Color(0xFFE3F2FD),
+        iconColor: const Color(0xFF1565C0),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                PredictionHistoryScreen(language: widget.language),
+          ),
+        ),
+      ),
+      _featureCard(
+        responsive,
+        title: _t("Weather\nImpact", YieldPredictionSi.weatherImpactCard),
+        subtitle: _t("View factors", YieldPredictionSi.viewFactors),
+        iconData: Icons.cloud_rounded,
+        iconBgColor: const Color(0xFFFFF3E0),
+        iconColor: const Color(0xFFE65100),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WeatherImpactScreen(language: widget.language),
+          ),
+        ),
+      ),
+      _featureCard(
+        responsive,
+        title: _t("Yield\nTips", YieldPredictionSi.yieldTipsCard),
+        subtitle: _t("Improve output", YieldPredictionSi.improveOutput),
+        iconData: Icons.lightbulb_outline_rounded,
+        iconBgColor: const Color(0xFFFCE4EC),
+        iconColor: const Color(0xFFC62828),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => YieldTipsScreen(language: widget.language),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _featureCard(
+    Responsive responsive, {
+    required String title,
+    required String subtitle,
+    required IconData iconData,
+    required Color iconBgColor,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(
+          responsive.value(mobile: 16, tablet: 20, desktop: 24),
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFF8FAF8), Color(0xFFEFF2EF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(
+              responsive.value(mobile: 16, tablet: 20, desktop: 24),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _withOpacity(Colors.black, 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: responsive.padding(
+              mobile: const EdgeInsets.all(12),
+              tablet: const EdgeInsets.all(16),
+              desktop: const EdgeInsets.all(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: responsive.padding(
+                    mobile: const EdgeInsets.all(8),
+                    tablet: const EdgeInsets.all(10),
+                    desktop: const EdgeInsets.all(12),
+                  ),
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    iconData,
+                    color: iconColor,
+                    size: responsive.value(mobile: 28, tablet: 36, desktop: 40),
+                  ),
+                ),
+                SizedBox(
+                  height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: responsive.fontSize(
+                      mobile: 13,
+                      tablet: 15,
+                      desktop: 16,
+                    ),
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(
+                  height: responsive.value(mobile: 3, tablet: 4, desktop: 5),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: responsive.fontSize(
+                      mobile: 10,
+                      tablet: 11,
+                      desktop: 12,
+                    ),
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black54,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(
+                  height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                ),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  // ================= DIALOGS =================
-  void _showHowPredictionWorks(BuildContext context) {
-    _infoDialog(
-      context,
-      "How Yield Prediction Works",
-      "Images of pepper plants are analyzed using deep learning models.\n\nSoil moisture and weather data are combined with visual features to estimate final yield.",
-    );
-  }
+  // ── Resource cards ───────────────────────────────────────────────────────
 
-  void _showImageCaptureGuide(BuildContext context) {
-    _infoDialog(
-      context,
-      "Image Capture Guide",
-      "• Use natural light\n• Avoid shadows\n• Capture from multiple angles\n• Keep camera 20–30cm away",
-    );
-  }
-
-  void _showIoTGuide(BuildContext context) {
-    _infoDialog(
-      context,
-      "IoT Sensor Setup",
-      "Place soil moisture sensor firmly in soil and allow readings to stabilize before prediction.",
-    );
-  }
-
-  void _showWeatherDialog(BuildContext context) {
-    _infoDialog(
-      context,
-      "Weather Impact",
-      "Current weather conditions are favorable for pepper cultivation.",
-    );
-  }
-
-  void _showYieldTips(BuildContext context) {
-    _infoDialog(
-      context,
-      "Yield Improvement Tips",
-      "• Maintain optimal irrigation\n• Avoid waterlogging\n• Monitor soil moisture weekly",
-    );
-  }
-
-  void _infoDialog(BuildContext context, String title, String content) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
+  Widget _buildResourceCards(Responsive responsive) {
+    return Column(
+      children: [
+        _resourceCard(
+          responsive,
+          title: _t(
+            "How Yield Prediction Works",
+            YieldPredictionSi.howYieldPredictionWorksTitle,
           ),
-        ],
+          description: _t(
+            "Understand the AI model",
+            YieldPredictionSi.understandAiModel,
+          ),
+          icon: Icons.school_rounded,
+          color: Colors.indigo,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  HowPredictionWorksScreen(language: widget.language),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+        ),
+        _resourceCard(
+          responsive,
+          title: _t(
+            "Image Capture Guide",
+            YieldPredictionSi.imageCaptureGuideTitle,
+          ),
+          description: _t(
+            "Improve image quality",
+            YieldPredictionSi.improveImageQuality,
+          ),
+          icon: Icons.camera_alt_rounded,
+          color: Colors.teal,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  ImageCaptureGuideScreen(language: widget.language),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+        ),
+        _resourceCard(
+          responsive,
+          title: _t(
+            "IoT Sensor Setup",
+            YieldPredictionSi.iotSensorSetupTitle,
+          ),
+          description: _t(
+            "Connect soil sensor",
+            YieldPredictionSi.connectSoilSensor,
+          ),
+          icon: Icons.sensors_rounded,
+          color: Colors.deepPurple,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  IotSensorSetupScreen(language: widget.language),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _resourceCard(
+    Responsive responsive, {
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: _withOpacity(Colors.black, 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.all(
+            responsive.value(mobile: 12, tablet: 14, desktop: 16),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(
+                  responsive.value(mobile: 9, tablet: 10, desktop: 11),
+                ),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: responsive.value(mobile: 20, tablet: 22, desktop: 24),
+                ),
+              ),
+              SizedBox(
+                width: responsive.value(mobile: 10, tablet: 12, desktop: 14),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: responsive.value(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey[800],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 2,
+                        tablet: 3,
+                        desktop: 4,
+                      ),
+                    ),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: responsive.value(
+                          mobile: 11,
+                          tablet: 12,
+                          desktop: 13,
+                        ),
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                color: Colors.grey[400],
+                size: responsive.value(mobile: 15, tablet: 17, desktop: 19),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

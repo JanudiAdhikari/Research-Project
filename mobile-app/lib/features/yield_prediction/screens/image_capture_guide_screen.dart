@@ -1,22 +1,33 @@
 import 'package:flutter/material.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class ImageCaptureGuideScreen extends StatelessWidget {
-  const ImageCaptureGuideScreen({super.key});
+  final String language;
+
+  const ImageCaptureGuideScreen({super.key, this.language = 'en'});
 
   @override
   Widget build(BuildContext context) {
+    final isSi = language == 'si';
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Image Capture Guide"),
+        title: Text(
+          isSi ? YieldPredictionSi.imageCaptureGuide : "Image Capture Guide",
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _header(
             icon: Icons.camera_alt_rounded,
-            title: "Capture Clear Images",
-            subtitle: "Improve prediction accuracy",
+            title: isSi
+                ? YieldPredictionSi.captureCleatImages
+                : "Capture Clear Images",
+            subtitle: isSi
+                ? YieldPredictionSi.improveYieldPredictionAccuracy
+                : "Improve prediction accuracy",
             color: Colors.teal,
           ),
 
@@ -55,6 +66,7 @@ class ImageCaptureGuideScreen extends StatelessWidget {
     );
   }
 }
+
 Widget _header({
   required IconData icon,
   required String title,
@@ -78,12 +90,18 @@ Widget _header({
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+              ),
             ],
           ),
         ),

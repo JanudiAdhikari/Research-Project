@@ -21,7 +21,9 @@ Color colorWithOpacity(Color c, double opacity) {
 }
 
 class FarmerDashboard extends StatefulWidget {
-  const FarmerDashboard({super.key});
+  final Function(int)? onTabSelected;
+
+  const FarmerDashboard({super.key, this.onTabSelected});
 
   @override
   State<FarmerDashboard> createState() => _FarmerDashboardState();
@@ -485,7 +487,7 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Hello, $_userName 👋",
+                      "Welcome 👋",
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.95),
                         fontSize: responsive.fontSize(
@@ -854,7 +856,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           Text(
             value,
             style: TextStyle(
-              fontSize: responsive.fontSize(mobile: 16, tablet: 17, desktop: 18),
+              fontSize: responsive.fontSize(
+                mobile: 16,
+                tablet: 17,
+                desktop: 18,
+              ),
               fontWeight: FontWeight.w700,
               color: Colors.grey[800],
             ),
@@ -863,7 +869,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           Text(
             label,
             style: TextStyle(
-              fontSize: responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
+              fontSize: responsive.fontSize(
+                mobile: 11,
+                tablet: 12,
+                desktop: 13,
+              ),
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
@@ -902,7 +912,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             child: Text(
               title,
               style: TextStyle(
-                fontSize: responsive.fontSize(mobile: 17, tablet: 20, desktop: 22),
+                fontSize: responsive.fontSize(
+                  mobile: 17,
+                  tablet: 20,
+                  desktop: 22,
+                ),
                 fontWeight: FontWeight.w700,
                 color: Colors.black87,
               ),
@@ -931,9 +945,21 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         mobile: GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
-          crossAxisSpacing: responsive.value(mobile: 12, tablet: 16, desktop: 20),
-          mainAxisSpacing: responsive.value(mobile: 12, tablet: 16, desktop: 20),
-          childAspectRatio: responsive.value(mobile: 1.05, tablet: 1.1, desktop: 1.15),
+          crossAxisSpacing: responsive.value(
+            mobile: 12,
+            tablet: 16,
+            desktop: 20,
+          ),
+          mainAxisSpacing: responsive.value(
+            mobile: 12,
+            tablet: 16,
+            desktop: 20,
+          ),
+          childAspectRatio: responsive.value(
+            mobile: 1.05,
+            tablet: 1.1,
+            desktop: 1.15,
+          ),
           physics: const NeverScrollableScrollPhysics(),
           children: _buildMainFeatureCards(context, responsive),
         ),
@@ -984,7 +1010,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => const HarvestPredictionDashboard(),
+              builder: (_) =>
+                  HarvestPredictionDashboard(language: _currentLanguage),
             ),
           );
         },
@@ -1031,7 +1058,12 @@ class _FarmerDashboardState extends State<FarmerDashboard>
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const QualityGradingDashboard()),
+            MaterialPageRoute(
+              builder: (_) => QualityGradingDashboard(
+                onTabSelected: widget.onTabSelected,
+                currentIndex: 0,
+              ),
+            ),
           );
         },
       ),
@@ -1116,25 +1148,45 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       ),
                       child: Image.asset(
                         iconPath,
-                        width: responsive.value(mobile: 32, tablet: 42, desktop: 48),
-                        height: responsive.value(mobile: 32, tablet: 42, desktop: 48),
+                        width: responsive.value(
+                          mobile: 32,
+                          tablet: 42,
+                          desktop: 48,
+                        ),
+                        height: responsive.value(
+                          mobile: 32,
+                          tablet: 42,
+                          desktop: 48,
+                        ),
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Icon(
                             Icons.broken_image,
-                            size: responsive.value(mobile: 28, tablet: 36, desktop: 40),
+                            size: responsive.value(
+                              mobile: 28,
+                              tablet: 36,
+                              desktop: 40,
+                            ),
                             color: Colors.grey[300],
                           );
                         },
                       ),
                     ),
                     SizedBox(
-                      height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
+                      height: responsive.value(
+                        mobile: 8,
+                        tablet: 10,
+                        desktop: 12,
+                      ),
                     ),
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: responsive.fontSize(mobile: 13, tablet: 15, desktop: 16),
+                        fontSize: responsive.fontSize(
+                          mobile: 13,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                         fontWeight: FontWeight.w700,
                         color: Colors.black,
                         height: 1.2,
@@ -1143,12 +1195,20 @@ class _FarmerDashboardState extends State<FarmerDashboard>
                       overflow: TextOverflow.ellipsis,
                     ),
                     SizedBox(
-                      height: responsive.value(mobile: 3, tablet: 4, desktop: 5),
+                      height: responsive.value(
+                        mobile: 3,
+                        tablet: 4,
+                        desktop: 5,
+                      ),
                     ),
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: responsive.fontSize(mobile: 10, tablet: 11, desktop: 12),
+                        fontSize: responsive.fontSize(
+                          mobile: 10,
+                          tablet: 11,
+                          desktop: 12,
+                        ),
                         fontWeight: FontWeight.w500,
                         color: Colors.black87,
                       ),
@@ -1294,7 +1354,11 @@ class _FarmerDashboardState extends State<FarmerDashboard>
             text,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+              fontSize: responsive.fontSize(
+                mobile: 13,
+                tablet: 14,
+                desktop: 15,
+              ),
               color: Colors.grey[800],
               height: 1.35,
             ),
@@ -1379,10 +1443,7 @@ class _PulsingFABState extends State<_PulsingFAB>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF1B5E20),
-                        widget.primary,
-                      ],
+                      colors: [const Color(0xFF1B5E20), widget.primary],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),

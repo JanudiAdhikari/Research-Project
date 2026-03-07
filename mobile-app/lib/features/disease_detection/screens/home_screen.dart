@@ -5,6 +5,7 @@ import 'image_picker_screen.dart';
 import 'posts_view_screen.dart';
 import 'complaint_screen.dart';
 import 'complaint_list_screen.dart';
+import 'weather_forecast_screen.dart';
 import '../../../utils/localization.dart';
 import '../../../utils/language_prefs.dart';
 import '../../../widgets/bottom_navigation.dart';
@@ -88,6 +89,11 @@ class _HomeScreenState extends State<HomeScreen>
   void _navigateToComplaintManagement(BuildContext context) => Navigator.push(
     context,
     MaterialPageRoute(builder: (_) => const ComplaintListScreen()),
+  );
+
+  void _navigateToWeatherForecast(BuildContext context) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const WeatherForecastScreen()),
   );
 
   @override
@@ -287,9 +293,17 @@ class _HomeScreenState extends State<HomeScreen>
         iconColor: const Color(0xFF6A1B9A),
         onTap: () => _navigateToComplaintManagement(context),
       ),
+      _FeatureCardData(
+        title: _translate('weather_forecast'),
+        subtitle: _translate('weather_forecast_subtitle'),
+        iconData: Icons.cloud_rounded,
+        iconBgColor: const Color(0xFFE1F5FE),
+        iconColor: const Color(0xFF01579B),
+        onTap: () => _navigateToWeatherForecast(context),
+      ),
     ];
 
-    // GridView with fixed aspect ratio so all 4 cards are identical in size
+    // GridView with fixed aspect ratio so all cards are identical in size
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),

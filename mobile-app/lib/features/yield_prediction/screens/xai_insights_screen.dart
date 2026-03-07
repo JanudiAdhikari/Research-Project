@@ -1,24 +1,29 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class XAIInsightsScreen extends StatelessWidget {
   final File imageFile;
   final double soilMoisture;
   final double temperature;
+  final String language;
 
   const XAIInsightsScreen({
     super.key,
     required this.imageFile,
     required this.soilMoisture,
     required this.temperature,
+    this.language = 'en',
   });
 
   @override
   Widget build(BuildContext context) {
+    final isSi = language == 'si';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("AI Insights"),
+        title: Text(isSi ? YieldPredictionSi.xaiInsights : "AI Insights"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -27,13 +32,15 @@ class XAIInsightsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _headerCard(),
+          _headerCard(isSi),
           const SizedBox(height: 20),
           _imageInsightCard(),
           const SizedBox(height: 16),
           _factorCard(
             icon: Icons.water_drop_rounded,
-            title: "Soil Moisture Impact",
+            title: isSi
+                ? YieldPredictionSi.soilMoistureImpact
+                : "Soil Moisture Impact",
             value: "${soilMoisture.round()}%",
             description:
                 "Optimal soil moisture level contributed positively to nutrient uptake and fruit development.",
@@ -43,7 +50,9 @@ class XAIInsightsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           _factorCard(
             icon: Icons.thermostat_rounded,
-            title: "Temperature Impact",
+            title: isSi
+                ? YieldPredictionSi.temperatureImpact
+                : "Temperature Impact",
             value: "${temperature.round()}°C",
             description:
                 "Temperature is within the favorable range for pepper growth, supporting healthy cone formation.",
@@ -59,7 +68,7 @@ class XAIInsightsScreen extends StatelessWidget {
 
   // ================= UI COMPONENTS =================
 
-  Widget _headerCard() {
+  Widget _headerCard(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -67,13 +76,15 @@ class XAIInsightsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
-        children: const [
-          Icon(Icons.psychology_rounded, color: Colors.green, size: 32),
-          SizedBox(width: 12),
+        children: [
+          const Icon(Icons.psychology_rounded, color: Colors.green, size: 32),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "The AI model analyzed the plant image and environmental conditions to explain how each factor influenced the yield prediction.",
-              style: TextStyle(fontSize: 14),
+              isSi
+                  ? YieldPredictionSi.aiModelAnalyzedPlantImage
+                  : "The AI model analyzed the plant image and environmental conditions to explain how each factor influenced the yield prediction.",
+              style: const TextStyle(fontSize: 14),
             ),
           ),
         ],
@@ -143,15 +154,18 @@ class XAIInsightsScreen extends StatelessWidget {
                 child: Text(
                   title,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold),
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Text(
                 value,
                 style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: color),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
             ],
           ),

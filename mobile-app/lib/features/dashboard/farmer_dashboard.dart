@@ -984,7 +984,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => const HarvestPredictionDashboard(),
+              builder: (_) =>
+                  HarvestPredictionDashboard(language: _currentLanguage),
             ),
           );
         },

@@ -374,6 +374,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       floatingActionButton: _plots.isEmpty
           ? null
           : FloatingActionButton.extended(
+              heroTag: 'my_farm_fab',
               onPressed: () => _showPlotForm(),
               icon: const Icon(Icons.add_location_alt_outlined),
               label: const Text(

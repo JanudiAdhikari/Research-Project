@@ -1,55 +1,81 @@
 import 'package:flutter/material.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class WeatherImpactScreen extends StatelessWidget {
-  const WeatherImpactScreen({super.key});
+  final String language;
+
+  const WeatherImpactScreen({super.key, this.language = 'en'});
 
   @override
   Widget build(BuildContext context) {
+    final isSi = language == 'si';
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Weather Impact"),
+        title: Text(isSi ? YieldPredictionSi.weatherImpact : "Weather Impact"),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _header(
             icon: Icons.cloud_rounded,
-            title: "Weather Influence on Yield",
-            subtitle: "How climate affects pepper production",
+            title: isSi
+                ? YieldPredictionSi.weatherInfluenceOnYield
+                : "Weather Influence on Yield",
+            subtitle: isSi
+                ? YieldPredictionSi.howClimateAffectsPepperProduction
+                : "How climate affects pepper production",
             color: Colors.orange,
           ),
 
           const SizedBox(height: 20),
 
           _infoCard(
-            Icons.thermostat_rounded,
-            "Temperature",
-            "Optimal range: 20°C – 30°C\nHigh temperatures may reduce flowering.",
-          ),
-          _infoCard(
-            Icons.water_drop_rounded,
-            "Rainfall",
-            "Moderate rainfall supports growth.\nExcess rain may cause root diseases.",
-          ),
-          _infoCard(
-            Icons.wb_sunny_rounded,
-            "Sunlight",
-            "Adequate sunlight improves photosynthesis and yield.",
-          ),
+  Icons.thermostat_rounded,
+  isSi
+      ? YieldPredictionSi.temperatureTitle
+      : "Temperature",
+  isSi
+      ? YieldPredictionSi.temperatureDesc
+      : "Optimal range: 20°C – 30°C\nHigh temperatures may reduce flowering.",
+),
+
+_infoCard(
+  Icons.water_drop_rounded,
+  isSi
+      ? YieldPredictionSi.rainfallTitle
+      : "Rainfall",
+  isSi
+      ? YieldPredictionSi.rainfallDesc
+      : "Moderate rainfall supports growth.\nExcess rain may cause root diseases.",
+),
+
+_infoCard(
+  Icons.wb_sunny_rounded,
+  isSi
+      ? YieldPredictionSi.sunlightTitle
+      : "Sunlight",
+  isSi
+      ? YieldPredictionSi.sunlightDesc
+      : "Adequate sunlight improves photosynthesis and yield.",
+),
 
           const SizedBox(height: 16),
 
           _tipBox(
-            Icons.info_rounded,
-            "Current weather conditions are suitable for pepper cultivation.",
-            Colors.green,
-          ),
+  Icons.info_rounded,
+  isSi
+      ? YieldPredictionSi.weatherSuitableTip
+      : "Current weather conditions are suitable for pepper cultivation.",
+  Colors.green,
+),
         ],
       ),
     );
   }
 }
+
 Widget _header({
   required IconData icon,
   required String title,
@@ -73,12 +99,18 @@ Widget _header({
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+              ),
             ],
           ),
         ),

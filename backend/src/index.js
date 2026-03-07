@@ -7,6 +7,7 @@ const morgan = require("morgan");
 const connectDB = require("./config/db");
 const userRoutes = require("./routes/user.routes");
 const farmRoutes = require("./routes/farm.routes");
+const farmDiaryRoutes = require("./routes/farm_diary.routes");
 const marketRoutes = require("./routes/market.routes");
 const exportDetailsByCountryRoutes = require("./routes/market_forecast/export_details_by_country.routes");
 const pastExportPriceRoutes = require("./routes/market_forecast/past_export_price.routes");
@@ -28,6 +29,7 @@ app.use(limiter);
 
 app.use("/api/users", userRoutes);
 app.use("/api/farm", farmRoutes);
+app.use("/api/farm-diary", farmDiaryRoutes);
 app.use("/api/market", marketRoutes);
 app.use("/api/certifications", certificationRoutes);
 

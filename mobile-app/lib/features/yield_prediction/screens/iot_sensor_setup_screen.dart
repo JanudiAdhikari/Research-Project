@@ -1,45 +1,62 @@
 import 'package:flutter/material.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class IotSensorSetupScreen extends StatelessWidget {
-  const IotSensorSetupScreen({super.key});
+  final String language;
+
+  const IotSensorSetupScreen({super.key, this.language = 'en'});
 
   @override
   Widget build(BuildContext context) {
+    final isSi = language == 'si';
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("IoT Sensor Setup"),
+        title: Text(
+          isSi ? YieldPredictionSi.iotSensorSetup : "IoT Sensor Setup",
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _header(
             icon: Icons.sensors_rounded,
-            title: "Soil Moisture Sensor",
-            subtitle: "Connect and collect accurate soil data",
+            title: isSi
+                ? YieldPredictionSi.soilMoistureSensor
+                : "Soil Moisture Sensor",
+            subtitle: isSi
+                ? YieldPredictionSi.connectAndCollectSoilData
+                : "Connect and collect accurate soil data",
             color: Colors.deepPurple,
           ),
 
           const SizedBox(height: 20),
 
           _stepCard(
-            "Insert Sensor",
-            "Place the sensor near the plant root zone.",
+            isSi ? YieldPredictionSi.insertSensor : "Insert Sensor",
+            isSi
+                ? YieldPredictionSi.placeTheSensor
+                : "Place the sensor near the plant root zone.",
             Icons.grass_rounded,
           ),
           _stepCard(
-            "Power Device",
-            "Turn on the ESP32 device.",
+            isSi ? YieldPredictionSi.powerDevice : "Power Device",
+            isSi ? YieldPredictionSi.turnOnEsp32 : "Turn on the ESP32 device.",
             Icons.power_settings_new_rounded,
           ),
           _stepCard(
-            "Wait for Stability",
-            "Allow readings to stabilize before submitting.",
+            isSi ? YieldPredictionSi.waitForStability : "Wait for Stability",
+            isSi
+                ? YieldPredictionSi.allowReadingsToStabilize
+                : "Allow readings to stabilize before submitting.",
             Icons.hourglass_bottom_rounded,
           ),
           _stepCard(
-            "Send Data",
-            "Transmit soil moisture value to the mobile app.",
+            isSi ? YieldPredictionSi.sendData : "Send Data",
+            isSi
+                ? YieldPredictionSi.transmitSoilMoistureValue
+                : "Transmit soil moisture value to the mobile app.",
             Icons.send_rounded,
           ),
 
@@ -47,7 +64,9 @@ class IotSensorSetupScreen extends StatelessWidget {
 
           _infoBox(
             Icons.check_circle_rounded,
-            "Soil moisture directly influences yield prediction.",
+            isSi
+                ? YieldPredictionSi.soilMoistureInfluencesYield
+                : "Soil moisture directly influences yield prediction.",
             Colors.green,
           ),
         ],
@@ -55,6 +74,7 @@ class IotSensorSetupScreen extends StatelessWidget {
     );
   }
 }
+
 Widget _header({
   required IconData icon,
   required String title,
@@ -78,12 +98,18 @@ Widget _header({
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+              ),
             ],
           ),
         ),

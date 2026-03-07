@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'dart:io';
 import 'firebase_options.dart';
 import 'features/auth/login_page.dart';
 import 'features/auth/signup_page.dart';
 import 'features/auth/splash_screen.dart';
+import 'widgets/navigation_wrapper.dart';
+import 'package:provider/provider.dart';
+import 'providers/yield_prediction_provider.dart';
+import 'providers/app_providers.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,8 +17,16 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await AppProviders.initialize();
     print("✅ Firebase initialized successfully");
-    runApp(const MyApp());
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => YieldPredictionProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
   } catch (e) {
     print("❌ Firebase initialization failed: $e");
     runApp(MyApp(error: e.toString()));

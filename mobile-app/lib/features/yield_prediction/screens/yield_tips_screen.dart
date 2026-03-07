@@ -1,60 +1,91 @@
 import 'package:flutter/material.dart';
+import '../../../utils/yield_prediction/yield_prediction_si.dart';
 
 class YieldTipsScreen extends StatelessWidget {
-  const YieldTipsScreen({super.key});
+  final String language;
+
+  const YieldTipsScreen({super.key, this.language = 'en'});
 
   @override
   Widget build(BuildContext context) {
+    final isSi = language == 'si';
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text("Yield Improvement Tips"),
+        title: Text(isSi ? YieldPredictionSi.yieldTips : "Yield Tips"),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _header(
             icon: Icons.lightbulb_outline_rounded,
-            title: "Improve Pepper Yield",
-            subtitle: "Practical tips for better harvest",
+            title: isSi
+                ? YieldPredictionSi.improvePepperYield
+                : "Improve Pepper Yield",
+            subtitle: isSi
+                ? YieldPredictionSi.practicalTipsForBetterHarvest
+                : "Practical tips for better harvest",
             color: Colors.purple,
           ),
 
           const SizedBox(height: 20),
 
           _stepCard(
-            Icons.water_rounded,
-            "Maintain Proper Irrigation",
-            "Avoid both water stress and waterlogging.",
-          ),
-          _stepCard(
-            Icons.grass_rounded,
-            "Healthy Soil",
-            "Ensure good drainage and organic matter content.",
-          ),
-          _stepCard(
-            Icons.science_rounded,
-            "Balanced Fertilization",
-            "Apply nutrients based on soil condition.",
-          ),
-          _stepCard(
-            Icons.visibility_rounded,
-            "Regular Monitoring",
-            "Monitor pests, diseases, and plant health.",
-          ),
+  Icons.water_rounded,
+  isSi
+      ? YieldPredictionSi.maintainProperIrrigation
+      : "Maintain Proper Irrigation",
+  isSi
+      ? YieldPredictionSi.avoidWaterStress
+      : "Avoid both water stress and waterlogging.",
+),
+
+_stepCard(
+  Icons.grass_rounded,
+  isSi
+      ? YieldPredictionSi.healthySoil
+      : "Healthy Soil",
+  isSi
+      ? YieldPredictionSi.ensureGoodDrainage
+      : "Ensure good drainage and organic matter content.",
+),
+
+_stepCard(
+  Icons.science_rounded,
+  isSi
+      ? YieldPredictionSi.balancedFertilization
+      : "Balanced Fertilization",
+  isSi
+      ? YieldPredictionSi.applyNutrientsBasedOnSoil
+      : "Apply nutrients based on soil condition.",
+),
+
+_stepCard(
+  Icons.visibility_rounded,
+  isSi
+      ? YieldPredictionSi.regularMonitoring
+      : "Regular Monitoring",
+  isSi
+      ? YieldPredictionSi.monitorPestsAndDiseases
+      : "Monitor pests, diseases, and plant health.",
+),
 
           const SizedBox(height: 16),
 
           _tipBox(
-            Icons.check_circle_rounded,
-            "Consistent monitoring improves yield prediction accuracy.",
-            Colors.green,
-          ),
+  Icons.check_circle_rounded,
+  isSi
+      ? YieldPredictionSi.monitoringImprovesAccuracy
+      : "Consistent monitoring improves yield prediction accuracy.",
+  Colors.green,
+),
         ],
       ),
     );
   }
 }
+
 Widget _header({
   required IconData icon,
   required String title,
@@ -78,12 +109,18 @@ Widget _header({
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+              ),
             ],
           ),
         ),

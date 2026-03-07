@@ -374,9 +374,9 @@ exports.getMyQualityChecks = async (req, res) => {
     if (!dbUser)
       return res.status(404).json({ message: "User not found in DB" });
 
-    const checks = await QualityCheck.find({ userId: dbUser._id }).select(
-      "batchId batch results.grade",
-    );
+    const checks = await QualityCheck.find({ userId: dbUser._id })
+      .sort({ createdAt: -1 })
+      .select("batchId batch results.grade createdAt");
 
     const payload = checks.map((c) => ({
       _id: c._id,

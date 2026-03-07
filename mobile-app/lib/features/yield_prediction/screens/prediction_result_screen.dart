@@ -3,8 +3,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'xai_insights_screen.dart';
 import '../../../utils/yield_prediction/yield_prediction_si.dart';
+import '../../../providers/yield_prediction_provider.dart';
+import '../../../models/prediction_response.dart';
 
 class PredictionResultScreen extends StatefulWidget {
   final double predictedYield;
@@ -81,6 +84,7 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
                 isSi ? YieldPredictionSi.viewAiInsights : "View AI Insights",
               ),
               onPressed: () {
+                final provider = context.read<YieldPredictionProvider>();
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -88,6 +92,8 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
                       imageFile: widget.imageFile,
                       soilMoisture: widget.soilMoisture,
                       temperature: widget.temperature,
+                      insights: provider.insights,
+                      topFactors: provider.topFactors,
                       language: widget.language,
                     ),
                   ),

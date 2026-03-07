@@ -1,5 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../../../utils/responsive.dart';
 import '../../../services/blockchain_service.dart';
 
@@ -14,10 +18,10 @@ class ViewBlockchainScreen extends StatefulWidget {
 
 class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
   bool _loadingQc = true;
+  bool _downloadingPdf = false;
   String? _qcError;
   Map<String, dynamic>? _qc;
 
-  // ---------- Helpers ----------
   String _safe(dynamic v, [String fallback = '-']) {
     if (v == null) return fallback;
     final s = v.toString().trim();
@@ -37,7 +41,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
   DateTime? _parseDate(dynamic v) {
     if (v == null) return null;
 
-    // Mongo style {"$date": "..."}
     if (v is Map && v[r'$date'] != null) {
       return DateTime.tryParse(v[r'$date'].toString());
     }
@@ -46,7 +49,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     return DateTime.tryParse(v.toString());
   }
 
-  // dd/MM/yyyy
   String _formatDateOnly(dynamic v) {
     final dt = _parseDate(v);
     if (dt == null) return _safe(v);
@@ -138,7 +140,315 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     }
   }
 
-  // ---------- UI Building Blocks ----------
+  Future<void> _downloadPdf() async {
+    setState(() => _downloadingPdf = true);
+
+    try {
+      final record = widget.record;
+
+      final batchId = _safe(record['batchId'], _safe(record['_id']));
+      final pepperType = _safe(record['pepperType']);
+      final district = _safe(record['district']);
+      final price = _formatNumber(record['pricePerKg']);
+      final qty = _formatNumber(record['quantity']);
+      final notes = _safe(record['notes'], 'No notes');
+
+      final statusRaw = _normalizeStatus(record['currentStatus']);
+      final statusPretty = _prettyStatus(statusRaw);
+
+      final qrToken = _safe(record['qrToken'], '');
+      final qrGeneratedOn = _formatDateOnly(record['qrGeneratedAt']);
+
+      final historyRaw = record['statusHistory'];
+      final List<Map<String, dynamic>> history = (historyRaw is List)
+          ? historyRaw.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+          : <Map<String, dynamic>>[];
+
+      history.sort((a, b) {
+        final ia = (a['index'] is num) ? (a['index'] as num).toInt() : 0;
+        final ib = (b['index'] is num) ? (b['index'] as num).toInt() : 0;
+        return ia.compareTo(ib);
+      });
+
+      final harvestDate = _qc?['batch']?['harvestDate'];
+      final harvestedOn = harvestDate != null
+          ? _formatDateOnly(harvestDate)
+          : '-';
+
+      final qcStatus = _safe(_qc?['status'], '-');
+      final qcGrade = _safe(_qc?['results']?['grade'], '-');
+      final qcScore = _formatNumber(_qc?['results']?['overallScore']);
+      final dryingMethod = _safe(_qc?['batch']?['dryingMethod'], '-');
+      final pepperVariety = _safe(_qc?['batch']?['pepperVariety'], '-');
+      final densityValue = _formatNumber(_qc?['density']?['value']);
+      final densitySource = _safe(_qc?['density']?['source'], '-');
+      final densityMeasuredOn = _formatDateOnly(_qc?['density']?['measuredAt']);
+
+      final certCount = (_qc?['certificatesSnapshot']?['count'] is num)
+          ? (_qc?['certificatesSnapshot']?['count'] as num).toInt()
+          : 0;
+
+      final factorScoresRaw = _qc?['results']?['factorScores'];
+      final Map<String, dynamic> factorScores = (factorScoresRaw is Map)
+          ? Map<String, dynamic>.from(factorScoresRaw)
+          : {};
+
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(24),
+          build: (context) => [
+            pw.Container(
+              padding: const pw.EdgeInsets.all(14),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.green100,
+                borderRadius: pw.BorderRadius.circular(10),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Pepper Batch Report',
+                          style: pw.TextStyle(
+                            fontSize: 22,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text('Batch ID: $batchId'),
+                        pw.Text('Current Status: $statusPretty'),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(width: 12),
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.green700,
+                      borderRadius: pw.BorderRadius.circular(20),
+                    ),
+                    child: pw.Text(
+                      statusPretty,
+                      style: pw.TextStyle(
+                        color: PdfColors.white,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            _pdfSectionTitle('Batch Details'),
+            _pdfInfoTable([
+              ['Pepper Type', pepperType],
+              ['District', district],
+              ['Price / kg', price],
+              ['Quantity', '$qty kg'],
+              ['Additional Notes', notes],
+            ]),
+            pw.SizedBox(height: 16),
+            _pdfSectionTitle('Quality Details'),
+            _pdfInfoTable([
+              ['Harvest Date', harvestedOn],
+              ['QC Status', qcStatus],
+              ['Grade', qcGrade],
+              ['Overall Score', qcScore],
+              ['Pepper Variety', pepperVariety],
+              ['Drying Method', dryingMethod],
+              ['Density', '$densityValue g/L'],
+              ['Density Source', densitySource],
+              ['Measured On', densityMeasuredOn],
+              ['Certificates', certCount.toString()],
+            ]),
+            if (factorScores.isNotEmpty) ...[
+              pw.SizedBox(height: 16),
+              _pdfSectionTitle('Factor Scores'),
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.grey300),
+                children: [
+                  pw.TableRow(
+                    decoration: const pw.BoxDecoration(
+                      color: PdfColors.grey200,
+                    ),
+                    children: [
+                      _pdfTableCell('Factor', isHeader: true),
+                      _pdfTableCell('Score', isHeader: true),
+                    ],
+                  ),
+                  ...factorScores.entries.map((e) {
+                    final score = (_safeDouble(e.value) ?? 0)
+                        .clamp(0, 100)
+                        .toDouble();
+                    return pw.TableRow(
+                      children: [
+                        _pdfTableCell(_prettyFactorKey(e.key)),
+                        _pdfTableCell(
+                          score % 1 == 0
+                              ? score.toInt().toString()
+                              : score.toStringAsFixed(1),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ],
+            pw.SizedBox(height: 16),
+            _pdfSectionTitle('QR Details'),
+            _pdfInfoTable([
+              ['QR Token', qrToken.isEmpty ? 'Not available' : qrToken],
+              ['Generated On', qrGeneratedOn],
+            ]),
+            pw.SizedBox(height: 16),
+            _pdfSectionTitle('Blockchain History'),
+            if (history.isEmpty && harvestedOn == '-')
+              pw.Text('No history found.')
+            else
+              pw.Column(
+                children: [
+                  if (harvestedOn != '-')
+                    _pdfHistoryRow('Harvested', harvestedOn, 'Farmer'),
+                  ...history.map((block) {
+                    final stRaw = _normalizeStatus(block['status']);
+                    final title = _prettyStatus(stRaw);
+                    final date = _formatDateOnly(block['timestamp']);
+                    final role = _prettyRole(block['actorRole']);
+                    return _pdfHistoryRow(title, date, role);
+                  }),
+                ],
+              ),
+          ],
+        ),
+      );
+
+      final Uint8List bytes = await pdf.save();
+
+      if (!mounted) return;
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PdfPreviewScreen(
+            pdfBytes: bytes,
+            fileName: 'batch_report_$batchId.pdf',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.error_outline_rounded, color: Colors.red),
+              SizedBox(width: 8),
+              Text('PDF Error'),
+            ],
+          ),
+          content: Text(
+            'Failed to generate the PDF.\n\n$e',
+            style: const TextStyle(height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _downloadingPdf = false);
+      }
+    }
+  }
+
+  pw.Widget _pdfSectionTitle(String title) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 8),
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 16,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.green800,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _pdfInfoTable(List<List<String>> rows) {
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300),
+      columnWidths: {
+        0: const pw.FlexColumnWidth(2.2),
+        1: const pw.FlexColumnWidth(3.8),
+      },
+      children: rows
+          .map(
+            (row) => pw.TableRow(
+              children: [
+                _pdfTableCell(row[0], isHeader: true),
+                _pdfTableCell(row[1]),
+              ],
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  pw.Widget _pdfTableCell(String text, {bool isHeader = false}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 10.5,
+          fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _pdfHistoryRow(String title, String date, String role) {
+    return pw.Container(
+      width: double.infinity,
+      margin: const pw.EdgeInsets.only(bottom: 8),
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.grey100,
+        borderRadius: pw.BorderRadius.circular(8),
+        border: pw.Border.all(color: PdfColors.grey300),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(title, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 2),
+          pw.Text('On: $date'),
+          pw.Text('By: $role'),
+        ],
+      ),
+    );
+  }
+
   Widget _sectionHeader(
     Responsive responsive,
     String title, {
@@ -221,7 +531,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     );
   }
 
-  // ---------- Factor Scores (Screenshot Style) ----------
   String _prettyFactorKey(String key) {
     final s = key.replaceAllMapped(
       RegExp(r'([a-z])([A-Z])'),
@@ -327,7 +636,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     );
   }
 
-  // ---------- Timeline ----------
   Widget _timelineItem(
     Responsive responsive, {
     required bool isLast,
@@ -430,7 +738,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     );
   }
 
-  // ---------- Load Quality Checks ----------
   @override
   void initState() {
     super.initState();
@@ -457,7 +764,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
         return;
       }
 
-      // pick latest by results.processedAt > updatedAt > createdAt
       list.sort((a, b) {
         DateTime? da =
             _parseDate(a['results']?['processedAt']) ??
@@ -482,7 +788,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     }
   }
 
-  // ---------- Screen ----------
   @override
   Widget build(BuildContext context) {
     final responsive = context.responsive;
@@ -507,8 +812,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
         ? historyRaw.map((e) => Map<String, dynamic>.from(e as Map)).toList()
         : <Map<String, dynamic>>[];
 
-    // ✅ IMPORTANT FIX for your error:
-    // index can be int OR double depending on Mongo/JSON decoding.
     history.sort((a, b) {
       final ia = (a['index'] is num) ? (a['index'] as num).toInt() : 0;
       final ib = (b['index'] is num) ? (b['index'] as num).toInt() : 0;
@@ -519,13 +822,11 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
       (b) => _normalizeStatus(b['status']) == 'MARKETPLACE_LISTED',
     );
 
-    // Harvested date (from qualitychecks.batch.harvestDate)
     final harvestDate = _qc?['batch']?['harvestDate'];
     final harvestedOn = harvestDate != null
         ? _formatDateOnly(harvestDate)
         : null;
 
-    // QC fields
     final qcStatus = _safe(_qc?['status'], '-');
     final qcGrade = _safe(_qc?['results']?['grade'], '-');
     final qcScore = _formatNumber(_qc?['results']?['overallScore']);
@@ -558,7 +859,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
           child: ListView(
             padding: EdgeInsets.all(responsive.pagePadding),
             children: [
-              // --------- Top Summary ---------
               _card(
                 responsive,
                 child: Row(
@@ -654,7 +954,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                 ),
               ),
 
-              // --------- Batch Details (no grade) ---------
               _card(
                 responsive,
                 child: Column(
@@ -696,7 +995,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                 ),
               ),
 
-              // --------- Quality Details + factors ---------
               _card(
                 responsive,
                 child: Column(
@@ -714,7 +1012,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                           : const SizedBox.shrink(),
                     ),
                     SizedBox(height: responsive.smallSpacing),
-
                     if (_qcError != null)
                       Text(
                         'Failed to load quality details: $_qcError',
@@ -733,7 +1030,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                         ),
                       )
                     else if (_qc != null) ...[
-                      // Grade + score highlight
                       Container(
                         padding: EdgeInsets.all(responsive.mediumSpacing),
                         decoration: BoxDecoration(
@@ -806,7 +1102,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                         ),
                       ),
                       SizedBox(height: responsive.mediumSpacing),
-
                       _infoRow(
                         responsive,
                         icon: Icons.fact_check_rounded,
@@ -849,7 +1144,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                         label: 'Certificates',
                         value: certCount.toString(),
                       ),
-
                       if (factorScores.isNotEmpty) ...[
                         SizedBox(height: responsive.mediumSpacing),
                         Row(
@@ -878,7 +1172,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                 ),
               ),
 
-              // --------- QR Section ---------
               _card(
                 responsive,
                 child: Column(
@@ -923,7 +1216,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                 ),
               ),
 
-              // --------- Blockchain History Timeline ---------
               _card(
                 responsive,
                 child: Column(
@@ -983,9 +1275,117 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                   ],
                 ),
               ),
+
+              Container(
+                margin: EdgeInsets.only(
+                  top: responsive.smallSpacing,
+                  bottom: responsive.largeSpacing,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _downloadingPdf ? null : _downloadPdf,
+                    icon: _downloadingPdf
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.download_rounded),
+                    label: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Text(
+                        _downloadingPdf
+                            ? 'Preparing PDF...'
+                            : 'Download PDF Report',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class PdfPreviewScreen extends StatelessWidget {
+  final Uint8List pdfBytes;
+  final String fileName;
+
+  const PdfPreviewScreen({
+    super.key,
+    required this.pdfBytes,
+    required this.fileName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text('PDF Preview'),
+        backgroundColor: const Color(0xFF2E7D32),
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8F5E9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF2E7D32).withOpacity(0.25),
+              ),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'PDF generated successfully. You can view in here.',
+                    style: TextStyle(
+                      color: Color(0xFF1B5E20),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: PdfPreview(
+              build: (format) async => pdfBytes,
+              allowPrinting: false,
+              allowSharing: false,
+              canChangePageFormat: false,
+              canChangeOrientation: false,
+              pdfFileName: fileName,
+            ),
+          ),
+        ],
       ),
     );
   }

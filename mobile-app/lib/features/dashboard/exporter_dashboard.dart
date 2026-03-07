@@ -210,7 +210,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Hello, $_userName 👋",
+                      "Welcome 👋",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.95),
                         fontSize: responsive.bodyFontSize,

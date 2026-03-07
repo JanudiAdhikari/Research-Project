@@ -4,10 +4,8 @@ class ApiConfig {
   static const String baseUrl =
       "https://research-backend-755295357792.us-central1.run.app";
 
-  // For physical device:
-  // cmd -> ipconfig -> IPv4 Address (Wi-Fi adapter)
-  // static const String baseUrl = "http://IPv4 Address:5000";
-  // static const String baseUrl = "http://192.168.8.159:5000";
-  static const String fastApiBaseUrl =
-      "http://10.20.130.135:8000"; // inference server
+  //ML model
+  static const String yieldPredictionApiUrl = "http://127.0.0.1:8000";
+  static const String fastApiBaseUrl = "http://10.20.130.135:8000";
+
 }

@@ -195,12 +195,14 @@ class _WeeklyPriceForecastState extends State<WeeklyPriceForecast>
           _currentLanguage == 'si'
               ? WeeklyPriceForecastSi.screenTitle
               : 'Weekly Price Forecast',
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF2E7D32),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             tooltip: 'Reset All',
             onPressed: () {
               setState(() {

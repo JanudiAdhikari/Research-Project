@@ -283,8 +283,10 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
           _currentLanguage == 'si'
               ? WeeklyPredictionSi.screenTitle
               : 'Price Forecast Analysis',
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF2E7D32),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
       body: isLoading

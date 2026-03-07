@@ -10,45 +10,76 @@ class DiseaseDetectionService {
   // static const String baseUrl = 'http://10.0.2.2:5001/api';
 
   // Uncomment below if using physical phone instead
-  static const String baseUrl = 'http://10.199.234.103:5001/api';
+  static const String baseUrl = 'http://192.168.8.159:5001/api';
 
   /// Disease detection result model
   static Future<DiseaseDetectionResult?> detectDisease(File imageFile) async {
+    print('\n' + '='*60);
+    print('🎬 DISEASE DETECTION STARTED');
+    print('='*60);
+
     try {
       var uri = Uri.parse('$baseUrl/detect-disease');
+      print('🔍 Sending to: $uri');
+      print('📁 File: ${imageFile.path}');
+
+      final fileSize = imageFile.lengthSync();
+      print('📊 Size: ${(fileSize / 1024).toStringAsFixed(2)} KB');
+
       var request = http.MultipartRequest('POST', uri);
 
-      // Add image file
       request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          imageFile.path,
-        ),
+        await http.MultipartFile.fromPath('image', imageFile.path),
       );
 
+      print('⏳ Processing... (10-30 seconds first time)');
+
       var response = await request.send().timeout(
-        const Duration(seconds: 30),
+        const Duration(seconds: 120),
         onTimeout: () {
-          throw TimeoutException('Disease detection request timed out');
+          print('❌ TIMEOUT after 120 seconds');
+          throw TimeoutException('Request timed out');
         },
       );
 
+      print('📡 Response: ${response.statusCode}');
+
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
+        print('✅ Got response');
+
         final jsonResponse = jsonDecode(responseBody);
+        print('🌾 Disease: ${jsonResponse['disease']}');
+        print('📊 Confidence: ${jsonResponse['confidence']}%');
+
+        print('='*60);
+        print('✅ SUCCESS');
+        print('='*60 + '\n');
 
         return DiseaseDetectionResult.fromJson(jsonResponse);
       } else {
         final responseBody = await response.stream.bytesToString();
-        final errorResponse = jsonDecode(responseBody);
-        throw Exception(errorResponse['error'] ?? 'Failed to detect disease');
+        print('❌ Error ${response.statusCode}: $responseBody');
+        throw Exception('Server error: ${response.statusCode}');
       }
-    } on SocketException {
-      throw Exception('Network error: Unable to connect to disease detection service');
-    } on TimeoutException {
-      throw TimeoutException('Request timed out. Please try again.');
+    } on SocketException catch (e) {
+      print('❌ Socket error: $e');
+      print('='*60);
+      print('❌ CANNOT CONNECT TO BACKEND');
+      print('='*60 + '\n');
+      throw Exception('Cannot reach backend at $baseUrl. Make sure Flask is running.');
+    } on TimeoutException catch (e) {
+      print('❌ Timeout: $e');
+      print('='*60);
+      print('❌ REQUEST TIMEOUT');
+      print('='*60 + '\n');
+      throw Exception('Request took too long. Backend may not be responding.');
     } catch (e) {
-      throw Exception('Disease detection error: $e');
+      print('❌ Error: $e');
+      print('='*60);
+      print('❌ FAILED');
+      print('='*60 + '\n');
+      throw Exception('Disease detection failed: $e');
     }
   }
 

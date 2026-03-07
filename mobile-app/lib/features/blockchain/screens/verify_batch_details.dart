@@ -19,6 +19,9 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
   bool _loadingQc = true;
   String? _qcError;
 
+  // Verify loading state
+  bool _verifying = false;
+
   @override
   void initState() {
     super.initState();
@@ -141,11 +144,79 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
     }
   }
 
+  // Verify button implementation
+  Future<void> _handleVerify() async {
+    if (_verifying) return;
+
+    final recordId = widget.record['_id']?.toString();
+    if (recordId == null || recordId.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Record id not found')));
+      return;
+    }
+
+    setState(() => _verifying = true);
+
+    try {
+      final updated = await BlockchainService.verifyRecord(recordId);
+
+      // Update local record map so UI changes immediately
+      setState(() {
+        widget.record['currentStatus'] = updated['currentStatus'];
+        widget.record['statusHistory'] = updated['statusHistory'];
+        widget.record['marketplaceProductId'] = updated['marketplaceProductId'];
+      });
+
+      if (!mounted) return;
+
+      final mpId = updated['marketplaceProductId']?.toString();
+
+      if (!mounted) return;
+
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.verified_rounded, color: Colors.green, size: 26),
+              SizedBox(width: 10),
+              const Expanded(child: Text('Verification Successful')),
+            ],
+          ),
+          content: Text(
+            mpId != null && mpId.isNotEmpty
+                ? 'This batch has been verified and listed on the marketplace.'
+                : 'This batch has been verified successfully.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+
+      // Optionally refresh QC after verify
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Verify failed: $e')));
+    } finally {
+      if (mounted) setState(() => _verifying = false);
+    }
+  }
+
   Widget _qcCard(Map<String, dynamic> qc) {
     final result = _safe(qc['result'] ?? qc['grade'], 'N/A');
     final responsive = context.responsive;
 
-    // Density details (separate lines)
+    // Density details
     String densityValue = '-';
     String densitySource = '-';
     String densityMeasured = '-';
@@ -154,7 +225,7 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
       final val = _safeDouble(densityObj['value']);
       densityValue = val != null ? '${_formatNumber(val)} g/L' : '-';
       densitySource = _safe(densityObj['source']);
-      // show date only (no time)
+      // show date
       densityMeasured = _formatDate(densityObj['measuredAt']);
     } else if (densityObj != null) {
       densityValue = _safe(densityObj);
@@ -229,7 +300,7 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
                         ),
                         SizedBox(height: responsive.smallSpacing),
                         Text(
-                          'Source: ${densitySource}',
+                          'Source: $densitySource',
                           style: TextStyle(
                             color: Colors.grey.shade800,
                             fontWeight: FontWeight.w600,
@@ -237,7 +308,7 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
                         ),
                         SizedBox(height: responsive.smallSpacing * 0.6),
                         Text(
-                          'Measured: ${densityMeasured}',
+                          'Measured: $densityMeasured',
                           style: TextStyle(
                             color: Colors.grey.shade800,
                             fontWeight: FontWeight.w600,
@@ -281,6 +352,9 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
     final statusPretty = _prettyStatus(statusRaw);
     final statusColor = _statusColor(statusRaw);
     final statusIcon = _statusIcon(statusRaw);
+
+    final bool isAlreadyVerified = statusRaw.trim().toUpperCase() == 'VERIFIED';
+    final bool isQrGenerated = statusRaw.trim().toUpperCase() == 'QR_GENERATED';
 
     final saleDate = _formatDate(r['saleDate']);
     final district = _safe(r['district']);
@@ -545,7 +619,14 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
                     ),
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.symmetric(
-                        vertical: responsive.smallSpacing,
+                        vertical: responsive.value(
+                          mobile: 14,
+                          tablet: 16,
+                          desktop: 18,
+                        ),
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                   ),
@@ -553,19 +634,23 @@ class _VerifyBatchDetailsScreenState extends State<VerifyBatchDetailsScreen> {
                 SizedBox(width: responsive.mediumSpacing),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Verify action (connect API)'),
-                        ),
-                      );
-                    },
+                    onPressed:
+                        (_verifying || isAlreadyVerified || isQrGenerated)
+                        ? null
+                        : _handleVerify,
                     icon: Icon(
                       Icons.verified_rounded,
                       size: responsive.mediumIconSize,
+                      color: (isAlreadyVerified || isQrGenerated)
+                          ? Colors.white70
+                          : null,
                     ),
                     label: Text(
-                      'Verify',
+                      isAlreadyVerified
+                          ? 'Verified'
+                          : isQrGenerated
+                          ? 'QR Generated'
+                          : (_verifying ? 'Verifying...' : 'Verify'),
                       style: TextStyle(fontSize: responsive.bodyFontSize),
                     ),
                     style: ElevatedButton.styleFrom(

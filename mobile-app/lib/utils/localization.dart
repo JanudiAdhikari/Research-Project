@@ -19,7 +19,7 @@ class AppLocalizations {
       'ceylon_pepper': 'Ceylon Pepper',
       'fetching_location': 'Fetching location...',
       'tap_to_refresh': 'Tap to refresh',
-      'total_crops': 'Total Crops',
+      'total_crops': 'Total Plots',
       'active_alerts': 'Active Alerts',
       'avg_quality': 'Avg Quality',
       'smart_farming_tools': 'Smart Farming Tools',

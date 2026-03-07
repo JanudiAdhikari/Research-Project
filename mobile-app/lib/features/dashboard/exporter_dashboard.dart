@@ -1,10 +1,15 @@
 import 'package:CeylonPepper/features/market_forecast/screens/export_price_prediction.dart';
 import 'package:flutter/material.dart';
 import '../../utils/responsive.dart';
-import '../../widgets/profile_screen.dart';
 import '../blockchain/screens/dashboard.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_page.dart';
+
+// Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
+Color colorWithOpacity(Color c, double opacity) {
+  final alpha = (opacity * 255).round().clamp(0, 255);
+  return c.withAlpha(alpha);
+}
 
 class ExporterDashboard extends StatefulWidget {
   const ExporterDashboard({super.key});
@@ -22,7 +27,6 @@ class _ExporterDashboardState extends State<ExporterDashboard>
   String _userName = "Exporter";
   final AuthService _authService = AuthService();
 
-  // Mock data for dashboard statistics
   int _totalBatches = 0;
   int _pendingOrders = 0;
   double _exportRevenue = 0.0;
@@ -48,7 +52,6 @@ class _ExporterDashboardState extends State<ExporterDashboard>
 
     _animationController.forward();
 
-    // Load initial data
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         _loadDashboardStats();
@@ -63,11 +66,10 @@ class _ExporterDashboardState extends State<ExporterDashboard>
   }
 
   Future<void> _loadDashboardStats() async {
-    // Simulate loading dashboard statistics
     await Future.delayed(const Duration(milliseconds: 500));
     if (mounted) {
       setState(() {
-        _totalBatches = 12; // Mock data - replace with actual data
+        _totalBatches = 12;
         _pendingOrders = 3;
         _exportRevenue = 85000.0;
       });
@@ -88,15 +90,112 @@ class _ExporterDashboardState extends State<ExporterDashboard>
           return;
         }
       }
-      // fallback to Firebase displayName
       final fb = _authService.currentUser;
       if (fb != null && fb.displayName != null && fb.displayName!.isNotEmpty) {
         if (mounted) setState(() => _userName = fb.displayName!);
       }
     } catch (e) {
-      // keep fallback name
       print("Failed to load user name: $e");
     }
+  }
+
+  // ── Logout Confirmation Dialog (same as Farmer Dashboard) ────────────────
+  void _showLogoutDialog(BuildContext context, Color primary) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: 0,
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colorWithOpacity(primary, 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.person_rounded, color: primary, size: 36),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _userName,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Are you sure you want to log out?',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(ctx).pop();
+                    await _authService.logout();
+                    if (!mounted) return;
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  label: const Text(
+                    'Logout',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red[600],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -118,35 +217,22 @@ class _ExporterDashboardState extends State<ExporterDashboard>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Enhanced Header
                   _buildHeader(responsive, primary),
-
                   ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
-
-                  // Quick Stats Cards
                   _buildQuickStats(responsive, primary),
-
                   ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
-
-                  // Section: Export Services
                   _buildSectionTitle(
                     responsive,
                     primary,
                     "Export Services",
                     Icons.local_shipping_rounded,
                   ),
-
                   ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
-
-                  // Main Feature Grid
                   SlideTransition(
                     position: _slideAnimation,
                     child: _buildMainFeatureGrid(context, responsive, primary),
                   ),
-
                   ResponsiveSpacing(mobile: 32, tablet: 40, desktop: 48),
-
-                  // Section: Export Tips
                   _buildSectionTitle(
                     responsive,
                     primary,
@@ -154,11 +240,8 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                     Icons.lightbulb_rounded,
                     iconColor: Colors.amber[700],
                   ),
-
                   ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
-
                   _buildTipsSection(responsive),
-
                   ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
                 ],
               ),
@@ -178,7 +261,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
       ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [primary, primary.withOpacity(0.85)],
+          colors: [primary, colorWithOpacity(primary, 0.85)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -192,7 +275,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         ),
         boxShadow: [
           BoxShadow(
-            color: primary.withOpacity(0.3),
+            color: colorWithOpacity(primary, 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -204,7 +287,6 @@ class _ExporterDashboardState extends State<ExporterDashboard>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Welcome text
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,7 +294,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                     Text(
                       "Welcome 👋",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.95),
+                        color: Colors.white.withValues(alpha: 0.95),
                         fontSize: responsive.bodyFontSize,
                         fontWeight: FontWeight.w400,
                       ),
@@ -235,104 +317,49 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                 ),
               ),
 
-              // Avatar with PopupMenu
-              PopupMenuButton<String>(
-                offset: Offset(
-                  0,
-                  responsive.value(mobile: 56, tablet: 60, desktop: 68),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+              // ── Avatar → tapping shows logout dialog (same as Farmer Dashboard) ──
+              GestureDetector(
+                onTap: () => _showLogoutDialog(context, primary),
                 child: Container(
+                  padding: EdgeInsets.all(
+                    responsive.value(mobile: 2, tablet: 3, desktop: 4),
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
                   child: CircleAvatar(
                     radius: responsive.value(
-                      mobile: 26,
-                      tablet: 28,
-                      desktop: 32,
+                      mobile: 22,
+                      tablet: 26,
+                      desktop: 30,
                     ),
-                    backgroundColor: Colors.white,
+                    backgroundColor: colorWithOpacity(primary, 0.1),
                     child: Icon(
-                      Icons.account_circle,
+                      Icons.person_rounded,
                       color: primary,
                       size: responsive.value(
-                        mobile: 32,
-                        tablet: 36,
-                        desktop: 42,
+                        mobile: 26,
+                        tablet: 30,
+                        desktop: 34,
                       ),
                     ),
                   ),
                 ),
-                onSelected: (value) async {
-                  if (value == 'profile') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                    );
-                    return;
-                  }
-
-                  if (value == 'logout') {
-                    await _authService.logout();
-                    if (!mounted) return;
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginPage()),
-                      (route) => false,
-                    );
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'profile',
-                    child: Row(
-                      children: [
-                        Icon(Icons.person_outline, size: 20),
-                        SizedBox(width: 12),
-                        Text("Profile"),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'settings',
-                    child: Row(
-                      children: [
-                        Icon(Icons.settings_outlined, size: 20),
-                        SizedBox(width: 12),
-                        Text("Settings"),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: 'logout',
-                    child: Row(
-                      children: [
-                        Icon(Icons.logout, color: Colors.red, size: 20),
-                        SizedBox(width: 12),
-                        Text("Logout", style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
 
           ResponsiveSpacing(mobile: 20, tablet: 24, desktop: 28),
 
-          // Location and temperature
+          // Location and temperature strip
           Container(
             padding: responsive.padding(
               mobile: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -340,12 +367,12 @@ class _ExporterDashboardState extends State<ExporterDashboard>
               desktop: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             ),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: colorWithOpacity(Colors.white, 0.15),
               borderRadius: BorderRadius.circular(
                 responsive.value(mobile: 16, tablet: 18, desktop: 20),
               ),
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: colorWithOpacity(Colors.white, 0.2),
                 width: 1,
               ),
             ),
@@ -353,7 +380,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
               children: [
                 Icon(
                   Icons.flag_rounded,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   size: responsive.smallIconSize,
                 ),
                 ResponsiveSpacing.horizontal(
@@ -364,7 +391,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
                 Text(
                   "Sri Lanka",
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: responsive.bodyFontSize,
                     fontWeight: FontWeight.w500,
                   ),
@@ -399,11 +426,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
   Widget _buildQuickStats(Responsive responsive, Color primary) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
-      child: ResponsiveBuilder(
-        mobile: _buildStatsRow(responsive, primary),
-        tablet: _buildStatsRow(responsive, primary),
-        desktop: _buildStatsRow(responsive, primary),
-      ),
+      child: _buildStatsRow(responsive, primary),
     );
   }
 
@@ -467,7 +490,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: colorWithOpacity(Colors.black, 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -586,7 +609,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
           children: _buildMainFeatureCards(context, responsive),
         ),
         desktop: GridView.count(
-          crossAxisCount: 4,
+          crossAxisCount: 2, // Only 2 cards now, so 2 columns looks better
           shrinkWrap: true,
           crossAxisSpacing: 22,
           mainAxisSpacing: 22,
@@ -609,9 +632,8 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         title: "Export\nPrices",
         subtitle: "Market trends",
         icon: Icons.trending_up_rounded,
-        gradient: LinearGradient(
-          colors: [Color(0xFF66BB6A), Color(0xFF43A047)],
-        ),
+        iconColor: Colors.green.shade700,
+        iconBgColor: Colors.green.shade50,
         onTap: () {
           Navigator.push(
             context,
@@ -624,34 +646,11 @@ class _ExporterDashboardState extends State<ExporterDashboard>
       _featureCard(
         context,
         responsive,
-        title: "Quality\nRequests",
-        subtitle: "Certifications",
-        icon: Icons.verified_user_rounded,
-        gradient: LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
-        ),
-        onTap: () {},
-      ),
-      _featureCard(
-        context,
-        responsive,
-        title: "Export\nBatches",
-        subtitle: "Shipments",
-        icon: Icons.inventory_2_rounded,
-        gradient: LinearGradient(
-          colors: [Color(0xFF81C784), Color(0xFF66BB6A)],
-        ),
-        onTap: () {},
-      ),
-      _featureCard(
-        context,
-        responsive,
         title: "Traceability",
         subtitle: "Blockchain",
         icon: Icons.qr_code_rounded,
-        gradient: LinearGradient(
-          colors: [Color(0xFF388E3C), Color(0xFF2E7D32)],
-        ),
+        iconColor: Colors.teal.shade700,
+        iconBgColor: Colors.teal.shade50,
         onTap: () {
           Navigator.push(
             context,
@@ -670,7 +669,8 @@ class _ExporterDashboardState extends State<ExporterDashboard>
     required String title,
     required String subtitle,
     required IconData icon,
-    required Gradient gradient,
+    required Color iconColor,
+    required Color iconBgColor,
     required VoidCallback onTap,
   }) {
     return Material(
@@ -678,95 +678,116 @@ class _ExporterDashboardState extends State<ExporterDashboard>
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(
-          responsive.value(mobile: 20, tablet: 22, desktop: 24),
+          responsive.value(mobile: 16, tablet: 20, desktop: 24),
         ),
         child: Container(
           decoration: BoxDecoration(
-            gradient: gradient,
+            gradient: const LinearGradient(
+              colors: [
+                Color.fromARGB(255, 248, 250, 248),
+                Color.fromARGB(255, 239, 242, 239),
+              ],
+            ),
             borderRadius: BorderRadius.circular(
-              responsive.value(mobile: 20, tablet: 22, desktop: 24),
+              responsive.value(mobile: 16, tablet: 20, desktop: 24),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: colorWithOpacity(Colors.black, 0.15),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                right: -15,
-                bottom: -15,
-                child: Icon(
-                  icon,
-                  size: responsive.value(mobile: 80, tablet: 90, desktop: 100),
-                  color: Colors.white.withOpacity(0.12),
-                ),
-              ),
-              Padding(
-                padding: responsive.padding(
-                  mobile: const EdgeInsets.all(18),
-                  tablet: const EdgeInsets.all(20),
-                  desktop: const EdgeInsets.all(24),
-                ),
-                child: Column(
+          child: Padding(
+            padding: responsive.padding(
+              mobile: const EdgeInsets.all(12),
+              tablet: const EdgeInsets.all(16),
+              desktop: const EdgeInsets.all(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Icon container — colored background like farmer dashboard
                     Container(
                       padding: responsive.padding(
-                        mobile: const EdgeInsets.all(10),
-                        tablet: const EdgeInsets.all(12),
-                        desktop: const EdgeInsets.all(14),
+                        mobile: const EdgeInsets.all(8),
+                        tablet: const EdgeInsets.all(10),
+                        desktop: const EdgeInsets.all(12),
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(12),
+                        color: iconBgColor,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         icon,
+                        color: iconColor,
                         size: responsive.value(
-                          mobile: 28,
-                          tablet: 32,
-                          desktop: 36,
+                          mobile: 32,
+                          tablet: 42,
+                          desktop: 48,
                         ),
-                        color: Colors.white,
                       ),
                     ),
-                    const Spacer(),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 8,
+                        tablet: 10,
+                        desktop: 12,
+                      ),
+                    ),
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: responsive.titleFontSize,
+                        fontSize: responsive.fontSize(
+                          mobile: 13,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: Colors.black,
                         height: 1.2,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    ResponsiveSpacing(mobile: 4, tablet: 5, desktop: 6),
+                    SizedBox(
+                      height: responsive.value(
+                        mobile: 3,
+                        tablet: 4,
+                        desktop: 5,
+                      ),
+                    ),
                     Text(
                       subtitle,
                       style: TextStyle(
                         fontSize: responsive.fontSize(
-                          mobile: 12,
-                          tablet: 13,
-                          desktop: 14,
+                          mobile: 10,
+                          tablet: 11,
+                          desktop: 12,
                         ),
                         fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.black87,
                       ),
-                    ),
-                    ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-                    Icon(
-                      Icons.arrow_forward_rounded,
-                      color: Colors.white.withOpacity(0.9),
-                      size: responsive.smallIconSize,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-              ),
-            ],
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: responsive.value(mobile: 16, tablet: 18, desktop: 20),
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -835,10 +856,10 @@ class _ExporterDashboardState extends State<ExporterDashboard>
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 20, tablet: 22, desktop: 24),
         ),
-        border: Border.all(color: iconColor.withOpacity(0.2), width: 1),
+        border: Border.all(color: colorWithOpacity(iconColor, 0.2), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: colorWithOpacity(Colors.black, 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -858,7 +879,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: iconColor.withOpacity(0.2),
+                  color: colorWithOpacity(iconColor, 0.2),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

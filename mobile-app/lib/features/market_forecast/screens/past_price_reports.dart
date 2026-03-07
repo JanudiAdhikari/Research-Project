@@ -74,10 +74,12 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
   // Sort reports by date (most recent first by default)
   void _sortReports() {
     pastReports.sort((a, b) {
-      DateTime? dateA =
-          _parseDate(a['saleDate'] ?? a['date'] ?? a['createdAt'] ?? a['reportDate']);
-      DateTime? dateB =
-          _parseDate(b['saleDate'] ?? b['date'] ?? b['createdAt'] ?? b['reportDate']);
+      DateTime? dateA = _parseDate(
+        a['saleDate'] ?? a['date'] ?? a['createdAt'] ?? a['reportDate'],
+      );
+      DateTime? dateB = _parseDate(
+        b['saleDate'] ?? b['date'] ?? b['createdAt'] ?? b['reportDate'],
+      );
 
       if (dateA == null || dateB == null) return 0;
       return _sortAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
@@ -259,12 +261,14 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
           _currentLanguage == 'si'
               ? ActualPriceDataSi.pastPriceDetails
               : 'Pepper Batch Details',
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF2E7D32),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
             onPressed: _loadReports,
           ),
         ],
@@ -272,86 +276,87 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage != null
-              ? ErrorView(errorMessage: _errorMessage!, onRetry: _loadReports)
-              : pastReports.isEmpty
-                  ? EmptyReportsView(language: _currentLanguage)
-                  : SingleChildScrollView(
-                      padding: EdgeInsets.all(responsive.mediumSpacing),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SummaryStatisticsCard(
-                            reports: pastReports,
-                            language: _currentLanguage,
-                          ),
-                          SizedBox(height: responsive.largeSpacing),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                _currentLanguage == 'si'
-                                    ? ActualPriceDataSi.recentSales
-                                    : 'Recent Pepper Batches',
-                                style: TextStyle(
-                                  fontSize: responsive.bodyFontSize + 2,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.sort),
-                                tooltip: _currentLanguage == 'si'
-                                    ? (_sortAscending
-                                        ? ActualPriceDataSi.oldestFirst
-                                        : ActualPriceDataSi.newestFirst)
-                                    : (_sortAscending
-                                        ? 'Oldest first'
-                                        : 'Newest first'),
-                                onPressed: _toggleSortOrder,
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: responsive.smallSpacing + 4),
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: pastReports.length,
-                            itemBuilder: (context, index) {
-                              final report = pastReports[index];
-
-                              return PriceReportCard(
-                                report: report,
-                                onUpdate: () => _navigateToUpdateReport(report),
-                                onDelete: () {
-                                  final id = report['_id'] as String? ??
-                                      report['id'] as String? ??
-                                      '';
-                                  if (id.isNotEmpty) {
-                                    _deleteReport(id);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          _currentLanguage == 'si'
-                                              ? ActualPriceDataSi.cannotDeleteNoId
-                                              : 'Cannot delete: Report ID not found',
-                                        ),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                },
-                                // ✅ NEW button callback
-                                onAddToMarketplace: () =>
-                                    _promptAddToMarketplace(report),
-                                language: _currentLanguage,
-                              );
-                            },
-                          ),
-                        ],
+          ? ErrorView(errorMessage: _errorMessage!, onRetry: _loadReports)
+          : pastReports.isEmpty
+          ? EmptyReportsView(language: _currentLanguage)
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(responsive.mediumSpacing),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SummaryStatisticsCard(
+                    reports: pastReports,
+                    language: _currentLanguage,
+                  ),
+                  SizedBox(height: responsive.largeSpacing),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        _currentLanguage == 'si'
+                            ? ActualPriceDataSi.recentSales
+                            : 'Recent Pepper Batches',
+                        style: TextStyle(
+                          fontSize: responsive.bodyFontSize + 2,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
                       ),
-                    ),
+                      IconButton(
+                        icon: const Icon(Icons.sort),
+                        tooltip: _currentLanguage == 'si'
+                            ? (_sortAscending
+                                  ? ActualPriceDataSi.oldestFirst
+                                  : ActualPriceDataSi.newestFirst)
+                            : (_sortAscending
+                                  ? 'Oldest first'
+                                  : 'Newest first'),
+                        onPressed: _toggleSortOrder,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: responsive.smallSpacing + 4),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: pastReports.length,
+                    itemBuilder: (context, index) {
+                      final report = pastReports[index];
+
+                      return PriceReportCard(
+                        report: report,
+                        onUpdate: () => _navigateToUpdateReport(report),
+                        onDelete: () {
+                          final id =
+                              report['_id'] as String? ??
+                              report['id'] as String? ??
+                              '';
+                          if (id.isNotEmpty) {
+                            _deleteReport(id);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  _currentLanguage == 'si'
+                                      ? ActualPriceDataSi.cannotDeleteNoId
+                                      : 'Cannot delete: Report ID not found',
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        // ✅ NEW button callback
+                        onAddToMarketplace: () =>
+                            _promptAddToMarketplace(report),
+                        language: _currentLanguage,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
     );
   }
 }

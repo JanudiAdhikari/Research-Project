@@ -18,30 +18,18 @@ class Responsive {
   bool get isLargeDesktop => width >= 1200;
 
   // Responsive value getter
-  double value({
-    required double mobile,
-    double? tablet,
-    double? desktop,
-  }) {
+  double value({required double mobile, double? tablet, double? desktop}) {
     if (isDesktop && desktop != null) return desktop;
     if (isTablet && tablet != null) return tablet;
     return mobile;
   }
 
   // Responsive spacing
-  double spacing({
-    required double mobile,
-    double? tablet,
-    double? desktop,
-  }) =>
+  double spacing({required double mobile, double? tablet, double? desktop}) =>
       value(mobile: mobile, tablet: tablet, desktop: desktop);
 
   // Responsive font size
-  double fontSize({
-    required double mobile,
-    double? tablet,
-    double? desktop,
-  }) =>
+  double fontSize({required double mobile, double? tablet, double? desktop}) =>
       value(mobile: mobile, tablet: tablet, desktop: desktop);
 
   // Responsive padding
@@ -56,11 +44,7 @@ class Responsive {
   }
 
   // Responsive icon size
-  double iconSize({
-    required double mobile,
-    double? tablet,
-    double? desktop,
-  }) =>
+  double iconSize({required double mobile, double? tablet, double? desktop}) =>
       value(mobile: mobile, tablet: tablet, desktop: desktop);
 
   // Quick access for common values
@@ -173,17 +157,17 @@ class ResponsiveText extends StatelessWidget {
   final TextOverflow? overflow;
 
   const ResponsiveText(
-      this.text, {
-        super.key,
-        required this.mobileFontSize,
-        this.tabletFontSize,
-        this.desktopFontSize,
-        this.fontWeight,
-        this.color,
-        this.textAlign,
-        this.maxLines,
-        this.overflow,
-      });
+    this.text, {
+    super.key,
+    required this.mobileFontSize,
+    this.tabletFontSize,
+    this.desktopFontSize,
+    this.fontWeight,
+    this.color,
+    this.textAlign,
+    this.maxLines,
+    this.overflow,
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -5,9 +5,15 @@ import 'image_picker_screen.dart';
 import 'posts_view_screen.dart';
 import 'complaint_screen.dart';
 import 'complaint_list_screen.dart';
-import 'analyze_plants_screen.dart';
+import 'weather_forecast_screen.dart';
 import '../../../utils/localization.dart';
 import '../../../utils/language_prefs.dart';
+import '../../../widgets/bottom_navigation.dart';
+
+Color _withOpacity(Color c, double opacity) {
+  final alpha = (opacity * 255).round().clamp(0, 255);
+  return c.withAlpha(alpha);
+}
 
 class HomeScreen extends StatefulWidget {
   final User? user;
@@ -19,34 +25,32 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  // Animation controller for fade-in effect on screen load
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   String _currentLanguage = 'en';
+
+  static const Color primary = Color(0xFF2E7D32);
 
   @override
   void initState() {
     super.initState();
-    // Initialize animation controller with 800ms duration
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    // Create fade animation from 0.0 to 1.0 opacity
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
-    // Start the animation
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
     _animationController.forward();
 
-    // Load saved language preference
     LanguagePrefs.getLanguage().then((lang) {
-      if (mounted) {
-        setState(() {
-          _currentLanguage = lang;
-        });
-      }
+      if (mounted) setState(() => _currentLanguage = lang);
     });
   }
 
@@ -61,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen>
       context,
       MaterialPageRoute(builder: (context) => const ImagePickerScreen()),
     );
-
     if (image != null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -73,264 +76,153 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  void _navigateToPosts(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const PostsViewScreen()),
-    );
-  }
+  void _navigateToPosts(BuildContext context) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const PostsViewScreen()),
+  );
 
-  void _navigateToComplaint(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ComplaintScreen()),
-    );
-  }
+  void _navigateToComplaint(BuildContext context) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const ComplaintScreen()),
+  );
 
-  void _navigateToComplaintManagement(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ComplaintListScreen()),
-    );
-  }
+  void _navigateToComplaintManagement(BuildContext context) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const ComplaintListScreen()),
+  );
 
-  void _navigateToAnalyzePlants(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AnalyzePlantsScreen()),
-    );
-  }
-
-  String _getUserDisplayName() {
-    return 'Farmer';
-  }
-
-  String _getUserEmail() {
-    return widget.user?.email ?? '';
-  }
-
-  final Color primary = const Color(0xFF2E7D32);
+  void _navigateToWeatherForecast(BuildContext context) => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const WeatherForecastScreen()),
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            // ---------------- FIXED HEADER ----------------
-            Container(
-                width: double.infinity,
-                padding: EdgeInsets.fromLTRB(
-                  0,
-                  MediaQuery.of(context).padding.top + 20,
-                  0,
-                  30,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [primary, primary.withOpacity(0.8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      // ── AppBar: exactly like QualityGradingDashboard ──────────────────────
+      appBar: AppBar(
+        backgroundColor: primary,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          _translate('disease_detection_title'),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigation(
+        currentIndex: 0,
+        onTabSelected: (index) {
+          if (index != 0) Navigator.pop(context);
+        },
+      ),
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 16),
+
+                  // Info card
+                  _buildInfoCard(),
+
+                  const SizedBox(height: 24),
+
+                  // Section title
+                  _buildSectionTitle(
+                    _translate('explore_features'),
+                    Icons.agriculture_rounded,
                   ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
+
+                  const SizedBox(height: 14),
+
+                  // 4 equal-size cards in 2x2 grid
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: _buildActionCardsGrid(context),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primary.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _translate('hello_user').replaceAll('{name}', _getUserDisplayName()),
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  _translate('disease_detection_title'),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                if (_getUserEmail().isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _getUserEmail(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
-              ),
 
-            // ----------- SCROLLABLE CONTENT -----------
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Description card
-                    _buildDescriptionCard(),
-
-                    const SizedBox(height: 28),
-
-                    // Section title
-                    Text(
-                      _translate('explore_features'),
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Features List
-                    // View Posts
-                    _buildNavigationCard(
-                      title: _translate('view_posts'),
-                      subtitle: _translate('view_posts_subtitle'),
-                      icon: Icons.dynamic_feed_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF42A5F5), Color(0xFF2196F3)],
-                      ),
-                      onTap: () => _navigateToPosts(context),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Make a Complaint
-                    _buildNavigationCard(
-                      title: _translate('make_complaint'),
-                      subtitle: _translate('make_complaint_subtitle'),
-                      icon: Icons.report_problem_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFFB74D), Color(0xFFFF9800)],
-                      ),
-                      onTap: () => _navigateToComplaint(context),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Manage Complaints
-                    _buildNavigationCard(
-                      title: _translate('manage_complaints'),
-                      subtitle: _translate('manage_complaints_subtitle'),
-                      icon: Icons.admin_panel_settings_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFBA68C8), Color(0xFF9C27B0)],
-                      ),
-                      onTap: () => _navigateToComplaintManagement(context),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Analyze Plants
-                    _buildNavigationCard(
-                      title: _translate('analyze_plants'),
-                      subtitle: _translate('analyze_plants_subtitle'),
-                      icon: Icons.eco_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF26A69A), Color(0xFF009688)],
-                      ),
-                      onTap: () => _navigateToAnalyzePlants(context),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Open Camera
-                    _buildNavigationCard(
-                      title: _translate('detection_camera'),
-                      subtitle: _translate('detection_camera_subtitle'),
-                      icon: Icons.camera_alt_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF66BB6A), Color(0xFF4CAF50)],
-                      ),
-                      onTap: () => _openCamera(context),
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildDescriptionCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFC8E6C9), Color(0xFFA5D6A7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+  // ── Section title ──────────────────────────────────────────────────────────
+
+  Widget _buildSectionTitle(String title, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white, width: 2),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        Icon(icon, color: primary, size: 22),
+      ],
+    );
+  }
+
+  // ── Info card ──────────────────────────────────────────────────────────────
+
+  Widget _buildInfoCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.2),
-            blurRadius: 12,
+            color: _withOpacity(Colors.black, 0.05),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
+      padding: const EdgeInsets.all(14),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withOpacity(0.08)),
+              color: _withOpacity(primary, 0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.health_and_safety_rounded,
-              color: Colors.black87,
-              size: 24,
+              color: primary,
+              size: 22,
             ),
           ),
           const SizedBox(width: 12),
@@ -341,19 +233,21 @@ class _HomeScreenState extends State<HomeScreen>
                 Text(
                   _translate('smart_farming_tools'),
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
                     color: Colors.black87,
-                    letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   _translate('disease_description'),
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.black87,
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -363,101 +257,141 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildNavigationCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Gradient gradient,
-    required VoidCallback onTap,
-  }) {
+  // ── 2x2 equal-size action cards grid ──────────────────────────────────────
+
+  Widget _buildActionCardsGrid(BuildContext context) {
+    final cards = [
+      _FeatureCardData(
+        title: _translate('view_posts'),
+        subtitle: _translate('view_posts_subtitle'),
+        iconData: Icons.dynamic_feed_rounded,
+        iconBgColor: const Color(0xFFE3F2FD),
+        iconColor: const Color(0xFF1565C0),
+        onTap: () => _navigateToPosts(context),
+      ),
+      _FeatureCardData(
+        title: _translate('detection_camera'),
+        subtitle: _translate('detection_camera_subtitle'),
+        iconData: Icons.camera_alt_rounded,
+        iconBgColor: const Color(0xFFE8F5E9),
+        iconColor: const Color(0xFF2E7D32),
+        onTap: () => _openCamera(context),
+      ),
+      _FeatureCardData(
+        title: _translate('make_complaint'),
+        subtitle: _translate('make_complaint_subtitle'),
+        iconData: Icons.report_problem_rounded,
+        iconBgColor: const Color(0xFFFFF3E0),
+        iconColor: const Color(0xFFE65100),
+        onTap: () => _navigateToComplaint(context),
+      ),
+      _FeatureCardData(
+        title: _translate('manage_complaints'),
+        subtitle: _translate('manage_complaints_subtitle'),
+        iconData: Icons.admin_panel_settings_rounded,
+        iconBgColor: const Color(0xFFF3E5F5),
+        iconColor: const Color(0xFF6A1B9A),
+        onTap: () => _navigateToComplaintManagement(context),
+      ),
+      _FeatureCardData(
+        title: _translate('weather_forecast'),
+        subtitle: _translate('weather_forecast_subtitle'),
+        iconData: Icons.cloud_rounded,
+        iconBgColor: const Color(0xFFE1F5FE),
+        iconColor: const Color(0xFF01579B),
+        onTap: () => _navigateToWeatherForecast(context),
+      ),
+    ];
+
+    // GridView with fixed aspect ratio so all cards are identical in size
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.0, // square cards — adjust if needed
+      ),
+      itemCount: cards.length,
+      itemBuilder: (context, index) => _buildFeatureCard(cards[index]),
+    );
+  }
+
+  Widget _buildFeatureCard(_FeatureCardData data) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: data.onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
-            gradient: gradient,
+            gradient: const LinearGradient(
+              colors: [Color(0xFFF8FAF8), Color(0xFFEFF2EF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.12),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: _withOpacity(Colors.black, 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: Stack(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Positioned(
-                right: -12,
-                bottom: -12,
-                child: Icon(
-                  icon,
-                  size: 65,
-                  color: Colors.white.withOpacity(0.15),
+              // Icon container
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: data.iconBgColor,
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Icon(data.iconData, color: data.iconColor, size: 28),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 22,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                subtitle,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white.withOpacity(0.95),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              color: Colors.white.withOpacity(0.95),
-                              size: 14,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+
+              const SizedBox(height: 10),
+
+              // Title
+              Text(
+                data.title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                  height: 1.2,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 4),
+
+              // Subtitle
+              Text(
+                data.subtitle,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              // Push arrow to the bottom
+              const Spacer(),
+
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 16,
+                  color: Colors.grey[600],
                 ),
               ),
             ],
@@ -467,7 +401,26 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  String _translate(String key) {
-    return AppLocalizations.translate(_currentLanguage, key);
-  }
+  String _translate(String key) =>
+      AppLocalizations.translate(_currentLanguage, key);
+}
+
+// ── Simple data class to keep card definitions tidy ───────────────────────
+
+class _FeatureCardData {
+  final String title;
+  final String subtitle;
+  final IconData iconData;
+  final Color iconBgColor;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  const _FeatureCardData({
+    required this.title,
+    required this.subtitle,
+    required this.iconData,
+    required this.iconBgColor,
+    required this.iconColor,
+    required this.onTap,
+  });
 }

@@ -1,11 +1,7 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../features/certifications/screens/exporter_certifications_dashboard_screen.dart';
-import '../features/certifications/screens/farmer_add_certifications_screen.dart';
-import '../features/certifications/screens/exporter_certification_details_screen.dart';
 import '../features/certifications/screens/farmer_certifications_dashboard_screen.dart';
 import '../services/auth_service.dart';
 import '../features/auth/login_page.dart';
@@ -145,8 +141,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
+        title: const Text('Log Out'),
+        content: const Text('Are you sure you want to log out?'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
@@ -162,7 +158,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Sign Out'),
+            child: const Text('Log Out'),
           ),
         ],
       ),
@@ -200,7 +196,10 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: const Icon(Icons.edit_outlined, color: _primary, size: 20),
             ),
             const SizedBox(width: 12),
-            const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text(
+              'Edit Profile',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ],
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -210,17 +209,28 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildTextField(firstCtrl, 'First name', Icons.person_outline,
-                    validator: (val) =>
-                        val?.trim().isEmpty == true ? 'Required' : null),
+                _buildTextField(
+                  firstCtrl,
+                  'First name',
+                  Icons.person_outline,
+                  validator: (val) =>
+                      val?.trim().isEmpty == true ? 'Required' : null,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(lastCtrl, 'Last name', Icons.person_outline),
                 const SizedBox(height: 12),
-                _buildTextField(contactCtrl, 'Contact', Icons.phone_outlined,
-                    keyboardType: TextInputType.phone),
+                _buildTextField(
+                  contactCtrl,
+                  'Contact',
+                  Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(
-                    locationCtrl, 'Location', Icons.location_on_outlined),
+                  locationCtrl,
+                  'Location',
+                  Icons.location_on_outlined,
+                ),
               ],
             ),
           ),
@@ -318,22 +328,27 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.person_off_outlined,
-                        size: 64, color: Colors.grey[400]),
+                    Icon(
+                      Icons.person_off_outlined,
+                      size: 64,
+                      color: Colors.grey[400],
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'No user data found',
                       style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500),
+                        color: Colors.grey[600],
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton(
                       onPressed: _loadUser,
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
-                          foregroundColor: Colors.white),
+                        backgroundColor: _primary,
+                        foregroundColor: Colors.white,
+                      ),
                       child: const Text('Retry'),
                     ),
                   ],
@@ -360,7 +375,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                           child: Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: responsive.value(
-                                  mobile: 16, tablet: 24, desktop: 32),
+                                mobile: 16,
+                                tablet: 24,
+                                desktop: 32,
+                              ),
                             ),
                             child: _buildInfoCards(responsive),
                           ),
@@ -381,7 +399,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                         Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: responsive.value(
-                                mobile: 16, tablet: 24, desktop: 32),
+                              mobile: 16,
+                              tablet: 24,
+                              desktop: 32,
+                            ),
                           ),
                           child: _buildActionButtons(responsive),
                         ),
@@ -401,7 +422,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                         Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: responsive.value(
-                                mobile: 16, tablet: 24, desktop: 32),
+                              mobile: 16,
+                              tablet: 24,
+                              desktop: 32,
+                            ),
                           ),
                           child: _buildSettingsSection(responsive),
                         ),
@@ -417,8 +441,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildHeader(Responsive responsive) {
-    final fullName =
-        '${_user!['firstName'] ?? ''} ${_user!['lastName'] ?? ''}'.trim();
+    final fullName = '${_user!['firstName'] ?? ''} ${_user!['lastName'] ?? ''}'
+        .trim();
     final email = _user!['email'] ?? '';
     final role = _user!['role'] ?? 'User';
 
@@ -461,14 +485,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: responsive.fontSize(
-                      mobile: 22, tablet: 26, desktop: 30),
+                    mobile: 22,
+                    tablet: 26,
+                    desktop: 30,
+                  ),
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.5,
                 ),
               ),
               // Role badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: colorWithOpacity(Colors.white, 0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -482,7 +512,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                     Icon(
                       Icons.badge_outlined,
                       color: Colors.white,
-                      size: responsive.value(mobile: 14, tablet: 16, desktop: 18),
+                      size: responsive.value(
+                        mobile: 14,
+                        tablet: 16,
+                        desktop: 18,
+                      ),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -490,7 +524,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: responsive.fontSize(
-                            mobile: 12, tablet: 13, desktop: 14),
+                          mobile: 12,
+                          tablet: 13,
+                          desktop: 14,
+                        ),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -525,12 +562,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                     child: CircleAvatar(
                       radius: responsive.value(
-                          mobile: 44, tablet: 52, desktop: 60),
+                        mobile: 44,
+                        tablet: 52,
+                        desktop: 60,
+                      ),
                       backgroundColor: Colors.white,
                       child: _uploading
                           ? CircularProgressIndicator(
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(_primary),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                _primary,
+                              ),
                               strokeWidth: 2,
                             )
                           : _user!['imageUrl'] != null &&
@@ -539,15 +580,22 @@ class _ProfileScreenState extends State<ProfileScreen>
                               child: Image.network(
                                 _user!['imageUrl'],
                                 width: responsive.value(
-                                    mobile: 88, tablet: 104, desktop: 120),
+                                  mobile: 88,
+                                  tablet: 104,
+                                  desktop: 120,
+                                ),
                                 height: responsive.value(
-                                    mobile: 88, tablet: 104, desktop: 120),
+                                  mobile: 88,
+                                  tablet: 104,
+                                  desktop: 120,
+                                ),
                                 fit: BoxFit.cover,
                                 loadingBuilder: (context, child, progress) {
                                   if (progress == null) return child;
                                   return CircularProgressIndicator(
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(_primary),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      _primary,
+                                    ),
                                     strokeWidth: 2,
                                   );
                                 },
@@ -560,7 +608,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   .toUpperCase(),
                               style: TextStyle(
                                 fontSize: responsive.fontSize(
-                                    mobile: 30, tablet: 36, desktop: 42),
+                                  mobile: 30,
+                                  tablet: 36,
+                                  desktop: 42,
+                                ),
                                 fontWeight: FontWeight.w700,
                                 color: _primary,
                               ),
@@ -577,7 +628,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                           color: Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(
-                              color: colorWithOpacity(_primary, 0.2), width: 2),
+                            color: colorWithOpacity(_primary, 0.2),
+                            width: 2,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: colorWithOpacity(Colors.black, 0.15),
@@ -592,7 +645,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                         child: Icon(
                           Icons.camera_alt_rounded,
                           size: responsive.value(
-                              mobile: 14, tablet: 16, desktop: 18),
+                            mobile: 14,
+                            tablet: 16,
+                            desktop: 18,
+                          ),
                           color: _primary,
                         ),
                       ),
@@ -613,7 +669,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: responsive.fontSize(
-                            mobile: 20, tablet: 24, desktop: 28),
+                          mobile: 20,
+                          tablet: 24,
+                          desktop: 28,
+                        ),
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
                       ),
@@ -625,7 +684,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                           Icons.email_outlined,
                           color: colorWithOpacity(Colors.white, 0.75),
                           size: responsive.value(
-                              mobile: 13, tablet: 14, desktop: 15),
+                            mobile: 13,
+                            tablet: 14,
+                            desktop: 15,
+                          ),
                         ),
                         const SizedBox(width: 5),
                         Expanded(
@@ -634,7 +696,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                             style: TextStyle(
                               color: colorWithOpacity(Colors.white, 0.85),
                               fontSize: responsive.fontSize(
-                                  mobile: 12, tablet: 13, desktop: 14),
+                                mobile: 12,
+                                tablet: 13,
+                                desktop: 14,
+                              ),
                               fontWeight: FontWeight.w400,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -651,7 +716,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                             Icons.location_on_rounded,
                             color: colorWithOpacity(Colors.white, 0.75),
                             size: responsive.value(
-                                mobile: 13, tablet: 14, desktop: 15),
+                              mobile: 13,
+                              tablet: 14,
+                              desktop: 15,
+                            ),
                           ),
                           const SizedBox(width: 5),
                           Expanded(
@@ -660,7 +728,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                               style: TextStyle(
                                 color: colorWithOpacity(Colors.white, 0.85),
                                 fontSize: responsive.fontSize(
-                                    mobile: 12, tablet: 13, desktop: 14),
+                                  mobile: 12,
+                                  tablet: 13,
+                                  desktop: 14,
+                                ),
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -702,8 +773,11 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: Text(
               title,
               style: TextStyle(
-                fontSize:
-                    responsive.fontSize(mobile: 17, tablet: 20, desktop: 22),
+                fontSize: responsive.fontSize(
+                  mobile: 17,
+                  tablet: 20,
+                  desktop: 22,
+                ),
                 fontWeight: FontWeight.w700,
                 color: Colors.black87,
               ),
@@ -727,12 +801,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Row(
       children: [
         Expanded(
-          child: _buildInfoCard(
-            responsive,
-            Icons.badge_outlined,
-            'Role',
-            role,
-          ),
+          child: _buildInfoCard(responsive, Icons.badge_outlined, 'Role', role),
         ),
         ResponsiveSpacing.horizontal(mobile: 10, tablet: 14, desktop: 18),
         Expanded(
@@ -773,10 +842,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 14, tablet: 18, desktop: 20),
         ),
-        border: Border.all(
-          color: colorWithOpacity(_primary, 0.12),
-          width: 1.5,
-        ),
+        border: Border.all(color: colorWithOpacity(_primary, 0.12), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: colorWithOpacity(Colors.black, 0.05),
@@ -806,7 +872,11 @@ class _ProfileScreenState extends State<ProfileScreen>
           Text(
             value,
             style: TextStyle(
-              fontSize: responsive.fontSize(mobile: 13, tablet: 14, desktop: 15),
+              fontSize: responsive.fontSize(
+                mobile: 13,
+                tablet: 14,
+                desktop: 15,
+              ),
               fontWeight: FontWeight.w700,
               color: Colors.grey[800],
             ),
@@ -818,7 +888,11 @@ class _ProfileScreenState extends State<ProfileScreen>
           Text(
             label,
             style: TextStyle(
-              fontSize: responsive.fontSize(mobile: 11, tablet: 12, desktop: 13),
+              fontSize: responsive.fontSize(
+                mobile: 11,
+                tablet: 12,
+                desktop: 13,
+              ),
               color: Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
@@ -865,16 +939,26 @@ class _ProfileScreenState extends State<ProfileScreen>
                     Icon(
                       Icons.edit_outlined,
                       color: Colors.white,
-                      size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                      size: responsive.value(
+                        mobile: 18,
+                        tablet: 20,
+                        desktop: 22,
+                      ),
                     ),
                     ResponsiveSpacing.horizontal(
-                        mobile: 8, tablet: 10, desktop: 12),
+                      mobile: 8,
+                      tablet: 10,
+                      desktop: 12,
+                    ),
                     Text(
                       'Edit Profile',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: responsive.fontSize(
-                            mobile: 14, tablet: 15, desktop: 16),
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -922,16 +1006,26 @@ class _ProfileScreenState extends State<ProfileScreen>
                     Icon(
                       Icons.logout_rounded,
                       color: Colors.redAccent,
-                      size: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                      size: responsive.value(
+                        mobile: 18,
+                        tablet: 20,
+                        desktop: 22,
+                      ),
                     ),
                     ResponsiveSpacing.horizontal(
-                        mobile: 8, tablet: 10, desktop: 12),
+                      mobile: 8,
+                      tablet: 10,
+                      desktop: 12,
+                    ),
                     Text(
-                      'Sign Out',
+                      'Log Out',
                       style: TextStyle(
                         color: Colors.redAccent,
                         fontSize: responsive.fontSize(
-                            mobile: 14, tablet: 15, desktop: 16),
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -952,10 +1046,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         borderRadius: BorderRadius.circular(
           responsive.value(mobile: 16, tablet: 20, desktop: 24),
         ),
-        border: Border.all(
-          color: colorWithOpacity(_primary, 0.12),
-          width: 1.5,
-        ),
+        border: Border.all(color: colorWithOpacity(_primary, 0.12), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: colorWithOpacity(Colors.black, 0.05),
@@ -1056,7 +1147,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: responsive.fontSize(
-                            mobile: 14, tablet: 15, desktop: 16),
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
+                        ),
                         color: Colors.grey[800],
                       ),
                     ),
@@ -1065,7 +1159,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                       subtitle,
                       style: TextStyle(
                         fontSize: responsive.fontSize(
-                            mobile: 11, tablet: 12, desktop: 13),
+                          mobile: 11,
+                          tablet: 12,
+                          desktop: 13,
+                        ),
                         color: Colors.grey[600],
                         fontWeight: FontWeight.w400,
                       ),
@@ -1103,8 +1200,9 @@ class _ProfileScreenState extends State<ProfileScreen>
         SnackBar(
           content: const Text('Unknown user role'),
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;

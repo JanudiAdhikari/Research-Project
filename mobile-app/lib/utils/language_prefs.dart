@@ -13,4 +13,3 @@ class LanguagePrefs {
     return prefs.getString(_key) ?? 'en';
   }
 }
-

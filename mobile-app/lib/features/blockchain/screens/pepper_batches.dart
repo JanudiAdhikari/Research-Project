@@ -293,11 +293,15 @@ class _VerifyBatchesScreenState extends State<VerifyBatchesScreen> {
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         backgroundColor: const Color(0xFF2E7D32),
-        title: const Text('Verify Pepper Batches'),
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Verify Pepper Batches',
+          style: TextStyle(color: Colors.white),
+        ),
         actions: [
           IconButton(
             tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
             onPressed: () => setState(_load),
           ),
         ],

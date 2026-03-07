@@ -8,7 +8,7 @@ class NavigationSi {
   static const String analyzeTrends = 'ප්‍රවණතා විශ්ලේෂණය කරන්න';
   static const String exportDetailsByCountry = 'රට අනුව අපනයන විස්තර';
   static const String trackGlobalExports = 'ගෝලීය අපනයන පසුගිය වාර්තා බලන්න';
-  static const String realMarketPrices = ' වෙළඳපොළ මිල';
+  static const String realMarketPrices = 'ගම්මිරිස් තොගවල විස්තර';
   static const String enterPriceDetails =
       'ඔබේ ගම්මිරිස් තොගයේ මිල විස්තර ඇතුළත් කරන්න';
   static const String descriptionTitle = 'වෙළඳපොළ අනාවැකි';

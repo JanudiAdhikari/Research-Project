@@ -53,12 +53,12 @@ class _NavigationWrapperState extends State<NavigationWrapper> {
       return const [ExporterDashboard(), MarketScreen(), ProfileScreen()];
     } else {
       // Farmer pages (default)
-      return const [
-        FarmerDashboard(),
-        MarketScreen(),
-        MyFarmScreen(),
+      return [
+        FarmerDashboard(onTabSelected: _onTabSelected),
+        const MarketScreen(),
+        const MyFarmScreen(),
         //FarmDiaryListScreen(),
-        ProfileScreen(),
+        const ProfileScreen(),
       ];
     }
   }

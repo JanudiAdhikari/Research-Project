@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../config/api.dart';
+import '../models/prediction_response.dart';
 
 // Only import dart:io on non-web platforms
 import 'dart:io' as io show SocketException, Platform;
@@ -31,8 +32,8 @@ class YieldPredictionService {
   /// - [temperature]: Environmental temperature in °C
   /// - [rainfall]: Optional rainfall in mm
   ///
-  /// Returns: Predicted yield value
-  Future<double> predictYield({
+  /// Returns: PredictionResponse with yield, insights, and top factors
+  Future<PredictionResponse> predictYield({
     required dynamic imageFile,
     required double soilMoisture,
     required double temperature,
@@ -125,8 +126,8 @@ class YieldPredictionService {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(await response.stream.bytesToString());
-        return (responseData['predicted_yield'] ?? responseData['yield'] ?? 0.0)
-            .toDouble();
+        print('[YieldPrediction] Response: $responseData');
+        return PredictionResponse.fromJson(responseData);
       } else {
         final errorBody = await response.stream.bytesToString();
         print('[YieldPrediction] Error response: $errorBody');

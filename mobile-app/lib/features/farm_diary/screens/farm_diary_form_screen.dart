@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../../../models/farm_diary.dart';
 import '../../../providers/app_providers.dart';
 import '../../../providers/farm_diary_provider.dart';
+import '../../../services/farmer_service.dart';
+import '../../../models/farm_plot.dart';
 
 class FarmDiaryFormScreen extends StatefulWidget {
   final String? farmPlotId;
@@ -34,6 +36,12 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
   String _plantHealth = 'good';
   List<String> _tags = [];
   bool _isLoading = false;
+
+  // Plot selection
+  final FarmerService _farmerService = FarmerService();
+  List<FarmPlot> _availablePlots = [];
+  String? _selectedFarmPlotId;
+  bool _isLoadingPlots = false;
 
   final List<String> activityTypes = [
     'watering',
@@ -102,6 +110,27 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
       _diseaseSymptomController = TextEditingController();
       _pestPresenceController = TextEditingController();
     }
+
+    _selectedFarmPlotId = widget.farmPlotId ?? widget.entry?.farmPlotId;
+    if (_selectedFarmPlotId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadAvailablePlots());
+    }
+  }
+
+  Future<void> _loadAvailablePlots() async {
+    setState(() => _isLoadingPlots = true);
+    try {
+      final plots = await _farmerService.fetchPlots();
+      setState(() {
+        _availablePlots = plots;
+      });
+    } catch (e) {
+      print('Error loading plots: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingPlots = false);
+      }
+    }
   }
 
   @override
@@ -125,7 +154,7 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
       return;
     }
 
-    if (widget.farmPlotId == null) {
+    if (_selectedFarmPlotId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a farm plot')),
       );
@@ -140,7 +169,7 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
       description: _descriptionController.text,
       activityType: _selectedActivityType,
       diaryDate: _selectedDate,
-      farmPlotId: widget.farmPlotId ?? widget.entry?.farmPlotId ?? '',
+      farmPlotId: _selectedFarmPlotId!,
       weather: Weather(
         condition: _selectedWeatherCondition,
         temperature: _temperature,
@@ -180,6 +209,7 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
       }
 
       if (saved != null) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -189,12 +219,20 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
         );
         Navigator.pop(context);
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(_provider.error ?? 'Failed to save entry')),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -205,50 +243,121 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
         title: Text(widget.entry != null ? 'Edit Entry' : 'New Diary Entry'),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            _buildTextField(
-              'Title ',
-              _titleController,
-              hint: 'e.g., Watering Session',
-              maxLines: 1,
-            ),
-            const SizedBox(height: 16),
-            // Activity Type
-            _buildActivityTypeDropdown(),
-            const SizedBox(height: 16),
-            // Date and Time
-            _buildDateField(),
-            const SizedBox(height: 16),
-            // Description
-            _buildTextField(
-              'Description',
-              _descriptionController,
-              hint: 'Describe what you did...',
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-            // Weather Section
-            const Divider(),
-            const SizedBox(height: 16),
-            const Text(
-              'Weather Information',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildWeatherConditionDropdown(),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
+      body: _isLoadingPlots
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.farmPlotId == null && widget.entry == null) ...[
+                    const Text(
+                      'Select Farm Plot',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
+                      value: _selectedFarmPlotId,
+                      hint: const Text('Select a plot'),
+                      items: _availablePlots
+                          .map((plot) => DropdownMenuItem(
+                                value: plot.id,
+                                child: Text('${plot.name} (${plot.crop})'),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedFarmPlotId = value);
+                      },
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  // Title
+                  _buildTextField(
+                    'Title ',
+                    _titleController,
+                    hint: 'e.g., Watering Session',
+                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 16),
+                  // Activity Type
+                  _buildActivityTypeDropdown(),
+                  const SizedBox(height: 16),
+                  // Date and Time
+                  _buildDateField(),
+                  const SizedBox(height: 16),
+                  // Description
+                  _buildTextField(
+                    'Description',
+                    _descriptionController,
+                    hint: 'Describe what you did...',
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 24),
+                  // Weather Section
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Weather Information',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildWeatherConditionDropdown(),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Temperature (°C)',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            _temperature = double.tryParse(value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Humidity (%)',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            _humidity = double.tryParse(value);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: 'Temperature (°C)',
+                      labelText: 'Rainfall (mm)',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -258,134 +367,95 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
                       ),
                     ),
                     onChanged: (value) {
-                      _temperature = double.tryParse(value);
+                      _rainfall = double.tryParse(value);
                     },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
+                  const SizedBox(height: 24),
+                  // Observations Section
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Observations',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPlantHealthDropdown(),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    'Disease Symptoms',
+                    _diseaseSymptomController,
+                    hint: 'Describe any disease symptoms...',
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    'Pest Presence',
+                    _pestPresenceController,
+                    hint: 'Describe any pests found...',
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 24),
+                  // Inputs Section
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Inputs Used',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    'Fertilizer',
+                    _fertiliserController,
+                    hint: 'Type and amount of fertilizer used',
+                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    'Pesticide',
+                    _pesticideController,
+                    hint: 'Type and amount of pesticide used',
+                    maxLines: 1,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    'Water Quantity (L)',
+                    _waterQuantityController,
+                    hint: 'Amount of water used in liters',
+                    maxLines: 1,
                     keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Humidity (%)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                  ),
+                  const SizedBox(height: 24),
+                  // Notes Section
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    'Additional Notes',
+                    _notesController,
+                    hint: 'Any other observations or notes...',
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 24),
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isLoading ? null : _saveDiaryEntry,
+                      icon: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save),
+                      label: Text(
+                        widget.entry != null ? 'Update Entry' : 'Save Entry',
                       ),
                     ),
-                    onChanged: (value) {
-                      _humidity = double.tryParse(value);
-                    },
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: 'Rainfall (mm)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-              ),
-              onChanged: (value) {
-                _rainfall = double.tryParse(value);
-              },
-            ),
-            const SizedBox(height: 24),
-            // Observations Section
-            const Divider(),
-            const SizedBox(height: 16),
-            const Text(
-              'Observations',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildPlantHealthDropdown(),
-            const SizedBox(height: 12),
-            _buildTextField(
-              'Disease Symptoms',
-              _diseaseSymptomController,
-              hint: 'Describe any disease symptoms...',
-              maxLines: 2,
-            ),
-            const SizedBox(height: 12),
-            _buildTextField(
-              'Pest Presence',
-              _pestPresenceController,
-              hint: 'Describe any pests found...',
-              maxLines: 2,
-            ),
-            const SizedBox(height: 24),
-            // Inputs Section
-            const Divider(),
-            const SizedBox(height: 16),
-            const Text(
-              'Inputs Used',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _buildTextField(
-              'Fertilizer',
-              _fertiliserController,
-              hint: 'Type and amount of fertilizer used',
-              maxLines: 1,
-            ),
-            const SizedBox(height: 12),
-            _buildTextField(
-              'Pesticide',
-              _pesticideController,
-              hint: 'Type and amount of pesticide used',
-              maxLines: 1,
-            ),
-            const SizedBox(height: 12),
-            _buildTextField(
-              'Water Quantity (L)',
-              _waterQuantityController,
-              hint: 'Amount of water used in liters',
-              maxLines: 1,
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 24),
-            // Notes Section
-            const Divider(),
-            const SizedBox(height: 16),
-            _buildTextField(
-              'Additional Notes',
-              _notesController,
-              hint: 'Any other observations or notes...',
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-            // Save Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _isLoading ? null : _saveDiaryEntry,
-                icon: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save),
-                label: Text(
-                  widget.entry != null ? 'Update Entry' : 'Save Entry',
-                ),
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../models/farm_diary.dart';
 import '../../../providers/app_providers.dart';
 import '../../../providers/farm_diary_provider.dart';
@@ -39,7 +40,7 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen> {
   void initState() {
     super.initState();
     _provider = AppProviders.farmDiary;
-    _loadEntries();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadEntries());
   }
 
   void _loadEntries() {
@@ -186,29 +187,35 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen> {
         title: const Text('Farm Diary'),
         elevation: 0,
         actions: [
-          if (_provider.hasPendingEntries)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Center(
-                child: Tooltip(
-                  message: '${_provider.pendingEntriesCount} pending changes',
-                  child: IconButton(
-                    icon: Badge(
-                      label: Text(_provider.pendingEntriesCount.toString()),
-                      child: const Icon(Icons.cloud_off),
-                    ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Syncing offline entries...'),
+          Consumer<FarmDiaryProvider>(
+            builder: (context, provider, child) {
+              if (provider.hasPendingEntries) {
+                return Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Center(
+                    child: Tooltip(
+                      message: '${provider.pendingEntriesCount} pending changes',
+                      child: IconButton(
+                        icon: Badge(
+                          label: Text(provider.pendingEntriesCount.toString()),
+                          child: const Icon(Icons.cloud_off),
                         ),
-                      );
-                      _provider.syncOfflineEntries();
-                    },
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Syncing offline entries...'),
+                            ),
+                          );
+                          provider.syncOfflineEntries();
+                        },
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ],
       ),
       body: Column(
@@ -247,10 +254,13 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen> {
           ),
           // Diary Entries List
           Expanded(
-            child: _provider.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _provider.error != null
-                ? Center(
+            child: Consumer<FarmDiaryProvider>(
+              builder: (context, provider, child) {
+                if (provider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (provider.error != null) {
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -260,7 +270,7 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen> {
                           color: Colors.red,
                         ),
                         const SizedBox(height: 16),
-                        Text('Error: ${_provider.error}'),
+                        Text('Error: ${provider.error}'),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: _loadEntries,
@@ -268,9 +278,10 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen> {
                         ),
                       ],
                     ),
-                  )
-                : _provider.diaryEntries.isEmpty
-                ? Center(
+                  );
+                }
+                if (provider.diaryEntries.isEmpty) {
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -283,37 +294,32 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen> {
                         const Text('No diary entries yet'),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => FarmDiaryFormScreen(
-                                farmPlotId: widget.farmPlotId,
-                              ),
-                            ),
+                          onPressed: () => context.navigateToFarmDiaryForm(
+                            farmPlotId: widget.farmPlotId,
                           ),
                           icon: const Icon(Icons.add),
                           label: const Text('Create Entry'),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: _provider.diaryEntries.length,
-                    itemBuilder: (context, index) {
-                      final entry = _provider.diaryEntries[index];
-                      return _buildDiaryCard(entry);
-                    },
-                  ),
+                  );
+                }
+                return ListView.builder(
+                  itemCount: provider.diaryEntries.length,
+                  itemBuilder: (context, index) {
+                    final entry = provider.diaryEntries[index];
+                    return _buildDiaryCard(entry);
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                FarmDiaryFormScreen(farmPlotId: widget.farmPlotId),
-          ),
+        heroTag: 'farm_diary_fab',
+        onPressed: () => context.navigateToFarmDiaryForm(
+          farmPlotId: widget.farmPlotId,
         ),
         icon: const Icon(Icons.add),
         label: const Text('New Entry'),
@@ -366,12 +372,7 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen> {
           ],
         ),
         trailing: const Icon(Icons.arrow_forward),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FarmDiaryDetailScreen(entryId: entry.id),
-          ),
-        ),
+        onTap: () => context.navigateToFarmDiaryDetail(entryId: entry.id),
       ),
     );
   }

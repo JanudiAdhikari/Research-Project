@@ -8,6 +8,7 @@ import '../widgets/empty_reports_view.dart';
 import '../widgets/error_view.dart';
 import 'actual_price_data.dart';
 import '../../../utils/market forecast/actual_price_data_si.dart';
+import '../widgets/marketplace_prompt_dialog.dart';
 
 class PastPriceReportsScreen extends StatefulWidget {
   const PastPriceReportsScreen({super.key});
@@ -74,34 +75,30 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
   void _sortReports() {
     pastReports.sort((a, b) {
       DateTime? dateA = _parseDate(
-        a['date'] ?? a['createdAt'] ?? a['reportDate'],
+        a['saleDate'] ?? a['date'] ?? a['createdAt'] ?? a['reportDate'],
       );
       DateTime? dateB = _parseDate(
-        b['date'] ?? b['createdAt'] ?? b['reportDate'],
+        b['saleDate'] ?? b['date'] ?? b['createdAt'] ?? b['reportDate'],
       );
 
       if (dateA == null || dateB == null) return 0;
-
       return _sortAscending ? dateA.compareTo(dateB) : dateB.compareTo(dateA);
     });
   }
 
-  // Helper method to parse date from various formats
   DateTime? _parseDate(dynamic dateValue) {
     if (dateValue == null) return null;
-
     if (dateValue is DateTime) return dateValue;
     if (dateValue is String) {
       try {
         return DateTime.parse(dateValue);
-      } catch (e) {
+      } catch (_) {
         return null;
       }
     }
     return null;
   }
 
-  // Toggle sort order
   void _toggleSortOrder() {
     setState(() {
       _sortAscending = !_sortAscending;
@@ -142,7 +139,6 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
       ),
     );
 
-    // If user confirms deletion, proceed to delete the report
     if (confirm == true) {
       try {
         await _service.deleteActualPriceData(id);
@@ -185,10 +181,73 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
       ),
     );
 
-    // Reload reports if update was successful
     if (result == true && mounted) {
       _loadReports();
     }
+  }
+
+  // Add to Marketplace flow
+  Future<void> _promptAddToMarketplace(Map<String, dynamic> report) async {
+    final id = (report['_id'] as String?) ?? (report['id'] as String?) ?? '';
+    if (id.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _currentLanguage == 'si'
+                ? ActualPriceDataSi.cannotDeleteNoId
+                : 'Cannot update: Report ID not found',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => MarketplacePromptDialog(
+        language: _currentLanguage,
+        onNoThanks: () => Navigator.pop(context),
+        onYesAdd: () async {
+          Navigator.pop(context);
+
+          try {
+            await _service.updateActualPriceData(id, {
+              'currentStatus': 'MARKETPLACE_LISTED',
+            });
+
+            if (!mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  _currentLanguage == 'si'
+                      ? 'වෙළඳපලට යොමු කරන ලදී. අනුමැතිය අවශ්‍ය වේ.'
+                      : 'Sent to marketplace. Approval is required.',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            _loadReports();
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  _currentLanguage == 'si'
+                      ? 'වෙළඳපලට යැවීම අසාර්ථකයි: $e'
+                      : 'Failed to send to marketplace: $e',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+      ),
+    );
   }
 
   @override
@@ -201,13 +260,15 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
         title: Text(
           _currentLanguage == 'si'
               ? ActualPriceDataSi.pastPriceDetails
-              : 'Past Price Details',
+              : 'Pepper Batch Details',
+          style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF2E7D32),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
             onPressed: _loadReports,
           ),
         ],
@@ -235,7 +296,7 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                       Text(
                         _currentLanguage == 'si'
                             ? ActualPriceDataSi.recentSales
-                            : 'Recent Sales',
+                            : 'Recent Pepper Batches',
                         style: TextStyle(
                           fontSize: responsive.bodyFontSize + 2,
                           fontWeight: FontWeight.w700,
@@ -261,14 +322,15 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: pastReports.length,
                     itemBuilder: (context, index) {
+                      final report = pastReports[index];
+
                       return PriceReportCard(
-                        report: pastReports[index],
-                        onUpdate: () =>
-                            _navigateToUpdateReport(pastReports[index]),
+                        report: report,
+                        onUpdate: () => _navigateToUpdateReport(report),
                         onDelete: () {
                           final id =
-                              pastReports[index]['_id'] as String? ??
-                              pastReports[index]['id'] as String? ??
+                              report['_id'] as String? ??
+                              report['id'] as String? ??
                               '';
                           if (id.isNotEmpty) {
                             _deleteReport(id);
@@ -285,6 +347,9 @@ class _PastPriceReportsScreenState extends State<PastPriceReportsScreen> {
                             );
                           }
                         },
+                        // ✅ NEW button callback
+                        onAddToMarketplace: () =>
+                            _promptAddToMarketplace(report),
                         language: _currentLanguage,
                       );
                     },

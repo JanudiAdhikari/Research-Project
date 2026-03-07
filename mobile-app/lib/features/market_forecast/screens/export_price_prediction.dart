@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 import '../../../utils/responsive.dart';
 import 'export_price_trends.dart';
 
@@ -32,6 +34,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     _calculateNextMonth();
   }
 
+  // Method to calculate the next month
   void _calculateNextMonth() {
     DateTime now = DateTime.now();
     DateTime nextMonthDate = DateTime(now.year, now.month + 1, 1);
@@ -62,7 +65,13 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
         title: const Text('Export Price Prediction'),
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
-        foregroundColor: const Color.fromARGB(255, 0, 0, 0),
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -77,7 +86,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
                   onTap: _resetForm,
                   borderRadius: BorderRadius.circular(10),
                   child: const Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: EdgeInsets.all(0.0),
                     child: Icon(
                       Icons.refresh_rounded,
                       color: Colors.white,
@@ -401,6 +410,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+  // Build the loading card
   Widget _buildLoadingCard(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -468,6 +478,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+// Buld the result card
   Widget _buildResultCard(BuildContext context) {
     final theme = Theme.of(context);
     final volumeKg = double.tryParse(_volumeController.text) ?? 0;
@@ -478,19 +489,19 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [const Color(0xFFFFF9C4), const Color(0xFFFFE082)],
+          colors: [const Color.fromARGB(255, 191, 243, 169), const Color.fromARGB(255, 208, 222, 204)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFE082).withOpacity(0.3),
+            color: const Color.fromARGB(255, 176, 238, 143).withOpacity(0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
           BoxShadow(
-            color: Colors.yellow.withOpacity(0.1),
+            color: const Color.fromARGB(255, 182, 221, 156).withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -701,6 +712,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+// Build number field
   Widget _buildNumberField() {
     final hasError = showErrors && _volumeController.text.isEmpty;
 
@@ -759,6 +771,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+// Build enhanced result row
   Widget _buildChip(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -777,6 +790,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+// Build month details section
   Widget _buildMonthDetailsSection(Responsive responsive) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -813,6 +827,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+// Build fetch button with loading state
   Widget _buildFetchButton({
     required bool isLoading,
     required VoidCallback onPressed,
@@ -874,6 +889,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+// Build month card
   Widget _buildMonthCard(Responsive responsive) {
     return Container(
       width: double.infinity,
@@ -946,6 +962,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
+// On submit, validate and call API
   void _onSubmit() {
     setState(() {
       showErrors = true;
@@ -957,23 +974,58 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
       return;
     }
 
+    _callExportPredictionApi();
+  }
+
+  Future<void> _callExportPredictionApi() async {
     setState(() {
       isLoading = true;
     });
 
-    // Simulate API call with delay
-    Future.delayed(const Duration(seconds: 2), () {
-      final pricePerKg = _estimateUnitPrice();
-      final volume = double.tryParse(_volumeController.text) ?? 0;
-      final total = pricePerKg * volume;
+    final volume = double.tryParse(_volumeController.text) ?? 0;
+
+    // Use for Android emulator
+    final apiUrl = Uri.parse('http://10.0.2.2:8000/predictexportprice');
+
+    try {
+      final resp = await http.post(
+        apiUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'quantity_kg': volume}),
+      );
+
+      if (resp.statusCode != 200) {
+        throw Exception('Server returned ${resp.statusCode}');
+      }
+
+      final body = json.decode(resp.body) as Map<String, dynamic>;
+      if (body.containsKey('error')) {
+        throw Exception(body['error'].toString());
+      }
+
+      final predicted = (body['predicted_export_price_lkr_per_kg'] as num?)
+          ?.toDouble();
+      final year = body['year'] as int?;
+      final monthNum = body['month'] as int?;
 
       setState(() {
-        predictedPricePerKg = pricePerKg;
-        predictedMonthlyTotal = total;
+        predictedPricePerKg = predicted;
+        predictedMonthlyTotal = (predicted != null) ? predicted * volume : null;
+        if (year != null && monthNum != null) {
+          nextYear = year.toString();
+          nextMonth = DateFormat('MMMM').format(DateTime(year, monthNum, 1));
+        }
         showResult = true;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Prediction failed: ${e.toString()}')),
+      );
+    } finally {
+      setState(() {
         isLoading = false;
       });
-    });
+    }
   }
 
   void _resetForm() {
@@ -987,31 +1039,6 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
       showMonthDetails = false;
       isLoadingMonthDetails = false;
     });
-  }
-
-  double _estimateUnitPrice() {
-    // Base price per kg in LKR - varies by month and pepper type
-    Map<String, Map<String, double>> basePrices = {
-      'February': {'Black': 1480.0, 'White': 3250.0},
-    };
-
-    double basePrice = basePrices[nextMonth]?[selectedPepperType] ?? 1500.0;
-
-    // Volume-based discount
-    double volumeInKg = double.tryParse(_volumeController.text) ?? 0;
-    double volumeDiscount = 0.0;
-
-    if (volumeInKg >= 1000) {
-      volumeDiscount = 0.10; // 10% discount for large volumes
-    } else if (volumeInKg >= 500) {
-      volumeDiscount = 0.05; // 5% discount for medium volumes
-    }
-
-    // Year-based price adjustment (future year might have inflation)
-    int currentYear = DateTime.now().year;
-    double yearAdjustment = int.parse(nextYear) > currentYear ? 1.05 : 1.0;
-
-    return basePrice * (1 - volumeDiscount) * yearAdjustment;
   }
 
   String _formatCurrencyNumber(double value) {

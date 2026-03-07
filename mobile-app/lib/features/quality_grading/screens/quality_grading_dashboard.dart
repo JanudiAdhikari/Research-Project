@@ -18,7 +18,14 @@ Color _withOpacity(Color c, double opacity) {
 }
 
 class QualityGradingDashboard extends StatefulWidget {
-  const QualityGradingDashboard({super.key});
+  final Function(int)? onTabSelected;
+  final int? currentIndex;
+
+  const QualityGradingDashboard({
+    super.key,
+    this.onTabSelected,
+    this.currentIndex = 0,
+  });
 
   @override
   State<QualityGradingDashboard> createState() =>
@@ -214,12 +221,18 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigation(
-        currentIndex: 0,
-        onTabSelected: (index) {
-          if (index != 0) Navigator.pop(context);
-        },
-      ),
+      bottomNavigationBar: widget.onTabSelected != null
+          ? BottomNavigation(
+              currentIndex: widget.currentIndex ?? 0,
+              onTabSelected: (index) {
+                // Navigate to the selected tab
+                widget.onTabSelected!(index);
+                // Pop back to show the navigation bar from parent
+                Navigator.pop(context);
+              },
+              userRole: 'farmer',
+            )
+          : null,
     );
   }
 

@@ -3,6 +3,8 @@ import '../../services/market_service.dart';
 import '../../services/auth_service.dart';
 import '../../models/market_product.dart';
 import '../../utils/responsive.dart';
+import '../../utils/language_prefs.dart';
+import '../../utils/common/market_screen_si.dart';
 
 // Same helper used in FarmerDashboard & ProfileScreen
 Color colorWithOpacity(Color c, double opacity) {
@@ -27,6 +29,7 @@ class _MarketScreenState extends State<MarketScreen>
   List<MarketProduct> _products = [];
   String _searchQuery = '';
   String _userRole = 'farmer';
+  String _currentLanguage = 'en'; // ← added for language support
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -52,7 +55,20 @@ class _MarketScreenState extends State<MarketScreen>
 
     _loadProducts();
     _loadUserRole();
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
+
+  // ── Language helper ────────────────────────────────────────────────────────
+
+  bool get _isSinhala => _currentLanguage == 'si';
+
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
+
+  // ──────────────────────────────────────────────────────────────────────────
 
   Future<void> _loadUserRole() async {
     try {
@@ -89,14 +105,16 @@ class _MarketScreenState extends State<MarketScreen>
         setState(() => _error = e.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load products: $e'),
+            content: Text(
+              '${_t(MarketScreenSi.failedToLoad, MarketScreenSi.failedToLoad)}$e',
+            ),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
             action: SnackBarAction(
-              label: 'Retry',
+              label: _t('Retry', MarketScreenSi.retry),
               textColor: Colors.white,
               onPressed: _loadProducts,
             ),
@@ -147,7 +165,9 @@ class _MarketScreenState extends State<MarketScreen>
             ),
             const SizedBox(width: 12),
             Text(
-              product == null ? 'Add New Product' : 'Edit Product',
+              product == null
+                  ? _t('Add New Product', MarketScreenSi.addNewProduct)
+                  : _t('Edit Product', MarketScreenSi.editProduct),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
@@ -161,17 +181,20 @@ class _MarketScreenState extends State<MarketScreen>
               children: [
                 _dialogField(
                   nameCtrl,
-                  'Product Name',
+                  _t('Product Name', MarketScreenSi.productName),
                   Icons.shopping_basket_outlined,
-                  hint: 'e.g., Rice, Wheat',
+                  hint: _t('e.g., Rice, Wheat', MarketScreenSi.productNameHint),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Product name is required'
+                      ? _t(
+                          'Product name is required',
+                          MarketScreenSi.productNameRequired,
+                        )
                       : null,
                 ),
                 const SizedBox(height: 14),
                 _dialogField(
                   priceCtrl,
-                  'Price',
+                  _t('Price', MarketScreenSi.price),
                   Icons.attach_money_outlined,
                   hint: '0.00',
                   prefixText: 'Rs ',
@@ -180,20 +203,27 @@ class _MarketScreenState extends State<MarketScreen>
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty)
-                      return 'Price is required';
+                      return _t(
+                        'Price is required',
+                        MarketScreenSi.priceRequired,
+                      );
                     final n = double.tryParse(v.trim());
-                    if (n == null || n <= 0) return 'Enter a valid price';
+                    if (n == null || n <= 0)
+                      return _t(
+                        'Enter a valid price',
+                        MarketScreenSi.priceInvalid,
+                      );
                     return null;
                   },
                 ),
                 const SizedBox(height: 14),
                 _dialogField(
                   unitCtrl,
-                  'Unit',
+                  _t('Unit', MarketScreenSi.unit),
                   Icons.scale_outlined,
-                  hint: 'kg, lbs, pcs',
+                  hint: _t('kg, lbs, pcs', MarketScreenSi.unitHint),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Unit is required'
+                      ? _t('Unit is required', MarketScreenSi.unitRequired)
                       : null,
                 ),
               ],
@@ -203,7 +233,10 @@ class _MarketScreenState extends State<MarketScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, null),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              _t('Cancel', MarketScreenSi.cancel),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -222,7 +255,11 @@ class _MarketScreenState extends State<MarketScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: Text(product == null ? 'Add Product' : 'Save'),
+            child: Text(
+              product == null
+                  ? _t('Add Product', MarketScreenSi.addProduct)
+                  : _t('Save', MarketScreenSi.save),
+            ),
           ),
         ],
       ),
@@ -245,8 +282,14 @@ class _MarketScreenState extends State<MarketScreen>
             SnackBar(
               content: Text(
                 product == null
-                    ? 'Product added successfully'
-                    : 'Product updated successfully',
+                    ? _t(
+                        'Product added successfully',
+                        MarketScreenSi.productAdded,
+                      )
+                    : _t(
+                        'Product updated successfully',
+                        MarketScreenSi.productUpdated,
+                      ),
               ),
               backgroundColor: _primary,
               behavior: SnackBarBehavior.floating,
@@ -260,7 +303,9 @@ class _MarketScreenState extends State<MarketScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to save product: $e'),
+              content: Text(
+                '${_t('Failed to save product: ', MarketScreenSi.failedToSave)}$e',
+              ),
               backgroundColor: Colors.redAccent,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -312,16 +357,23 @@ class _MarketScreenState extends State<MarketScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Delete Product',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          _t('Delete Product', MarketScreenSi.deleteProduct),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
-        content: Text('Are you sure you want to delete "${product.name}"?'),
+        content: Text(
+          '${_t('Are you sure you want to delete "', MarketScreenSi.deleteConfirm)}'
+          '${product.name}'
+          '${_t('"?', MarketScreenSi.deleteConfirmEnd)}',
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              _t('Cancel', MarketScreenSi.cancel),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -332,7 +384,7 @@ class _MarketScreenState extends State<MarketScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Delete'),
+            child: Text(_t('Delete', MarketScreenSi.delete)),
           ),
         ],
       ),
@@ -343,7 +395,9 @@ class _MarketScreenState extends State<MarketScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Product deleted'),
+              content: Text(
+                _t('Product deleted', MarketScreenSi.productDeleted),
+              ),
               backgroundColor: _primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -357,7 +411,9 @@ class _MarketScreenState extends State<MarketScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to delete: $e'),
+              content: Text(
+                '${_t('Failed to delete: ', MarketScreenSi.failedToDelete)}$e',
+              ),
               backgroundColor: Colors.redAccent,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -423,7 +479,7 @@ class _MarketScreenState extends State<MarketScreen>
                   // ── Section title ────────────────────────────────────
                   _buildSectionTitle(
                     r,
-                    'Available Products',
+                    _t('Available Products', MarketScreenSi.availableProducts),
                     Icons.store_rounded,
                   ),
 
@@ -445,9 +501,9 @@ class _MarketScreenState extends State<MarketScreen>
           : FloatingActionButton.extended(
               onPressed: () => _showProductForm(),
               icon: const Icon(Icons.add_shopping_cart_outlined),
-              label: const Text(
-                'Add Product',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              label: Text(
+                _t('Add Product', MarketScreenSi.addProduct),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               backgroundColor: _primary,
               foregroundColor: Colors.white,
@@ -494,7 +550,7 @@ class _MarketScreenState extends State<MarketScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Market Place',
+                  _t('Market Place', MarketScreenSi.marketPlace),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: r.fontSize(mobile: 26, tablet: 30, desktop: 34),
@@ -504,7 +560,10 @@ class _MarketScreenState extends State<MarketScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Buy and sell fresh farm produce',
+                  _t(
+                    'Buy and sell fresh farm produce',
+                    MarketScreenSi.marketSubtitle,
+                  ),
                   style: TextStyle(
                     color: colorWithOpacity(Colors.white, 0.80),
                     fontSize: r.fontSize(mobile: 13, tablet: 14, desktop: 15),
@@ -545,7 +604,7 @@ class _MarketScreenState extends State<MarketScreen>
         onChanged: (v) => setState(() => _searchQuery = v),
         style: TextStyle(fontSize: r.bodyFontSize),
         decoration: InputDecoration(
-          hintText: 'Search products...',
+          hintText: _t('Search products...', MarketScreenSi.searchProducts),
           hintStyle: TextStyle(
             fontSize: r.bodyFontSize,
             color: Colors.grey[400],
@@ -652,6 +711,7 @@ class _MarketScreenState extends State<MarketScreen>
               onEdit: () => _showProductForm(product),
               onDelete: () => _confirmDelete(product),
               isFarmer: _userRole == 'farmer',
+              isSinhala: _isSinhala, // ← pass language flag
             );
           },
         ),
@@ -682,7 +742,10 @@ class _MarketScreenState extends State<MarketScreen>
             ),
             SizedBox(height: r.mediumSpacing),
             Text(
-              'Failed to load products',
+              _t(
+                'Failed to load products',
+                MarketScreenSi.failedToLoadProducts,
+              ),
               style: TextStyle(
                 fontSize: r.titleFontSize,
                 fontWeight: FontWeight.w700,
@@ -702,9 +765,9 @@ class _MarketScreenState extends State<MarketScreen>
             ElevatedButton.icon(
               onPressed: _loadProducts,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text(
-                'Try Again',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              label: Text(
+                _t('Try Again', MarketScreenSi.tryAgain),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
@@ -749,7 +812,9 @@ class _MarketScreenState extends State<MarketScreen>
             ),
             SizedBox(height: r.largeSpacing),
             Text(
-              _searchQuery.isEmpty ? 'No products yet' : 'No products found',
+              _searchQuery.isEmpty
+                  ? _t('No products yet', MarketScreenSi.noProductsYet)
+                  : _t('No products found', MarketScreenSi.noProductsFound),
               style: TextStyle(
                 fontSize: r.headingFontSize,
                 fontWeight: FontWeight.w700,
@@ -759,8 +824,14 @@ class _MarketScreenState extends State<MarketScreen>
             SizedBox(height: r.smallSpacing),
             Text(
               _searchQuery.isEmpty
-                  ? 'Start by adding your first product'
-                  : 'Try a different search term',
+                  ? _t(
+                      'Start by adding your first product',
+                      MarketScreenSi.addFirstProduct,
+                    )
+                  : _t(
+                      'Try a different search term',
+                      MarketScreenSi.tryDifferentSearch,
+                    ),
               style: TextStyle(
                 fontSize: r.bodyFontSize,
                 color: Colors.grey[600],
@@ -771,9 +842,9 @@ class _MarketScreenState extends State<MarketScreen>
               ElevatedButton.icon(
                 onPressed: () => _showProductForm(),
                 icon: const Icon(Icons.add_rounded),
-                label: const Text(
-                  'Add Product',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                label: Text(
+                  _t('Add Product', MarketScreenSi.addProduct),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primary,
@@ -804,12 +875,14 @@ class _ProductCard extends StatefulWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final bool isFarmer;
+  final bool isSinhala; // ← added for language support
 
   const _ProductCard({
     required this.product,
     required this.onEdit,
     required this.onDelete,
     this.isFarmer = true,
+    this.isSinhala = false, // ← added for language support
   });
 
   @override
@@ -820,6 +893,10 @@ class _ProductCardState extends State<_ProductCard> {
   static const Color _primary = Color(0xFF2E7D32);
   int _qty = 1;
   bool _fav = false;
+
+  // ── Language helper ──────────────────────────────────────────────────────
+  String _t(String english, String sinhala) =>
+      widget.isSinhala ? sinhala : english;
 
   @override
   Widget build(BuildContext context) {
@@ -953,7 +1030,7 @@ class _ProductCardState extends State<_ProductCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Per ${p.unit}',
+                        '${_t('Per', MarketScreenSi.per)} ${p.unit}',
                         style: TextStyle(
                           fontSize: unitSize,
                           color: Colors.grey[500],
@@ -1019,9 +1096,9 @@ class _ProductCardState extends State<_ProductCard> {
                                             color: _primary,
                                           ),
                                           const SizedBox(width: 10),
-                                          const Text(
-                                            'Edit',
-                                            style: TextStyle(
+                                          Text(
+                                            _t('Edit', MarketScreenSi.edit),
+                                            style: const TextStyle(
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -1038,9 +1115,12 @@ class _ProductCardState extends State<_ProductCard> {
                                             color: Colors.redAccent,
                                           ),
                                           const SizedBox(width: 10),
-                                          const Text(
-                                            'Delete',
-                                            style: TextStyle(
+                                          Text(
+                                            _t(
+                                              'Delete',
+                                              MarketScreenSi.deleteMenu,
+                                            ),
+                                            style: const TextStyle(
                                               color: Colors.redAccent,
                                               fontWeight: FontWeight.w600,
                                             ),

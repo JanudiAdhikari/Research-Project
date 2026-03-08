@@ -7,7 +7,7 @@ import '../services/quality_check_api.dart';
 import 'new_quality_check/batch_details_screen.dart';
 import 'how_it_works_screen.dart';
 import 'image_capture_guide_screen.dart';
-import 'iot_device_setup_screen.dart';
+// import 'iot_device_setup_screen.dart';
 import 'past_reports/past_reports_screen.dart';
 import 'quality_tips_main_screen.dart';
 import '../../../utils/quality_grading/quality_grading_dashboard_si.dart';

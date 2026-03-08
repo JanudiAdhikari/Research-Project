@@ -6,6 +6,8 @@ import '../features/certifications/screens/farmer_certifications_dashboard_scree
 import '../services/auth_service.dart';
 import '../features/auth/login_page.dart';
 import '../utils/responsive.dart';
+import '../utils/language_prefs.dart';
+import '../utils/common/profile_screen_si.dart';
 
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
@@ -26,6 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Map<String, dynamic>? _user;
   bool _loading = true;
   bool _uploading = false;
+  String _currentLanguage = 'en'; // ← added for language support
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -52,7 +55,20 @@ class _ProfileScreenState extends State<ProfileScreen>
         );
 
     _loadUser();
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
+
+  // ── Language helper ────────────────────────────────────────────────────────
+
+  bool get _isSinhala => _currentLanguage == 'si';
+
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
+
+  // ──────────────────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
@@ -99,7 +115,9 @@ class _ProfileScreenState extends State<ProfileScreen>
         await _loadUser();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Profile image updated'),
+            content: Text(
+              _t('Profile image updated', ProfileScreenSi.profileImageUpdated),
+            ),
             backgroundColor: _primary,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -110,7 +128,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to save image URL'),
+            content: Text(
+              _t('Failed to save image URL', ProfileScreenSi.failedToSaveImage),
+            ),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -123,7 +143,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Upload failed: $e'),
+            content: Text(
+              '${_t('Upload failed: ', ProfileScreenSi.uploadFailed)}$e',
+            ),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -141,13 +163,21 @@ class _ProfileScreenState extends State<ProfileScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Log Out'),
-        content: const Text('Are you sure you want to log out?'),
+        title: Text(_t('Log Out', ProfileScreenSi.logOut)),
+        content: Text(
+          _t(
+            'Are you sure you want to log out?',
+            ProfileScreenSi.logOutConfirm,
+          ),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              _t('Cancel', ProfileScreenSi.cancel),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -158,7 +188,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Log Out'),
+            child: Text(_t('Log Out', ProfileScreenSi.logOut)),
           ),
         ],
       ),
@@ -196,9 +226,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: const Icon(Icons.edit_outlined, color: _primary, size: 20),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Edit Profile',
-              style: TextStyle(fontWeight: FontWeight.w700),
+            Text(
+              _t('Edit Profile', ProfileScreenSi.editProfile),
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -211,24 +241,29 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 _buildTextField(
                   firstCtrl,
-                  'First name',
+                  _t('First name', ProfileScreenSi.firstName),
                   Icons.person_outline,
-                  validator: (val) =>
-                      val?.trim().isEmpty == true ? 'Required' : null,
+                  validator: (val) => val?.trim().isEmpty == true
+                      ? _t('Required', ProfileScreenSi.required)
+                      : null,
                 ),
                 const SizedBox(height: 12),
-                _buildTextField(lastCtrl, 'Last name', Icons.person_outline),
+                _buildTextField(
+                  lastCtrl,
+                  _t('Last name', ProfileScreenSi.lastName),
+                  Icons.person_outline,
+                ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   contactCtrl,
-                  'Contact',
+                  _t('Contact', ProfileScreenSi.contact),
                   Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
                 ),
                 const SizedBox(height: 12),
                 _buildTextField(
                   locationCtrl,
-                  'Location',
+                  _t('Location', ProfileScreenSi.location),
                   Icons.location_on_outlined,
                 ),
               ],
@@ -238,7 +273,10 @@ class _ProfileScreenState extends State<ProfileScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              _t('Cancel', ProfileScreenSi.cancel),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -255,7 +293,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 await _loadUser();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Profile updated'),
+                    content: Text(
+                      _t('Profile updated', ProfileScreenSi.profileUpdated),
+                    ),
                     backgroundColor: _primary,
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
@@ -272,7 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Save'),
+            child: Text(_t('Save', ProfileScreenSi.save)),
           ),
         ],
       ),
@@ -335,7 +375,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No user data found',
+                      _t('No user data found', ProfileScreenSi.noUserDataFound),
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 16,
@@ -349,7 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         backgroundColor: _primary,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Retry'),
+                      child: Text(_t('Retry', ProfileScreenSi.retry)),
                     ),
                   ],
                 ),
@@ -389,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         // Section title
                         _buildSectionTitle(
                           responsive,
-                          'Account Actions',
+                          _t('Account Actions', ProfileScreenSi.accountActions),
                           Icons.manage_accounts_rounded,
                         ),
 
@@ -412,7 +452,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                         // Section title for settings
                         _buildSectionTitle(
                           responsive,
-                          'Settings & Preferences',
+                          _t(
+                            'Settings & Preferences',
+                            ProfileScreenSi.settingsPreferences,
+                          ),
                           Icons.settings_rounded,
                         ),
 
@@ -481,7 +524,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'My Profile',
+                _t('My Profile', ProfileScreenSi.myProfile),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: responsive.fontSize(
@@ -794,21 +837,27 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildInfoCards(Responsive responsive) {
-    final contact = _user!['contact'] ?? 'Not set';
-    final location = _user!['location'] ?? 'Not set';
+    final contact = _user!['contact'] ?? _t('Not set', ProfileScreenSi.notSet);
+    final location =
+        _user!['location'] ?? _t('Not set', ProfileScreenSi.notSet);
     final role = _capitalizeFirst(_user!['role'] ?? 'User');
 
     return Row(
       children: [
         Expanded(
-          child: _buildInfoCard(responsive, Icons.badge_outlined, 'Role', role),
+          child: _buildInfoCard(
+            responsive,
+            Icons.badge_outlined,
+            _t('Role', ProfileScreenSi.role),
+            role,
+          ),
         ),
         ResponsiveSpacing.horizontal(mobile: 10, tablet: 14, desktop: 18),
         Expanded(
           child: _buildInfoCard(
             responsive,
             Icons.phone_outlined,
-            'Contact',
+            _t('Contact', ProfileScreenSi.contactLabel),
             contact,
           ),
         ),
@@ -817,7 +866,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: _buildInfoCard(
             responsive,
             Icons.location_on_outlined,
-            'Location',
+            _t('Location', ProfileScreenSi.locationLabel),
             location,
           ),
         ),
@@ -950,16 +999,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                       tablet: 10,
                       desktop: 12,
                     ),
-                    Text(
-                      'Edit Profile',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: responsive.fontSize(
-                          mobile: 14,
-                          tablet: 15,
-                          desktop: 16,
+                    Flexible(
+                      child: Text(
+                        _t('Edit Profile', ProfileScreenSi.editProfileBtn),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: responsive.fontSize(
+                            mobile: 14,
+                            tablet: 15,
+                            desktop: 16,
+                          ),
+                          fontWeight: FontWeight.w700,
                         ),
-                        fontWeight: FontWeight.w700,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -1017,16 +1070,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                       tablet: 10,
                       desktop: 12,
                     ),
-                    Text(
-                      'Log Out',
-                      style: TextStyle(
-                        color: Colors.redAccent,
-                        fontSize: responsive.fontSize(
-                          mobile: 14,
-                          tablet: 15,
-                          desktop: 16,
+                    Flexible(
+                      child: Text(
+                        _t('Log Out', ProfileScreenSi.logOutBtn),
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: responsive.fontSize(
+                            mobile: 14,
+                            tablet: 15,
+                            desktop: 16,
+                          ),
+                          fontWeight: FontWeight.w700,
                         ),
-                        fontWeight: FontWeight.w700,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -1060,8 +1117,11 @@ class _ProfileScreenState extends State<ProfileScreen>
           _buildSettingsTile(
             responsive,
             Icons.verified_outlined,
-            'Certifications',
-            'Add or manage your certifications',
+            _t('Certifications', ProfileScreenSi.certifications),
+            _t(
+              'Add or manage your certifications',
+              ProfileScreenSi.certificationsSubtitle,
+            ),
             _openCertifications,
             isFirst: true,
           ),
@@ -1069,24 +1129,33 @@ class _ProfileScreenState extends State<ProfileScreen>
           _buildSettingsTile(
             responsive,
             Icons.notifications_outlined,
-            'Notifications',
-            'Manage your notification preferences',
+            _t('Notifications', ProfileScreenSi.notifications),
+            _t(
+              'Manage your notification preferences',
+              ProfileScreenSi.notificationsSubtitle,
+            ),
             () {},
           ),
           Divider(height: 1, color: colorWithOpacity(_primary, 0.08)),
           _buildSettingsTile(
             responsive,
             Icons.lock_outline,
-            'Privacy',
-            'Control your privacy settings',
+            _t('Privacy', ProfileScreenSi.privacy),
+            _t(
+              'Control your privacy settings',
+              ProfileScreenSi.privacySubtitle,
+            ),
             () {},
           ),
           Divider(height: 1, color: colorWithOpacity(_primary, 0.08)),
           _buildSettingsTile(
             responsive,
             Icons.help_outline,
-            'Help & Support',
-            'Get help or contact support',
+            _t('Help & Support', ProfileScreenSi.helpSupport),
+            _t(
+              'Get help or contact support',
+              ProfileScreenSi.helpSupportSubtitle,
+            ),
             () {},
             isLast: true,
           ),
@@ -1198,7 +1267,9 @@ class _ProfileScreenState extends State<ProfileScreen>
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Unknown user role'),
+          content: Text(
+            _t('Unknown user role', ProfileScreenSi.unknownUserRole),
+          ),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/market_service.dart';
+import '../../services/auth_service.dart';
 import '../../models/market_product.dart';
 import '../../utils/responsive.dart';
 
@@ -25,6 +26,7 @@ class _MarketScreenState extends State<MarketScreen>
   String? _error;
   List<MarketProduct> _products = [];
   String _searchQuery = '';
+  String _userRole = 'farmer';
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -49,6 +51,20 @@ class _MarketScreenState extends State<MarketScreen>
         );
 
     _loadProducts();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    try {
+      final auth = AuthService();
+      final role = await auth.storage.read(key: 'role');
+      if (!mounted) return;
+      setState(() {
+        _userRole = role ?? 'farmer';
+      });
+    } catch (e) {
+      // ignore and default to farmer
+    }
   }
 
   @override
@@ -424,7 +440,7 @@ class _MarketScreenState extends State<MarketScreen>
           ),
         ),
       ),
-      floatingActionButton: _products.isEmpty
+      floatingActionButton: (_products.isEmpty || _userRole == 'exporter')
           ? null
           : FloatingActionButton.extended(
               onPressed: () => _showProductForm(),
@@ -635,6 +651,7 @@ class _MarketScreenState extends State<MarketScreen>
               product: product,
               onEdit: () => _showProductForm(product),
               onDelete: () => _confirmDelete(product),
+              isFarmer: _userRole == 'farmer',
             );
           },
         ),
@@ -786,11 +803,13 @@ class _ProductCard extends StatefulWidget {
   final MarketProduct product;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final bool isFarmer;
 
   const _ProductCard({
     required this.product,
     required this.onEdit,
     required this.onDelete,
+    this.isFarmer = true,
   });
 
   @override
@@ -988,47 +1007,49 @@ class _ProductCardState extends State<_ProductCard> {
                               else if (v == 'delete')
                                 widget.onDelete();
                             },
-                            itemBuilder: (_) => [
-                              PopupMenuItem(
-                                value: 'edit',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.edit_outlined,
-                                      size: 18,
-                                      color: _primary,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      'Edit',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
+                            itemBuilder: (_) => widget.isFarmer
+                                ? [
+                                    PopupMenuItem(
+                                      value: 'edit',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.edit_outlined,
+                                            size: 18,
+                                            color: _primary,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          const Text(
+                                            'Edit',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.delete_outline,
-                                      size: 18,
-                                      color: Colors.redAccent,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      'Delete',
-                                      style: TextStyle(
-                                        color: Colors.redAccent,
-                                        fontWeight: FontWeight.w600,
+                                    PopupMenuItem(
+                                      value: 'delete',
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.delete_outline,
+                                            size: 18,
+                                            color: Colors.redAccent,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          const Text(
+                                            'Delete',
+                                            style: TextStyle(
+                                              color: Colors.redAccent,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                                  ]
+                                : [],
                           ),
                         ),
                       ),

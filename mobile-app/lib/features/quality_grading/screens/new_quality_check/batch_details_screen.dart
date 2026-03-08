@@ -62,6 +62,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
   final TextEditingController _batchWeightKgController =
       TextEditingController();
   final TextEditingController _batchWeightGController = TextEditingController();
+  bool _hasWeightError = false;
+  bool _hasHarvestDateError = false;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -406,17 +408,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                                 if (!_formKey.currentState!.validate()) return;
 
                                 if (_harvestDate == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        _t(
-                                          'Please select harvest date',
-                                          BatchDetailsScreenSi
-                                              .pleaseSelectHarvestDate,
-                                        ),
-                                      ),
-                                    ),
-                                  );
+                                  setState(() => _hasHarvestDateError = true);
                                   return;
                                 }
                                 try {
@@ -430,6 +422,26 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
 
                                   final api = QualityCheckApi();
 
+                                  final kgWeight = _parseIntOrZero(
+                                    _batchWeightKgController.text,
+                                  );
+                                  final gWeight = _parseIntOrZero(
+                                    _batchWeightGController.text,
+                                  );
+
+                                  if (kgWeight == 0 && gWeight == 0) {
+                                    if (Navigator.canPop(context)) {
+                                      Navigator.pop(context); // Dismiss loading dialog
+                                    }
+                                    setState(() => _hasWeightError = true);
+                                    return;
+                                  }
+
+                                  setState(() {
+                                    _hasHarvestDateError = false;
+                                    _hasWeightError = false;
+                                  });
+
                                   final result = await api.createQualityCheck(
                                     pepperType: _mapPepperType(_pepperType),
                                     pepperVariety: _mapVariety(_pepperVariety),
@@ -437,12 +449,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                                     dryingMethod: _mapDryingMethod(
                                       _dryingMethod,
                                     ),
-                                    batchWeightKg: _parseIntOrZero(
-                                      _batchWeightKgController.text,
-                                    ),
-                                    batchWeightG: _parseIntOrZero(
-                                      _batchWeightGController.text,
-                                    ),
+                                    batchWeightKg: kgWeight,
+                                    batchWeightG: gWeight,
                                   );
 
                                   if (!mounted) return;
@@ -678,7 +686,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
           Text(
             label,
             style: TextStyle(
-              color: Colors.grey[700],
+              color: _hasHarvestDateError ? Colors.red.shade700 : Colors.grey[700],
               fontSize: responsive.bodyFontSize,
               fontWeight: FontWeight.w600,
             ),
@@ -686,6 +694,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
           const SizedBox(height: 8),
           InkWell(
             onTap: () async {
+              if (_hasHarvestDateError) setState(() => _hasHarvestDateError = false);
+              
               final pickedDate = await showDatePicker(
                 context: context,
                 initialDate: DateTime.now(),
@@ -711,13 +721,16 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(
+                  color: _hasHarvestDateError ? Colors.red.shade400 : Colors.grey.shade300,
+                  width: _hasHarvestDateError ? 1.5 : 1.0,
+                ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.calendar_today_rounded,
-                    color: Colors.grey[600],
+                    color: _hasHarvestDateError ? Colors.red.shade400 : Colors.grey[600],
                     size: responsive.mediumIconSize,
                   ),
                   ResponsiveSpacing.horizontal(
@@ -733,22 +746,42 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                           )
                         : '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
                     style: TextStyle(
-                      color: selectedDate == null
-                          ? Colors.grey[400]
-                          : Colors.black87,
+                      color: _hasHarvestDateError 
+                          ? Colors.red.shade700 
+                          : selectedDate == null
+                            ? Colors.grey[400]
+                            : Colors.black87,
                       fontSize: responsive.bodyFontSize + 1,
                     ),
                   ),
                   const Spacer(),
                   Icon(
                     Icons.arrow_drop_down_rounded,
-                    color: Colors.grey[600],
+                    color: _hasHarvestDateError ? Colors.red.shade400 : Colors.grey[600],
                     size: responsive.value(mobile: 24, tablet: 26, desktop: 28),
                   ),
                 ],
               ),
             ),
           ),
+          if (_hasHarvestDateError) ...[
+            const SizedBox(height: 6),
+            Text(
+              _t(
+                'Please select harvest date',
+                BatchDetailsScreenSi.pleaseSelectHarvestDate,
+              ),
+              style: TextStyle(
+                color: Colors.red.shade400,
+                fontSize: responsive.fontSize(
+                  mobile: 12,
+                  tablet: 13,
+                  desktop: 14,
+                ),
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ]
         ],
       ),
     );
@@ -765,7 +798,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
           Text(
             _t('Batch Weight', BatchDetailsScreenSi.batchWeight),
             style: TextStyle(
-              color: Colors.grey[700],
+              color: _hasWeightError ? Colors.red.shade700 : Colors.grey[700],
               fontSize: responsive.bodyFontSize,
               fontWeight: FontWeight.w600,
             ),
@@ -779,6 +812,9 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                   controller: _batchWeightKgController,
                   keyboardType: TextInputType.number,
                   style: TextStyle(fontSize: responsive.bodyFontSize + 1),
+                  onChanged: (_) {
+                    if (_hasWeightError) setState(() => _hasWeightError = false);
+                  },
                   decoration: InputDecoration(
                     hintText: _t('Kilograms', BatchDetailsScreenSi.kilograms),
                     hintStyle: TextStyle(
@@ -789,12 +825,12 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                     fillColor: Colors.white,
                     prefixIcon: Icon(
                       Icons.balance_rounded,
-                      color: Colors.grey[600],
+                      color: _hasWeightError ? Colors.red.shade400 : Colors.grey[600],
                       size: responsive.mediumIconSize,
                     ),
                     suffixText: 'kg',
                     suffixStyle: TextStyle(
-                      color: Colors.grey[600],
+                      color: _hasWeightError ? Colors.red.shade700 : Colors.grey[600],
                       fontSize: responsive.bodyFontSize,
                       fontWeight: FontWeight.w600,
                     ),
@@ -804,11 +840,17 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: BorderSide(
+                        color: _hasWeightError ? Colors.red.shade400 : Colors.grey.shade300,
+                        width: _hasWeightError ? 1.5 : 1.0,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: primary, width: 2),
+                      borderSide: BorderSide(
+                        color: _hasWeightError ? Colors.red : primary, 
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -824,6 +866,9 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                   controller: _batchWeightGController,
                   keyboardType: TextInputType.number,
                   style: TextStyle(fontSize: responsive.bodyFontSize + 1),
+                  onChanged: (_) {
+                    if (_hasWeightError) setState(() => _hasWeightError = false);
+                  },
                   decoration: InputDecoration(
                     hintText: _t('Grams', BatchDetailsScreenSi.grams),
                     hintStyle: TextStyle(
@@ -834,7 +879,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                     fillColor: Colors.white,
                     suffixText: 'g',
                     suffixStyle: TextStyle(
-                      color: Colors.grey[600],
+                      color: _hasWeightError ? Colors.red.shade700 : Colors.grey[600],
                       fontSize: responsive.bodyFontSize,
                       fontWeight: FontWeight.w600,
                     ),
@@ -848,11 +893,17 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
+                      borderSide: BorderSide(
+                        color: _hasWeightError ? Colors.red.shade400 : Colors.grey.shade300,
+                        width: _hasWeightError ? 1.5 : 1.0,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: primary, width: 2),
+                      borderSide: BorderSide(
+                        color: _hasWeightError ? Colors.red : primary, 
+                        width: 2,
+                      ),
                     ),
                   ),
                 ),
@@ -866,7 +917,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen>
               BatchDetailsScreenSi.weightHint,
             ),
             style: TextStyle(
-              color: Colors.grey[500],
+              color: _hasWeightError ? Colors.red.shade400 : Colors.grey[500],
               fontSize: responsive.fontSize(
                 mobile: 12,
                 tablet: 13,

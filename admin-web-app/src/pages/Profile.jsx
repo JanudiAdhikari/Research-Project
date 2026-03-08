@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard, LogOut, User, Settings,
+    LayoutDashboard, LogOut, User,
     Badge, Phone, MapPin, Camera, Edit2, ShieldCheck
 } from 'lucide-react';
 import { getProfile, updateProfile } from '../services/api';
@@ -129,10 +129,7 @@ export default function Profile() {
                         <User size={20} />
                         <span>Profile</span>
                     </div>
-                    <div className="nav-item inactive">
-                        <Settings size={20} />
-                        <span>Settings</span>
-                    </div>
+
                 </nav>
 
                 <div className="sidebar-footer">

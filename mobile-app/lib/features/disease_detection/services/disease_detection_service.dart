@@ -10,8 +10,8 @@ class DiseaseDetectionService {
   // static const String baseUrl = 'http://10.0.2.2:5001/api';
 
   // Uncomment below if using physical phone instead
-  static const String baseUrl = 'http://10.92.254.103:5001/api';
- // static const String baseUrl ='https://research-backend-755295357792.us-central1.run.app/api';
+  //static const String baseUrl = 'http://10.92.254.103:5001/api';
+  static const String baseUrl = 'https://disease-detection-optimized-755295357792.europe-west1.run.app/api';
 
   /// Disease detection result model
   static Future<DiseaseDetectionResult?> detectDisease(File imageFile) async {

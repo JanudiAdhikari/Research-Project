@@ -478,7 +478,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-// Buld the result card
+  // Buld the result card
   Widget _buildResultCard(BuildContext context) {
     final theme = Theme.of(context);
     final volumeKg = double.tryParse(_volumeController.text) ?? 0;
@@ -489,7 +489,10 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [const Color.fromARGB(255, 191, 243, 169), const Color.fromARGB(255, 208, 222, 204)],
+          colors: [
+            const Color.fromARGB(255, 191, 243, 169),
+            const Color.fromARGB(255, 208, 222, 204),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -712,7 +715,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-// Build number field
+  // Build number field
   Widget _buildNumberField() {
     final hasError = showErrors && _volumeController.text.isEmpty;
 
@@ -771,7 +774,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-// Build enhanced result row
+  // Build enhanced result row
   Widget _buildChip(String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -790,7 +793,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-// Build month details section
+  // Build month details section
   Widget _buildMonthDetailsSection(Responsive responsive) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,7 +830,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-// Build fetch button with loading state
+  // Build fetch button with loading state
   Widget _buildFetchButton({
     required bool isLoading,
     required VoidCallback onPressed,
@@ -889,7 +892,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-// Build month card
+  // Build month card
   Widget _buildMonthCard(Responsive responsive) {
     return Container(
       width: double.infinity,
@@ -962,7 +965,7 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
     );
   }
 
-// On submit, validate and call API
+  // On submit, validate and call API
   void _onSubmit() {
     setState(() {
       showErrors = true;
@@ -984,8 +987,10 @@ class _ExportPricePredictionState extends State<ExportPricePrediction> {
 
     final volume = double.tryParse(_volumeController.text) ?? 0;
 
-    // Use for Android emulator
-    final apiUrl = Uri.parse('http://10.0.2.2:8000/predictexportprice');
+    // Deployed API URL
+    final apiUrl = Uri.parse(
+      'https://price-prediction-755295357792.europe-west1.run.app/predictexportprice',
+    );
 
     try {
       final resp = await http.post(

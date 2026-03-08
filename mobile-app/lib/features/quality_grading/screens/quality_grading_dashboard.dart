@@ -644,24 +644,24 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
   ) {
     return Column(
       children: [
-        _resourceCard(
-          responsive,
-          title: _t(
-            "IoT Device Setup",
-            QualityGradingDashboardSi.iotDeviceSetup,
-          ),
-          description: _t(
-            "Learn how to connect and use the IoT device",
-            QualityGradingDashboardSi.iotDeviceDescription,
-          ),
-          icon: Icons.bluetooth_rounded,
-          color: Colors.indigo,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const IotDeviceSetupScreen()),
-          ),
-        ),
-        SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
+        // _resourceCard(
+        //   responsive,
+        //   title: _t(
+        //     "IoT Device Setup",
+        //     QualityGradingDashboardSi.iotDeviceSetup,
+        //   ),
+        //   description: _t(
+        //     "Learn how to connect and use the IoT device",
+        //     QualityGradingDashboardSi.iotDeviceDescription,
+        //   ),
+        //   icon: Icons.bluetooth_rounded,
+        //   color: Colors.indigo,
+        //   onTap: () => Navigator.push(
+        //     context,
+        //     MaterialPageRoute(builder: (_) => const IotDeviceSetupScreen()),
+        //   ),
+        // ),
+        // SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
         _resourceCard(
           responsive,
           title: _t(
@@ -854,7 +854,8 @@ class _QualityGradingDashboardState extends State<QualityGradingDashboard>
                 _guideStep(
                   "1",
                   _t(
-                    "Connect measurement device via Bluetooth",
+                    // "Connect measurement device via Bluetooth",
+                    "Measure the mass of 1 liter of pepper to determine its bulk density",
                     QualityGradingDashboardSi.step1,
                   ),
                 ),

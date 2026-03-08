@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/market_service.dart';
+import '../../services/auth_service.dart';
 import '../../models/market_product.dart';
 import '../../utils/responsive.dart';
 
@@ -21,10 +22,12 @@ class _MarketScreenState extends State<MarketScreen>
   static const Color _primary = Color(0xFF2E7D32);
 
   final MarketService _service = MarketService();
+  final AuthService _auth = AuthService();
   bool _loading = true;
   String? _error;
   List<MarketProduct> _products = [];
   String _searchQuery = '';
+  String? _userRole;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -49,6 +52,17 @@ class _MarketScreenState extends State<MarketScreen>
         );
 
     _loadProducts();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    try {
+      final role = await _auth.storage.read(key: 'role');
+      if (mounted)
+        setState(() => _userRole = role?.toString().toLowerCase() ?? 'farmer');
+    } catch (e) {
+      if (mounted) setState(() => _userRole = 'farmer');
+    }
   }
 
   @override
@@ -424,7 +438,7 @@ class _MarketScreenState extends State<MarketScreen>
           ),
         ),
       ),
-      floatingActionButton: _products.isEmpty
+      floatingActionButton: _products.isEmpty || _userRole == 'exporter'
           ? null
           : FloatingActionButton.extended(
               onPressed: () => _showProductForm(),

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    LogOut, User, Settings, PieChart, Activity,
+    LogOut, User, PieChart, Activity,
     CheckCircle, Database, LayoutDashboard, Share2
 } from 'lucide-react';
 import api from '../services/api';
@@ -68,10 +68,7 @@ export default function Dashboard() {
                         <User size={20} />
                         <span>Profile</span>
                     </div>
-                    <div className="nav-item inactive">
-                        <Settings size={20} />
-                        <span>Settings</span>
-                    </div>
+
                 </nav>
 
                 <div className="sidebar-footer">

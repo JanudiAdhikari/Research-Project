@@ -57,6 +57,13 @@ class _PastReportsScreenState extends State<PastReportsScreen>
 
   String _t(String enText, String siText) => _isSi ? siText : enText;
 
+  // Helper to extract creation date from a report
+  DateTime _createdAt(Map<String, dynamic> report) {
+    final raw = report['createdAt'] as String?;
+    if (raw == null) return DateTime.fromMillisecondsSinceEpoch(0);
+    return DateTime.tryParse(raw) ?? DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
   // Sort / filter option keys (internal, language-independent)
   static const _sortNewest = 'Newest First';
   static const _sortOldest = 'Oldest First';
@@ -167,17 +174,19 @@ class _PastReportsScreenState extends State<PastReportsScreen>
 
   List<Map<String, dynamic>> get _filteredReports {
     var reports = List<Map<String, dynamic>>.from(_allReports);
+
     if (_filterGrade != _filterAllGrades) {
       reports = reports
           .where((r) => _shortGrade(_displayGrade(r)) == _filterGrade)
           .toList();
     }
+
     switch (_sortBy) {
       case _sortNewest:
-        reports.sort((a, b) => _dateString(b).compareTo(_dateString(a)));
+        reports.sort((a, b) => _createdAt(b).compareTo(_createdAt(a)));
         break;
       case _sortOldest:
-        reports.sort((a, b) => _dateString(a).compareTo(_dateString(b)));
+        reports.sort((a, b) => _createdAt(a).compareTo(_createdAt(b)));
         break;
       case _sortHighest:
         reports.sort((a, b) => _score(b).compareTo(_score(a)));
@@ -186,6 +195,7 @@ class _PastReportsScreenState extends State<PastReportsScreen>
         reports.sort((a, b) => _score(a).compareTo(_score(b)));
         break;
     }
+
     return reports;
   }
 

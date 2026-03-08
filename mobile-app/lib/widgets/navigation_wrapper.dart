@@ -8,6 +8,7 @@ import '../features/auth/login_page.dart';
 import 'my_farm_screen.dart';
 import '../features/marketplace/market_screen.dart';
 import 'profile_screen.dart';
+//import '../features/farm_diary/screens/farm_diary_list_screen.dart';
 
 class NavigationWrapper extends StatefulWidget {
   const NavigationWrapper({Key? key}) : super(key: key);
@@ -52,11 +53,12 @@ class _NavigationWrapperState extends State<NavigationWrapper> {
       return const [ExporterDashboard(), MarketScreen(), ProfileScreen()];
     } else {
       // Farmer pages (default)
-      return const [
-        FarmerDashboard(),
-        MarketScreen(),
-        MyFarmScreen(),
-        ProfileScreen(),
+      return [
+        FarmerDashboard(onTabSelected: _onTabSelected),
+        const MarketScreen(),
+        const MyFarmScreen(),
+        //FarmDiaryListScreen(),
+        const ProfileScreen(),
       ];
     }
   }

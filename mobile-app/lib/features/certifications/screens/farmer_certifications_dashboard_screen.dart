@@ -5,6 +5,8 @@ import '../services/certification_api.dart';
 import 'farmer_add_certifications_screen.dart';
 import 'farmer_certification_details_screen.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/common/farmer_certifications_dashboard_si.dart';
 
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
@@ -38,6 +40,8 @@ class _FarmerCertificationsDashboardScreenState
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  String _currentLanguage = 'en';
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +59,11 @@ class _FarmerCertificationsDashboardScreenState
           CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
         );
 
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
+
     _load();
   }
 
@@ -65,6 +74,10 @@ class _FarmerCertificationsDashboardScreenState
     super.dispose();
   }
 
+  bool get _isSinhala => _currentLanguage == 'si';
+
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
+
   String _formatDate(DateTime d) {
     final mm = d.month.toString().padLeft(2, '0');
     final dd = d.day.toString().padLeft(2, '0');
@@ -73,14 +86,16 @@ class _FarmerCertificationsDashboardScreenState
 
   String _mapUiStatusToApiStatus(String ui) {
     final s = ui.toLowerCase();
-    if (s == 'pending' || s == 'verified' || s == 'rejected') return s;
+    if (s == 'pending' || s == 'අපේක්ෂිත') return 'pending';
+    if (s == 'verified' || s == 'සත්‍යාපිත') return 'verified';
+    if (s == 'rejected' || s == 'ප්‍රතික්ෂේපිත') return 'rejected';
     return 'all';
   }
 
   String _mapUiSortToApiSort(String ui) {
     final s = ui.toLowerCase();
-    if (s.contains('oldest')) return 'oldest';
-    if (s.contains('expiry')) return 'expiry';
+    if (s.contains('oldest') || s.contains('පැරණිතම')) return 'oldest';
+    if (s.contains('expiry') || s.contains('කල් ඉකුත්')) return 'expiry';
     return 'newest';
   }
 
@@ -104,13 +119,21 @@ class _FarmerCertificationsDashboardScreenState
 
       final status = _statusFilter.toLowerCase();
 
-      if (status == 'expired') {
+      if (status == 'expired' || status == 'කල් ඉකුත් වූ') {
         finalList = list.where((e) => e.isExpired).toList();
-      } else if (status == 'all') {
+      } else if (status == 'all' || status == 'සියල්ල') {
         finalList = list;
-      } else if (['pending', 'verified', 'rejected'].contains(status)) {
+      } else if ([
+        'pending',
+        'verified',
+        'rejected',
+        'අපේක්ෂිත',
+        'සත්‍යාපිත',
+        'ප්‍රතික්ෂේපිත',
+      ].contains(status)) {
+        final apiStatus2 = _mapUiStatusToApiStatus(_statusFilter);
         finalList = list
-            .where((e) => !e.isExpired && e.status == status)
+            .where((e) => !e.isExpired && e.status == apiStatus2)
             .toList();
       }
 
@@ -140,7 +163,12 @@ class _FarmerCertificationsDashboardScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Certificate submitted'),
+          content: Text(
+            _t(
+              'Certificate submitted',
+              FarmerCertificationsDashboardSi.certificateSubmitted,
+            ),
+          ),
           backgroundColor: _primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -248,7 +276,7 @@ class _FarmerCertificationsDashboardScreenState
         elevation: 4,
         icon: const Icon(Icons.add_rounded),
         label: Text(
-          'Add New',
+          _t('Add New', FarmerCertificationsDashboardSi.addNew),
           style: TextStyle(
             fontWeight: FontWeight.w700,
             fontSize: responsive.fontSize(mobile: 14, tablet: 15, desktop: 16),
@@ -259,6 +287,11 @@ class _FarmerCertificationsDashboardScreenState
   }
 
   Widget _buildHeader(Responsive responsive) {
+    final count = _items.length;
+    final countLabel = _isSinhala
+        ? '$count ${count == 1 ? FarmerCertificationsDashboardSi.certificate : FarmerCertificationsDashboardSi.certificates}'
+        : '$count certificate${count == 1 ? '' : 's'}';
+
     return Container(
       padding: responsive.padding(
         mobile: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -316,7 +349,10 @@ class _FarmerCertificationsDashboardScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'My Certifications',
+                  _t(
+                    'My Certifications',
+                    FarmerCertificationsDashboardSi.myCertifications,
+                  ),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: responsive.fontSize(
@@ -330,7 +366,7 @@ class _FarmerCertificationsDashboardScreenState
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${_items.length} certificate${_items.length == 1 ? '' : 's'}',
+                  countLabel,
                   style: TextStyle(
                     color: colorWithOpacity(Colors.white, 0.8),
                     fontSize: responsive.fontSize(
@@ -369,6 +405,32 @@ class _FarmerCertificationsDashboardScreenState
   }
 
   Widget _buildSearchAndFilters(Responsive responsive) {
+    final statusItems = _isSinhala
+        ? [
+            FarmerCertificationsDashboardSi.filterAll,
+            FarmerCertificationsDashboardSi.filterPending,
+            FarmerCertificationsDashboardSi.filterVerified,
+            FarmerCertificationsDashboardSi.filterRejected,
+            FarmerCertificationsDashboardSi.filterExpired,
+          ]
+        : const ['All', 'Pending', 'Verified', 'Rejected', 'Expired'];
+
+    final sortItems = _isSinhala
+        ? [
+            FarmerCertificationsDashboardSi.sortNewest,
+            FarmerCertificationsDashboardSi.sortOldest,
+            FarmerCertificationsDashboardSi.sortExpiry,
+          ]
+        : const ['Newest', 'Oldest', 'Expiry soon'];
+
+    // Keep filter/sort values in sync when language changes
+    final currentStatus = _isSinhala
+        ? _siStatusLabel(_statusFilter)
+        : _enStatusLabel(_statusFilter);
+    final currentSort = _isSinhala
+        ? _siSortLabel(_sortMode)
+        : _enSortLabel(_sortMode);
+
     return Column(
       children: [
         // Search bar
@@ -397,7 +459,10 @@ class _FarmerCertificationsDashboardScreenState
               ),
             ),
             decoration: InputDecoration(
-              hintText: 'Search by type, number, issuing body...',
+              hintText: _t(
+                'Search by type, number, issuing body...',
+                FarmerCertificationsDashboardSi.searchHint,
+              ),
               hintStyle: TextStyle(
                 color: Colors.grey[400],
                 fontSize: responsive.fontSize(
@@ -459,18 +524,13 @@ class _FarmerCertificationsDashboardScreenState
             Expanded(
               child: _dropdownBox(
                 responsive,
-                value: _statusFilter,
-                items: const [
-                  'All',
-                  'Pending',
-                  'Verified',
-                  'Rejected',
-                  'Expired',
-                ],
+                value: currentStatus,
+                items: statusItems,
                 icon: Icons.filter_list_rounded,
                 onChanged: (v) {
                   if (v == null) return;
-                  setState(() => _statusFilter = v);
+                  // Always store English key internally for API mapping
+                  setState(() => _statusFilter = _toEnStatusKey(v));
                   _load();
                 },
               ),
@@ -479,12 +539,12 @@ class _FarmerCertificationsDashboardScreenState
             Expanded(
               child: _dropdownBox(
                 responsive,
-                value: _sortMode,
-                items: const ['Newest', 'Oldest', 'Expiry soon'],
+                value: currentSort,
+                items: sortItems,
                 icon: Icons.sort_rounded,
                 onChanged: (v) {
                   if (v == null) return;
-                  setState(() => _sortMode = v);
+                  setState(() => _sortMode = _toEnSortKey(v));
                   _load();
                 },
               ),
@@ -494,6 +554,75 @@ class _FarmerCertificationsDashboardScreenState
       ],
     );
   }
+
+  // ── Language-neutral key helpers ───────────────────────────────────────────
+
+  /// Returns the display label for _statusFilter in the current language.
+  String _siStatusLabel(String enKey) {
+    switch (enKey.toLowerCase()) {
+      case 'pending':
+        return FarmerCertificationsDashboardSi.filterPending;
+      case 'verified':
+        return FarmerCertificationsDashboardSi.filterVerified;
+      case 'rejected':
+        return FarmerCertificationsDashboardSi.filterRejected;
+      case 'expired':
+        return FarmerCertificationsDashboardSi.filterExpired;
+      default:
+        return FarmerCertificationsDashboardSi.filterAll;
+    }
+  }
+
+  String _enStatusLabel(String enKey) {
+    switch (enKey.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'verified':
+        return 'Verified';
+      case 'rejected':
+        return 'Rejected';
+      case 'expired':
+        return 'Expired';
+      default:
+        return 'All';
+    }
+  }
+
+  String _siSortLabel(String enKey) {
+    final s = enKey.toLowerCase();
+    if (s.contains('oldest')) return FarmerCertificationsDashboardSi.sortOldest;
+    if (s.contains('expiry')) return FarmerCertificationsDashboardSi.sortExpiry;
+    return FarmerCertificationsDashboardSi.sortNewest;
+  }
+
+  String _enSortLabel(String enKey) {
+    final s = enKey.toLowerCase();
+    if (s.contains('oldest')) return 'Oldest';
+    if (s.contains('expiry')) return 'Expiry soon';
+    return 'Newest';
+  }
+
+  /// Converts a displayed label (any language) back to the English internal key.
+  String _toEnStatusKey(String label) {
+    const siMap = {
+      FarmerCertificationsDashboardSi.filterPending: 'Pending',
+      FarmerCertificationsDashboardSi.filterVerified: 'Verified',
+      FarmerCertificationsDashboardSi.filterRejected: 'Rejected',
+      FarmerCertificationsDashboardSi.filterExpired: 'Expired',
+    };
+    return siMap[label] ?? label; // English labels pass through unchanged
+  }
+
+  String _toEnSortKey(String label) {
+    const siMap = {
+      FarmerCertificationsDashboardSi.sortOldest: 'Oldest',
+      FarmerCertificationsDashboardSi.sortExpiry: 'Expiry soon',
+      FarmerCertificationsDashboardSi.sortNewest: 'Newest',
+    };
+    return siMap[label] ?? label;
+  }
+
+  // ── Reusable widgets ───────────────────────────────────────────────────────
 
   Widget _dropdownBox(
     Responsive responsive, {
@@ -584,7 +713,10 @@ class _FarmerCertificationsDashboardScreenState
             ),
             ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
             Text(
-              'Failed to load',
+              _t(
+                'Failed to load',
+                FarmerCertificationsDashboardSi.failedToLoad,
+              ),
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: responsive.fontSize(
@@ -612,7 +744,7 @@ class _FarmerCertificationsDashboardScreenState
             ElevatedButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
+              label: Text(_t('Retry', FarmerCertificationsDashboardSi.retry)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
                 foregroundColor: Colors.white,
@@ -664,7 +796,10 @@ class _FarmerCertificationsDashboardScreenState
             ),
             ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
             Text(
-              'No certifications found',
+              _t(
+                'No certifications found',
+                FarmerCertificationsDashboardSi.noCertificationsFound,
+              ),
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: responsive.fontSize(
@@ -677,7 +812,10 @@ class _FarmerCertificationsDashboardScreenState
             ),
             const SizedBox(height: 8),
             Text(
-              'Add your first certificate to get started',
+              _t(
+                'Add your first certificate to get started',
+                FarmerCertificationsDashboardSi.addFirstCertificate,
+              ),
               style: TextStyle(
                 color: Colors.grey[500],
                 fontSize: responsive.fontSize(
@@ -691,7 +829,12 @@ class _FarmerCertificationsDashboardScreenState
             ElevatedButton.icon(
               onPressed: _openAdd,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Add New Certificate'),
+              label: Text(
+                _t(
+                  'Add New Certificate',
+                  FarmerCertificationsDashboardSi.addNewCertificate,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
                 foregroundColor: Colors.white,
@@ -856,12 +999,12 @@ class _FarmerCertificationsDashboardScreenState
                       children: [
                         _metaChip(
                           Icons.schedule_outlined,
-                          'Submitted: ${_formatDate(c.createdAt)}',
+                          '${_t('Submitted', FarmerCertificationsDashboardSi.submitted)}: ${_formatDate(c.createdAt)}',
                           responsive,
                         ),
                         _metaChip(
                           Icons.event_available_outlined,
-                          'Expiry: ${_formatDate(c.expiryDate)}',
+                          '${_t('Expiry', FarmerCertificationsDashboardSi.expiry)}: ${_formatDate(c.expiryDate)}',
                           responsive,
                         ),
                         if (c.rejectionReason != null &&
@@ -869,7 +1012,7 @@ class _FarmerCertificationsDashboardScreenState
                             c.status == 'rejected')
                           _metaChip(
                             Icons.info_outline,
-                            'Reason: ${c.rejectionReason}',
+                            '${_t('Reason', FarmerCertificationsDashboardSi.reason)}: ${c.rejectionReason}',
                             responsive,
                           ),
                       ],
@@ -950,6 +1093,29 @@ class _FarmerCertificationsDashboardScreenState
       fg = Colors.red.shade700;
     }
 
+    // Translate status label for display
+    String displayLabel;
+    if (_isSinhala) {
+      switch (s) {
+        case 'pending':
+          displayLabel = FarmerCertificationsDashboardSi.filterPending;
+          break;
+        case 'verified':
+          displayLabel = FarmerCertificationsDashboardSi.filterVerified;
+          break;
+        case 'rejected':
+          displayLabel = FarmerCertificationsDashboardSi.filterRejected;
+          break;
+        case 'expired':
+          displayLabel = FarmerCertificationsDashboardSi.filterExpired;
+          break;
+        default:
+          displayLabel = status[0].toUpperCase() + status.substring(1);
+      }
+    } else {
+      displayLabel = status[0].toUpperCase() + status.substring(1);
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: responsive.value(mobile: 9, tablet: 10, desktop: 12),
@@ -961,7 +1127,7 @@ class _FarmerCertificationsDashboardScreenState
         border: Border.all(color: colorWithOpacity(fg, 0.3)),
       ),
       child: Text(
-        status[0].toUpperCase() + status.substring(1),
+        displayLabel,
         style: TextStyle(
           fontWeight: FontWeight.w700,
           color: fg,

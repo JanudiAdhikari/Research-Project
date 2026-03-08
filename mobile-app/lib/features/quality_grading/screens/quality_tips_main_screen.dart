@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/quality_grading/quality_tips_main_screen_si.dart';
 import 'quality_tip_detail_screen.dart';
 
 class QualityTipsMainScreen extends StatefulWidget {
@@ -14,6 +16,8 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  String _currentLanguage = 'en';
+
   @override
   void initState() {
     super.initState();
@@ -25,6 +29,11 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
 
   @override
@@ -32,6 +41,10 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
     _animationController.dispose();
     super.dispose();
   }
+
+  bool get _isSinhala => _currentLanguage == 'si';
+
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
 
   @override
   Widget build(BuildContext context) {
@@ -44,12 +57,18 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
         backgroundColor: primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Quality Tips",
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          _t("Quality Tips", QualityTipsMainScreenSi.qualityTips),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
       ),
       body: FadeTransition(
@@ -63,22 +82,31 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
               children: [
                 // Categories Grid
                 Text(
-                  "Explore Quality Factors",
+                  _t(
+                    "Explore Quality Factors",
+                    QualityTipsMainScreenSi.exploreQualityFactors,
+                  ),
                   style: TextStyle(
                     fontSize: responsive.titleFontSize,
                     fontWeight: FontWeight.w800,
                     color: Colors.grey[800],
                   ),
                 ),
-                SizedBox(height: responsive.value(mobile: 12, tablet: 14, desktop: 16)),
+                SizedBox(
+                  height: responsive.value(mobile: 12, tablet: 14, desktop: 16),
+                ),
                 _buildCategoriesGrid(context, responsive),
 
-                SizedBox(height: responsive.value(mobile: 24, tablet: 28, desktop: 32)),
+                SizedBox(
+                  height: responsive.value(mobile: 24, tablet: 28, desktop: 32),
+                ),
 
                 // Quick Tips Section
                 _buildQuickTipsSection(responsive),
 
-                SizedBox(height: responsive.value(mobile: 24, tablet: 28, desktop: 32)),
+                SizedBox(
+                  height: responsive.value(mobile: 24, tablet: 28, desktop: 32),
+                ),
               ],
             ),
           ),
@@ -90,37 +118,28 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
   Widget _buildCategoriesGrid(BuildContext context, Responsive responsive) {
     final categories = [
       {
-        'title': 'Variety &\nPiperine',
+        'title': _t(
+          'Variety &\nPiperine',
+          QualityTipsMainScreenSi.varietyPiperine,
+        ),
         'icon': Icons.spa_rounded,
         'color': const Color(0xFF10B981),
         'route': 'variety',
       },
       {
-        'title': 'Color\nUniformity',
-        'icon': Icons.palette_rounded,
-        'color': const Color(0xFFf59e0b),
-        'route': 'color',
-      },
-      {
-        'title': 'Size & Shape\nConsistency',
-        'icon': Icons.straighten_rounded,
-        'color': const Color(0xFF3B82F6),
-        'route': 'size',
-      },
-      {
-        'title': 'Mold\nPrevention',
+        'title': _t('Mold\nPrevention', QualityTipsMainScreenSi.moldPrevention),
         'icon': Icons.health_and_safety_rounded,
         'color': const Color(0xFFEF4444),
         'route': 'mold',
       },
       {
-        'title': 'Drying\nProcess',
+        'title': _t('Drying\nProcess', QualityTipsMainScreenSi.dryingProcess),
         'icon': Icons.wb_sunny_rounded,
         'color': const Color(0xFFF59E0B),
         'route': 'drying',
       },
       {
-        'title': 'Storage\nTips',
+        'title': _t('Storage\nTips', QualityTipsMainScreenSi.storageTips),
         'icon': Icons.inventory_2_rounded,
         'color': const Color(0xFF8B5CF6),
         'route': 'storage',
@@ -129,10 +148,18 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount = responsive.value(mobile: 2, tablet: 3, desktop: 4).toInt();
+        final crossAxisCount = responsive
+            .value(mobile: 2, tablet: 3, desktop: 4)
+            .toInt();
         final spacing = responsive.value(mobile: 12, tablet: 14, desktop: 16);
-        final itemWidth = (constraints.maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
-        final itemHeight = responsive.value(mobile: 160, tablet: 175, desktop: 180);
+        final itemWidth =
+            (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+            crossAxisCount;
+        final itemHeight = responsive.value(
+          mobile: 160,
+          tablet: 175,
+          desktop: 180,
+        );
 
         return Wrap(
           spacing: spacing,
@@ -194,14 +221,12 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
               Positioned(
                 right: -20,
                 bottom: -20,
-                child: Icon(
-                  icon,
-                  size: 100,
-                  color: color.withOpacity(0.08),
-                ),
+                child: Icon(icon, size: 100, color: color.withOpacity(0.08)),
               ),
               Padding(
-                padding: EdgeInsets.all(responsive.value(mobile: 14, tablet: 16, desktop: 18)),
+                padding: EdgeInsets.all(
+                  responsive.value(mobile: 14, tablet: 16, desktop: 18),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -217,7 +242,11 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: responsive.value(mobile: 15, tablet: 16, desktop: 17),
+                        fontSize: responsive.value(
+                          mobile: 15,
+                          tablet: 16,
+                          desktop: 17,
+                        ),
                         fontWeight: FontWeight.w700,
                         color: Colors.grey[800],
                         height: 1.2,
@@ -228,15 +257,23 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
                     Row(
                       children: [
                         Text(
-                          "Learn more",
+                          _t("Learn more", QualityTipsMainScreenSi.learnMore),
                           style: TextStyle(
-                            fontSize: responsive.value(mobile: 12, tablet: 13, desktop: 14),
+                            fontSize: responsive.value(
+                              mobile: 12,
+                              tablet: 13,
+                              desktop: 14,
+                            ),
                             color: color,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_rounded, color: color, size: 14),
+                        Icon(
+                          Icons.arrow_forward_rounded,
+                          color: color,
+                          size: 14,
+                        ),
                       ],
                     ),
                   ],
@@ -253,28 +290,42 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
     final quickTips = [
       {
         'icon': Icons.check_circle_rounded,
-        'text': 'Sun dry for 3-4 days for optimal quality',
+        'text': _t(
+          'Sun dry for 3-4 days for optimal quality',
+          QualityTipsMainScreenSi.tip1,
+        ),
         'color': const Color(0xFF10B981),
       },
       {
         'icon': Icons.check_circle_rounded,
-        'text': 'Remove light berries before packaging',
+        'text': _t(
+          'Remove light berries before packaging',
+          QualityTipsMainScreenSi.tip2,
+        ),
         'color': const Color(0xFF3B82F6),
       },
       {
         'icon': Icons.check_circle_rounded,
-        'text': 'Store in cool, dry place to prevent mold',
+        'text': _t(
+          'Store in cool, dry place to prevent mold',
+          QualityTipsMainScreenSi.tip3,
+        ),
         'color': const Color(0xFF8B5CF6),
       },
       {
         'icon': Icons.check_circle_rounded,
-        'text': 'Get GAP certification for premium prices',
+        'text': _t(
+          'Get GAP certification for premium prices',
+          QualityTipsMainScreenSi.tip4,
+        ),
         'color': const Color(0xFFF59E0B),
       },
     ];
 
     return Container(
-      padding: EdgeInsets.all(responsive.value(mobile: 18, tablet: 20, desktop: 22)),
+      padding: EdgeInsets.all(
+        responsive.value(mobile: 18, tablet: 20, desktop: 22),
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -305,40 +356,52 @@ class _QualityTipsMainScreenState extends State<QualityTipsMainScreen>
               ),
               const SizedBox(width: 12),
               Text(
-                "Quick Tips",
+                _t("Quick Tips", QualityTipsMainScreenSi.quickTips),
                 style: TextStyle(
-                  fontSize: responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                  fontSize: responsive.value(
+                    mobile: 18,
+                    tablet: 20,
+                    desktop: 22,
+                  ),
                   fontWeight: FontWeight.w700,
                   color: Colors.grey[800],
                 ),
               ),
             ],
           ),
-          SizedBox(height: responsive.value(mobile: 14, tablet: 16, desktop: 18)),
-          ...quickTips.map((tip) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      tip['icon'] as IconData,
-                      color: tip['color'] as Color,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        tip['text'] as String,
-                        style: TextStyle(
-                          fontSize: responsive.value(mobile: 14, tablet: 15, desktop: 16),
-                          color: Colors.grey[700],
-                          height: 1.4,
+          SizedBox(
+            height: responsive.value(mobile: 14, tablet: 16, desktop: 18),
+          ),
+          ...quickTips.map(
+            (tip) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    tip['icon'] as IconData,
+                    color: tip['color'] as Color,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      tip['text'] as String,
+                      style: TextStyle(
+                        fontSize: responsive.value(
+                          mobile: 14,
+                          tablet: 15,
+                          desktop: 16,
                         ),
+                        color: Colors.grey[700],
+                        height: 1.4,
                       ),
                     ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -40,6 +40,8 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
     'top_close': null,
   };
 
+  String? _uploadingKey;
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -94,19 +96,30 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
 
     final file = File(result.path);
 
+    setState(() => _uploadingKey = key);
+
     // validate before saving
     try {
       final api = QualityCheckApi();
       await api.validateImage(image: file);
 
       if (!mounted) return;
-      setState(() => images[key] = file);
+      setState(() {
+        images[key] = file;
+        _uploadingKey = null;
+      });
     } catch (e) {
       if (!mounted) return;
+      setState(() => _uploadingKey = null);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Invalid image: ${e.toString()}"),
+          content: Text(
+            _t(
+              'Please ensure the photo clearly shows the pepper sample.',
+              'කරුණාකර ඡායාරූපයේ ගම්මිරිස් සාම්පලය පැහැදිලිව පෙනෙන බව තහවුරු කරන්න.',
+            ),
+          ),
           backgroundColor: Colors.red.shade600,
         ),
       );
@@ -824,10 +837,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
     Color accentColor,
   ) {
     final hasImage = images[key] != null;
+    final isUploading = _uploadingKey == key;
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => pickImage(key),
+        onTap: isUploading ? null : () => pickImage(key),
         child: Container(
           height: responsive.value(mobile: 120, tablet: 140, desktop: 160),
           decoration: BoxDecoration(
@@ -840,84 +854,107 @@ class _ImageUploadScreenState extends State<ImageUploadScreen>
               width: hasImage ? 2 : 1,
             ),
           ),
-          child: hasImage
-              ? Stack(
+          child: isUploading
+              ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.file(
-                        images[key]!,
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
+                    SizedBox(
+                      height: responsive.value(mobile: 24, tablet: 26, desktop: 28),
+                      width: responsive.value(mobile: 24, tablet: 26, desktop: 28),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: accentColor,
                       ),
                     ),
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade500,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
-                          size: responsive.value(
-                            mobile: 14,
-                            tablet: 15,
-                            desktop: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: responsive.value(
-                            mobile: 6,
-                            tablet: 7,
-                            desktop: 8,
-                          ),
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.7),
-                              Colors.transparent,
-                            ],
-                          ),
-                          borderRadius: const BorderRadius.only(
-                            bottomLeft: Radius.circular(14),
-                            bottomRight: Radius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: responsive.bodyFontSize - 2,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                    ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
+                    Text(
+                      _t('Validating...', 'තහවුරු කරමින්...'),
+                      style: TextStyle(
+                        fontSize: responsive.bodyFontSize - 2,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 )
-              : Column(
+              : hasImage
+                  ? Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.file(
+                            images[key]!,
+                            width: double.infinity,
+                            height: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          top: 6,
+                          right: 6,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade500,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.check_rounded,
+                              color: Colors.white,
+                              size: responsive.value(
+                                mobile: 14,
+                                tablet: 15,
+                                desktop: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              vertical: responsive.value(
+                                mobile: 6,
+                                tablet: 7,
+                                desktop: 8,
+                              ),
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  Colors.black.withOpacity(0.7),
+                                  Colors.transparent,
+                                ],
+                              ),
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(14),
+                                bottomRight: Radius.circular(14),
+                              ),
+                            ),
+                            child: Text(
+                              label,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: responsive.bodyFontSize - 2,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(

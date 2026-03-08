@@ -1283,15 +1283,20 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
                         size: responsive.smallIconSize,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        _t(
-                          'Download Report (PDF)',
-                          DetailedReportScreenSi.downloadPdf,
-                        ),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: responsive.titleFontSize,
-                          letterSpacing: 0.5,
+                      Expanded(
+                        child: Text(
+                          _t(
+                            'Download Report (PDF)',
+                            DetailedReportScreenSi.downloadPdf,
+                          ),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: responsive.titleFontSize,
+                            letterSpacing: 0.5,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -1329,15 +1334,20 @@ class _DetailedReportScreenState extends State<DetailedReportScreen>
                   size: responsive.smallIconSize,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  _t(
-                    'How is Quality Calculated?',
-                    DetailedReportScreenSi.howQualityCalculated,
-                  ),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: responsive.titleFontSize,
-                    letterSpacing: 0.5,
+                Expanded(
+                  child: Text(
+                    _t(
+                      'How is Quality Calculated?',
+                      DetailedReportScreenSi.howQualityCalculated,
+                    ),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: responsive.titleFontSize,
+                      letterSpacing: 0.5,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

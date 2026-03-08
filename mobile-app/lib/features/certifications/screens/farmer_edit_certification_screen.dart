@@ -7,6 +7,8 @@ import 'package:open_filex/open_filex.dart';
 import '../models/certification_model.dart';
 import '../services/certification_api.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/common/farmer_edit_certification_si.dart';
 
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
@@ -60,6 +62,8 @@ class _FarmerEditCertificationScreenState
 
   bool _saving = false;
 
+  String _currentLanguage = 'en';
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -84,10 +88,15 @@ class _FarmerEditCertificationScreenState
     );
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _animationController.forward();
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
 
   @override
@@ -96,6 +105,10 @@ class _FarmerEditCertificationScreenState
     _animationController.dispose();
     super.dispose();
   }
+
+  bool get _isSinhala => _currentLanguage == 'si';
+
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
 
   String _formatDate(DateTime? d) {
     if (d == null) return '';
@@ -155,7 +168,10 @@ class _FarmerEditCertificationScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              _t('Cancel', FarmerEditCertificationSi.cancel),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
@@ -166,7 +182,7 @@ class _FarmerEditCertificationScreenState
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Confirm'),
+            child: Text(_t('Confirm', FarmerEditCertificationSi.confirm)),
           ),
         ],
       ),
@@ -186,8 +202,9 @@ class _FarmerEditCertificationScreenState
       firstDate: DateTime(now.year - 10),
       lastDate: DateTime(now.year + 20),
       builder: (ctx, child) => Theme(
-        data: Theme.of(ctx)
-            .copyWith(colorScheme: ColorScheme.fromSeed(seedColor: _primary)),
+        data: Theme.of(
+          ctx,
+        ).copyWith(colorScheme: ColorScheme.fromSeed(seedColor: _primary)),
         child: child!,
       ),
     );
@@ -232,7 +249,9 @@ class _FarmerEditCertificationScreenState
         _removeExistingAttachment = false;
       });
     } catch (e) {
-      _toast("File pick failed: $e");
+      _toast(
+        "${_t('File pick failed', FarmerEditCertificationSi.filePickFailed)}: $e",
+      );
     }
   }
 
@@ -264,15 +283,30 @@ class _FarmerEditCertificationScreenState
     if (_formKey.currentState?.validate() != true) return;
 
     if (_issueDate == null) {
-      _toast('Please select issue date');
+      _toast(
+        _t(
+          'Please select issue date',
+          FarmerEditCertificationSi.pleaseSelectIssueDate,
+        ),
+      );
       return;
     }
     if (_expiryDate == null) {
-      _toast('Please select expiry date');
+      _toast(
+        _t(
+          'Please select expiry date',
+          FarmerEditCertificationSi.pleaseSelectExpiryDate,
+        ),
+      );
       return;
     }
     if (!_expiryDate!.isAfter(_issueDate!)) {
-      _toast('Expiry date must be after issue date');
+      _toast(
+        _t(
+          'Expiry date must be after issue date',
+          FarmerEditCertificationSi.expiryAfterIssue,
+        ),
+      );
       return;
     }
 
@@ -286,7 +320,9 @@ class _FarmerEditCertificationScreenState
         issuingBody: _issuingBody!.trim(),
         issueDate: _issueDate!,
         expiryDate: _expiryDate!,
-        removeAttachment: _attachmentFile != null ? false : _removeExistingAttachment,
+        removeAttachment: _attachmentFile != null
+            ? false
+            : _removeExistingAttachment,
         newAttachmentFile: _attachmentFile,
       );
 
@@ -318,11 +354,14 @@ class _FarmerEditCertificationScreenState
     final raw = (initial.attachment.originalName ?? '').trim();
     final currentName = raw.isNotEmpty
         ? raw
-        : (initial.attachment.isPdf ? 'Document' : 'Image');
+        : (initial.attachment.isPdf
+              ? _t('Document', FarmerEditCertificationSi.document)
+              : _t('Image', FarmerEditCertificationSi.image));
 
     // Determine if UI has any file to show
     final hasPicked = _attachmentFile != null;
-    final hasExisting = initial.attachment.hasFile && !_removeExistingAttachment;
+    final hasExisting =
+        initial.attachment.hasFile && !_removeExistingAttachment;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -346,11 +385,18 @@ class _FarmerEditCertificationScreenState
                         children: [
                           _buildSectionTitle(
                             responsive,
-                            'Certification Details',
+                            _t(
+                              'Certification Details',
+                              FarmerEditCertificationSi.certificationDetails,
+                            ),
                             Icons.verified_outlined,
                           ),
 
-                          ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
+                          ResponsiveSpacing(
+                            mobile: 16,
+                            tablet: 20,
+                            desktop: 24,
+                          ),
 
                           _sectionCard(
                             responsive,
@@ -360,72 +406,126 @@ class _FarmerEditCertificationScreenState
                                 // Certification Type dropdown (same as add)
                                 _buildDropdown(
                                   responsive,
-                                  value: (_certificationType == null ||
-                                          _certTypeOptions.contains(_certificationType))
+                                  value:
+                                      (_certificationType == null ||
+                                          _certTypeOptions.contains(
+                                            _certificationType,
+                                          ))
                                       ? _certificationType
                                       : 'Other',
                                   items: _certTypeOptions,
-                                  label: 'Certification Type',
+                                  label: _t(
+                                    'Certification Type',
+                                    FarmerEditCertificationSi.certificationType,
+                                  ),
                                   icon: Icons.verified_outlined,
                                   validator: (_) {
                                     if (_certificationType == null ||
                                         _certificationType!.trim().isEmpty) {
-                                      return 'Required';
+                                      return _t(
+                                        'Required',
+                                        FarmerEditCertificationSi.required,
+                                      );
                                     }
                                     return null;
                                   },
                                   onChanged: (val) async {
                                     if (val == null) return;
                                     if (val == 'Other') {
-                                      final custom = await _showOtherInputDialog(
-                                        title: 'Other Certification Type',
-                                        hint: 'Type certification name',
-                                      );
+                                      final custom =
+                                          await _showOtherInputDialog(
+                                            title: _t(
+                                              'Other Certification Type',
+                                              FarmerEditCertificationSi
+                                                  .otherCertificationTypeTitle,
+                                            ),
+                                            hint: _t(
+                                              'Type certification name',
+                                              FarmerEditCertificationSi
+                                                  .otherCertificationTypeHint,
+                                            ),
+                                          );
                                       if (custom == null) return;
-                                      setState(() => _certificationType = custom);
+                                      setState(
+                                        () => _certificationType = custom,
+                                      );
                                     } else {
                                       setState(() => _certificationType = val);
                                     }
                                   },
                                 ),
 
-                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
+                                ResponsiveSpacing(
+                                  mobile: 14,
+                                  tablet: 16,
+                                  desktop: 18,
+                                ),
 
                                 _buildTextField(
                                   responsive,
                                   controller: _certNumberCtrl,
-                                  label: 'Certificate Number',
+                                  label: _t(
+                                    'Certificate Number',
+                                    FarmerEditCertificationSi.certificateNumber,
+                                  ),
                                   icon: Icons.confirmation_number_outlined,
                                   validator: (v) =>
-                                      (v == null || v.trim().isEmpty) ? 'Required' : null,
+                                      (v == null || v.trim().isEmpty)
+                                      ? _t(
+                                          'Required',
+                                          FarmerEditCertificationSi.required,
+                                        )
+                                      : null,
                                 ),
 
-                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
+                                ResponsiveSpacing(
+                                  mobile: 14,
+                                  tablet: 16,
+                                  desktop: 18,
+                                ),
 
                                 // Issuing Body dropdown (same as add)
                                 _buildDropdown(
                                   responsive,
-                                  value: (_issuingBody == null ||
-                                          _issuingBodyOptions.contains(_issuingBody))
+                                  value:
+                                      (_issuingBody == null ||
+                                          _issuingBodyOptions.contains(
+                                            _issuingBody,
+                                          ))
                                       ? _issuingBody
                                       : 'Other',
                                   items: _issuingBodyOptions,
-                                  label: 'Issuing Body',
+                                  label: _t(
+                                    'Issuing Body',
+                                    FarmerEditCertificationSi.issuingBody,
+                                  ),
                                   icon: Icons.account_balance_outlined,
                                   validator: (_) {
                                     if (_issuingBody == null ||
                                         _issuingBody!.trim().isEmpty) {
-                                      return 'Required';
+                                      return _t(
+                                        'Required',
+                                        FarmerEditCertificationSi.required,
+                                      );
                                     }
                                     return null;
                                   },
                                   onChanged: (val) async {
                                     if (val == null) return;
                                     if (val == 'Other') {
-                                      final custom = await _showOtherInputDialog(
-                                        title: 'Other Issuing Body',
-                                        hint: 'Type issuing organization',
-                                      );
+                                      final custom =
+                                          await _showOtherInputDialog(
+                                            title: _t(
+                                              'Other Issuing Body',
+                                              FarmerEditCertificationSi
+                                                  .otherIssuingBodyTitle,
+                                            ),
+                                            hint: _t(
+                                              'Type issuing organization',
+                                              FarmerEditCertificationSi
+                                                  .otherIssuingBodyHint,
+                                            ),
+                                          );
                                       if (custom == null) return;
                                       setState(() => _issuingBody = custom);
                                     } else {
@@ -434,27 +534,45 @@ class _FarmerEditCertificationScreenState
                                   },
                                 ),
 
-                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
+                                ResponsiveSpacing(
+                                  mobile: 14,
+                                  tablet: 16,
+                                  desktop: 18,
+                                ),
 
                                 _buildDateField(
                                   responsive,
-                                  label: 'Issue Date',
+                                  label: _t(
+                                    'Issue Date',
+                                    FarmerEditCertificationSi.issueDate,
+                                  ),
                                   icon: Icons.event_outlined,
                                   date: _issueDate,
                                   onTap: () => _pickDate(isIssueDate: true),
                                 ),
 
-                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
+                                ResponsiveSpacing(
+                                  mobile: 14,
+                                  tablet: 16,
+                                  desktop: 18,
+                                ),
 
                                 _buildDateField(
                                   responsive,
-                                  label: 'Expiry Date',
+                                  label: _t(
+                                    'Expiry Date',
+                                    FarmerEditCertificationSi.expiryDate,
+                                  ),
                                   icon: Icons.event_available_outlined,
                                   date: _expiryDate,
                                   onTap: () => _pickDate(isIssueDate: false),
                                 ),
 
-                                ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
+                                ResponsiveSpacing(
+                                  mobile: 14,
+                                  tablet: 16,
+                                  desktop: 18,
+                                ),
 
                                 // Attachment field styled like Add page, but shows current too
                                 _buildAttachmentField(
@@ -468,11 +586,19 @@ class _FarmerEditCertificationScreenState
                             ),
                           ),
 
-                          ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
+                          ResponsiveSpacing(
+                            mobile: 24,
+                            tablet: 28,
+                            desktop: 32,
+                          ),
 
                           _buildSaveButton(responsive),
 
-                          ResponsiveSpacing(mobile: 24, tablet: 32, desktop: 40),
+                          ResponsiveSpacing(
+                            mobile: 24,
+                            tablet: 32,
+                            desktop: 40,
+                          ),
                         ],
                       ),
                     ),
@@ -540,22 +666,34 @@ class _FarmerEditCertificationScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Edit Certification',
+                  _t(
+                    'Edit Certification',
+                    FarmerEditCertificationSi.editCertification,
+                  ),
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize:
-                        responsive.fontSize(mobile: 20, tablet: 24, desktop: 28),
+                    fontSize: responsive.fontSize(
+                      mobile: 20,
+                      tablet: 24,
+                      desktop: 28,
+                    ),
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Update details and save',
+                  _t(
+                    'Update details and save',
+                    FarmerEditCertificationSi.updateDetailsAndSave,
+                  ),
                   style: TextStyle(
                     color: colorWithOpacity(Colors.white, 0.8),
-                    fontSize:
-                        responsive.fontSize(mobile: 12, tablet: 13, desktop: 14),
+                    fontSize: responsive.fontSize(
+                      mobile: 12,
+                      tablet: 13,
+                      desktop: 14,
+                    ),
                   ),
                 ),
               ],
@@ -586,8 +724,11 @@ class _FarmerEditCertificationScreenState
           child: Text(
             title,
             style: TextStyle(
-              fontSize:
-                  responsive.fontSize(mobile: 17, tablet: 20, desktop: 22),
+              fontSize: responsive.fontSize(
+                mobile: 17,
+                tablet: 20,
+                desktop: 22,
+              ),
               fontWeight: FontWeight.w700,
               color: Colors.black87,
             ),
@@ -788,11 +929,14 @@ class _FarmerEditCertificationScreenState
             horizontal: 12,
           ),
           filled: hasDate,
-          fillColor:
-              hasDate ? colorWithOpacity(_primary, 0.04) : Colors.transparent,
+          fillColor: hasDate
+              ? colorWithOpacity(_primary, 0.04)
+              : Colors.transparent,
         ),
         child: Text(
-          hasDate ? _formatDate(date) : 'Select date',
+          hasDate
+              ? _formatDate(date)
+              : _t('Select date', FarmerEditCertificationSi.selectDate),
           style: TextStyle(
             color: hasDate ? Colors.grey[800] : Colors.grey[500],
             fontSize: responsive.fontSize(mobile: 14, tablet: 15, desktop: 16),
@@ -810,13 +954,13 @@ class _FarmerEditCertificationScreenState
     required bool hasExisting,
     required bool hasPicked,
   }) {
-
     // what to display
     final displayName = hasPicked
-        ? (_attachmentName ?? 'Selected file')
+        ? (_attachmentName ??
+              _t('Selected file', FarmerEditCertificationSi.selectedFile))
         : hasExisting
-            ? currentName
-            : 'No attachment';
+        ? currentName
+        : _t('No attachment', FarmerEditCertificationSi.noAttachment);
 
     final displayIsPdf = hasPicked ? _attachmentIsPdf : currentIsPdf;
 
@@ -845,7 +989,10 @@ class _FarmerEditCertificationScreenState
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  "Certificate File (Optional)",
+                  _t(
+                    'Certificate File (Optional)',
+                    FarmerEditCertificationSi.certificateFileOptional,
+                  ),
                   style: TextStyle(
                     fontSize: responsive.fontSize(
                       mobile: 14,
@@ -860,7 +1007,11 @@ class _FarmerEditCertificationScreenState
               TextButton.icon(
                 onPressed: _saving ? null : _pickAttachment,
                 icon: const Icon(Icons.upload_file),
-                label: Text(hasPicked ? "Replace" : "Upload"),
+                label: Text(
+                  hasPicked
+                      ? _t('Replace', FarmerEditCertificationSi.replace)
+                      : _t('Upload', FarmerEditCertificationSi.upload),
+                ),
                 style: TextButton.styleFrom(foregroundColor: _primary),
               ),
             ],
@@ -869,7 +1020,10 @@ class _FarmerEditCertificationScreenState
 
           if (!hasPicked && !hasExisting && !_removeExistingAttachment)
             Text(
-              "Upload JPG, PNG, WEBP, or PDF (max 10MB).",
+              _t(
+                'Upload JPG, PNG, WEBP, or PDF (max 10MB).',
+                FarmerEditCertificationSi.uploadHint,
+              ),
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: responsive.fontSize(
@@ -893,7 +1047,10 @@ class _FarmerEditCertificationScreenState
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      "Attachment will be removed (Save to apply)",
+                      _t(
+                        'Attachment will be removed (Save to apply)',
+                        FarmerEditCertificationSi.attachmentWillBeRemoved,
+                      ),
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: Colors.red.shade700,
@@ -901,10 +1058,11 @@ class _FarmerEditCertificationScreenState
                     ),
                   ),
                   IconButton(
-                    tooltip: "Undo",
+                    tooltip: _t('Undo', FarmerEditCertificationSi.undo),
                     onPressed: _saving
                         ? null
-                        : () => setState(() => _removeExistingAttachment = false),
+                        : () =>
+                              setState(() => _removeExistingAttachment = false),
                     icon: const Icon(Icons.undo),
                     color: Colors.red.shade600,
                   ),
@@ -940,13 +1098,15 @@ class _FarmerEditCertificationScreenState
                     ),
                   ),
                   IconButton(
-                    tooltip: "Preview",
-                    onPressed: (_saving || !hasPicked) ? null : _previewPickedAttachment,
+                    tooltip: _t('Preview', FarmerEditCertificationSi.preview),
+                    onPressed: (_saving || !hasPicked)
+                        ? null
+                        : _previewPickedAttachment,
                     icon: const Icon(Icons.visibility_outlined),
                     color: _primary,
                   ),
                   IconButton(
-                    tooltip: "Remove",
+                    tooltip: _t('Remove', FarmerEditCertificationSi.remove),
                     onPressed: _saving ? null : _removeAttachment,
                     icon: const Icon(Icons.delete_outline),
                     color: Colors.redAccent,
@@ -1001,14 +1161,21 @@ class _FarmerEditCertificationScreenState
               children: [
                 if (_saving)
                   SizedBox(
-                    width:
-                        responsive.value(mobile: 18, tablet: 20, desktop: 22),
-                    height:
-                        responsive.value(mobile: 18, tablet: 20, desktop: 22),
+                    width: responsive.value(
+                      mobile: 18,
+                      tablet: 20,
+                      desktop: 22,
+                    ),
+                    height: responsive.value(
+                      mobile: 18,
+                      tablet: 20,
+                      desktop: 22,
+                    ),
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.grey[600]!,
+                      ),
                     ),
                   )
                 else
@@ -1017,13 +1184,25 @@ class _FarmerEditCertificationScreenState
                     color: Colors.white,
                     size: responsive.value(mobile: 20, tablet: 22, desktop: 24),
                   ),
-                ResponsiveSpacing.horizontal(mobile: 10, tablet: 12, desktop: 14),
+                ResponsiveSpacing.horizontal(
+                  mobile: 10,
+                  tablet: 12,
+                  desktop: 14,
+                ),
                 Text(
-                  _saving ? 'Saving...' : 'Save Changes',
+                  _saving
+                      ? _t('Saving...', FarmerEditCertificationSi.saving)
+                      : _t(
+                          'Save Changes',
+                          FarmerEditCertificationSi.saveChanges,
+                        ),
                   style: TextStyle(
                     color: _saving ? Colors.grey[600] : Colors.white,
                     fontSize: responsive.fontSize(
-                        mobile: 15, tablet: 16, desktop: 17),
+                      mobile: 15,
+                      tablet: 16,
+                      desktop: 17,
+                    ),
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.3,
                   ),

@@ -10,7 +10,7 @@ class ProcessingScreenSi {
   ];
 
   // Main text
-  static const String aiAnalysisInProgress = 'AI විශ්ලේෂණය සිදු වෙමින්';
+  static const String aiAnalysisInProgress = 'විශ්ලේෂණය සිදු වෙමින්';
   static const String pleaseWait =
       'කරුණාකර රැඳී සිටින්න, ඔබේ ගම්මිරිස් ගුණාත්මකභාවය විශ්ලේෂණය කරමින් ඇත';
 

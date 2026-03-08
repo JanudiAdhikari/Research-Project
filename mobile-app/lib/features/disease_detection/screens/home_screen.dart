@@ -285,14 +285,14 @@ class _HomeScreenState extends State<HomeScreen>
         iconColor: const Color(0xFFE65100),
         onTap: () => _navigateToComplaint(context),
       ),
-      _FeatureCardData(
-        title: _translate('manage_complaints'),
-        subtitle: _translate('manage_complaints_subtitle'),
-        iconData: Icons.admin_panel_settings_rounded,
-        iconBgColor: const Color(0xFFF3E5F5),
-        iconColor: const Color(0xFF6A1B9A),
-        onTap: () => _navigateToComplaintManagement(context),
-      ),
+      // _FeatureCardData(
+      //   title: _translate('manage_complaints'),
+      //   subtitle: _translate('manage_complaints_subtitle'),
+      //   iconData: Icons.admin_panel_settings_rounded,
+      //   iconBgColor: const Color(0xFFF3E5F5),
+      //   iconColor: const Color(0xFF6A1B9A),
+      //   onTap: () => _navigateToComplaintManagement(context),
+      // ),
       _FeatureCardData(
         title: _translate('weather_forecast'),
         subtitle: _translate('weather_forecast_subtitle'),

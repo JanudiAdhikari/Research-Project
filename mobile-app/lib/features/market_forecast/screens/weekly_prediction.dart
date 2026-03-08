@@ -113,7 +113,8 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
 
   Future<void> fetchPrediction() async {
     final service = PricePredictionService(
-      apiUrl: 'http://10.0.2.2:8000/predictlocalprice',
+      apiUrl:
+          'https://price-prediction-755295357792.europe-west1.run.app/predictlocalprice',
     );
 
     try {

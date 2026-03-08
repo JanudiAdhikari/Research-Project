@@ -629,7 +629,7 @@ class _ExporterDashboardState extends State<ExporterDashboard>
       _featureCard(
         context,
         responsive,
-        title: "Export\nPrices",
+        title: "Predict Monthly \nExport Prices",
         subtitle: "Market trends",
         icon: Icons.trending_up_rounded,
         iconColor: Colors.green.shade700,

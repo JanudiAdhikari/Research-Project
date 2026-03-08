@@ -17,7 +17,7 @@ class BulkDensityScreen2Si {
   static const String instruction3 =
       'පහත ක්ෂේත්‍රයට අගය ඇතුළු කර "ඝනත්වය සුරකින්න" තට්ටු කරන්න.';
   static const String instruction4 =
-      'පිළිගත හැකි පරාසය 200–900 g/L වේ. සුරැකීමට පෙර දෙවරක් පරීක්ෂා කරන්න.';
+      'පිළිගත හැකි පරාසය 0–600 g/L වේ. සුරැකීමට පෙර දෙවරක් පරීක්ෂා කරන්න.';
 
   // Input card
   static const String enterBulkDensity = 'තොග ඝනත්වය ඇතුළු කරන්න';
@@ -28,7 +28,7 @@ class BulkDensityScreen2Si {
   static const String pleaseEnterDensity = 'කරුණාකර ඝනත්ව අගයක් ඇතුළු කරන්න';
   static const String densityMustBePositive = 'ඝනත්වය 0 ට වඩා වැඩි විය යුතුය';
   static const String densityOutOfRange =
-      'යථාර්ථවාදී අගයක් ඇතුළු කරන්න (200–900 g/L)';
+      'යථාර්ථවාදී අගයක් ඇතුළු කරන්න (0–600 g/L)';
 
   // Snackbar
   static const String densitySavedSuccess = 'ඝනත්වය සාර්ථකව සුරකින ලදී';

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/farmer_service.dart';
 import '../models/farm_plot.dart';
+import '../utils/common/my_farm_screen_si.dart';
 import '../utils/responsive.dart';
+import '../utils/language_prefs.dart';
 
 Color colorWithOpacity(Color c, double opacity) {
   final alpha = (opacity * 255).round().clamp(0, 255);
@@ -23,6 +25,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
   bool _loading = true;
   String? _error;
   List<FarmPlot> _plots = [];
+  String _currentLanguage = 'en'; // ← added for language support
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -47,7 +50,20 @@ class _MyFarmScreenState extends State<MyFarmScreen>
         );
 
     _loadPlots();
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
   }
+
+  // ── Language helper ────────────────────────────────────────────────────────
+
+  bool get _isSinhala => _currentLanguage == 'si';
+
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
+
+  // ──────────────────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
@@ -71,14 +87,16 @@ class _MyFarmScreenState extends State<MyFarmScreen>
         setState(() => _error = e.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load plots: $e'),
+            content: Text(
+              '${_t('Failed to load plots: ', MyFarmScreenSi.failedToLoad)}$e',
+            ),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
             action: SnackBarAction(
-              label: 'Retry',
+              label: _t('Retry', MyFarmScreenSi.retry),
               textColor: Colors.white,
               onPressed: _loadPlots,
             ),
@@ -119,7 +137,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
             ),
             const SizedBox(width: 12),
             Text(
-              plot == null ? 'Add New Plot' : 'Edit Plot',
+              plot == null
+                  ? _t('Add New Plot', MyFarmScreenSi.addNewPlot)
+                  : _t('Edit Plot', MyFarmScreenSi.editPlot),
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
@@ -133,24 +153,27 @@ class _MyFarmScreenState extends State<MyFarmScreen>
               children: [
                 _dialogField(
                   nameCtrl,
-                  'Plot Location',
+                  _t('Plot Location', MyFarmScreenSi.plotLocation),
                   Icons.label_outline,
-                  hint: 'e.g., Kegalle',
+                  hint: _t('e.g., Kegalle', MyFarmScreenSi.plotLocationHint),
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Plot name is required'
+                      ? _t(
+                          'Plot name is required',
+                          MyFarmScreenSi.plotNameRequired,
+                        )
                       : null,
                 ),
                 const SizedBox(height: 14),
                 _dialogField(
                   cropCtrl,
-                  'Crop Type',
+                  _t('Crop Type', MyFarmScreenSi.cropType),
                   Icons.grass_outlined,
-                  hint: 'e.g., Black Pepper',
+                  hint: _t('e.g., Black Pepper', MyFarmScreenSi.cropTypeHint),
                 ),
                 const SizedBox(height: 14),
                 _dialogField(
                   areaCtrl,
-                  'Area (hectares)',
+                  _t('Area (hectares)', MyFarmScreenSi.areaHectares),
                   Icons.straighten_outlined,
                   hint: '0.0',
                   suffixText: 'ha',
@@ -159,9 +182,16 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty)
-                      return 'Area is required';
+                      return _t(
+                        'Area is required',
+                        MyFarmScreenSi.areaRequired,
+                      );
                     final n = double.tryParse(v.trim());
-                    if (n == null || n <= 0) return 'Enter a valid area';
+                    if (n == null || n <= 0)
+                      return _t(
+                        'Enter a valid area',
+                        MyFarmScreenSi.areaInvalid,
+                      );
                     return null;
                   },
                 ),
@@ -172,7 +202,10 @@ class _MyFarmScreenState extends State<MyFarmScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              _t('Cancel', MyFarmScreenSi.cancel),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -194,8 +227,14 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                     SnackBar(
                       content: Text(
                         plot == null
-                            ? 'Plot added successfully'
-                            : 'Plot updated successfully',
+                            ? _t(
+                                'Plot added successfully',
+                                MyFarmScreenSi.plotAdded,
+                              )
+                            : _t(
+                                'Plot updated successfully',
+                                MyFarmScreenSi.plotUpdated,
+                              ),
                       ),
                       backgroundColor: _primary,
                       behavior: SnackBarBehavior.floating,
@@ -210,7 +249,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Error: $e'),
+                      content: Text('${_t('Error: ', MyFarmScreenSi.error)}$e'),
                       backgroundColor: Colors.redAccent,
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(
@@ -228,7 +267,11 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: Text(plot == null ? 'Add Plot' : 'Save'),
+            child: Text(
+              plot == null
+                  ? _t('Add Plot', MyFarmScreenSi.addPlot)
+                  : _t('Save', MyFarmScreenSi.save),
+            ),
           ),
         ],
       ),
@@ -278,16 +321,23 @@ class _MyFarmScreenState extends State<MyFarmScreen>
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Delete Plot',
-          style: TextStyle(fontWeight: FontWeight.w700),
+        title: Text(
+          _t('Delete Plot', MyFarmScreenSi.deletePlot),
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
-        content: Text('Are you sure you want to delete "${plot.name}"?'),
+        content: Text(
+          '${_t('Are you sure you want to delete "', MyFarmScreenSi.deleteConfirm)}'
+          '${plot.name}'
+          '${_t('"?', MyFarmScreenSi.deleteConfirmEnd)}',
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              _t('Cancel', MyFarmScreenSi.cancel),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -298,7 +348,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Delete'),
+            child: Text(_t('Delete', MyFarmScreenSi.delete)),
           ),
         ],
       ),
@@ -310,7 +360,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Plot deleted'),
+              content: Text(_t('Plot deleted', MyFarmScreenSi.plotDeleted)),
               backgroundColor: _primary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -324,7 +374,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to delete: $e'),
+              content: Text(
+                '${_t('Failed to delete: ', MyFarmScreenSi.failedToDelete)}$e',
+              ),
               backgroundColor: Colors.redAccent,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -377,9 +429,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
               heroTag: 'my_farm_fab',
               onPressed: () => _showPlotForm(),
               icon: const Icon(Icons.add_location_alt_outlined),
-              label: const Text(
-                'Add Plot',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              label: Text(
+                _t('Add Plot', MyFarmScreenSi.addPlot),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               backgroundColor: _primary,
               foregroundColor: Colors.white,
@@ -426,7 +478,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'My Farm',
+                  _t('My Farm', MyFarmScreenSi.myFarm),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: r.fontSize(mobile: 26, tablet: 30, desktop: 34),
@@ -436,7 +488,10 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Manage your farm plots',
+                  _t(
+                    'Manage your farm plots',
+                    MyFarmScreenSi.manageYourFarmPlots,
+                  ),
                   style: TextStyle(
                     color: colorWithOpacity(Colors.white, 0.80),
                     fontSize: r.fontSize(mobile: 13, tablet: 14, desktop: 15),
@@ -525,7 +580,11 @@ class _MyFarmScreenState extends State<MyFarmScreen>
           ResponsiveSpacing(mobile: 24, tablet: 28, desktop: 32),
 
           // ── Section title ────────────────────────────────────────
-          _buildSectionTitle(r, 'Farm Plots', Icons.grid_view_rounded),
+          _buildSectionTitle(
+            r,
+            _t('Farm Plots', MyFarmScreenSi.farmPlots),
+            Icons.grid_view_rounded,
+          ),
 
           ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
 
@@ -552,7 +611,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
           child: _buildStatCard(
             r,
             Icons.grid_on_rounded,
-            'Total Plots',
+            _t('Total Plots', MyFarmScreenSi.totalPlots),
             _plots.length.toString(),
           ),
         ),
@@ -561,7 +620,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
           child: _buildStatCard(
             r,
             Icons.landscape_rounded,
-            'Total Area',
+            _t('Total Area', MyFarmScreenSi.totalArea),
             '${_totalArea.toStringAsFixed(1)} ha',
           ),
         ),
@@ -734,7 +793,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              plot.crop.isNotEmpty ? plot.crop : 'No crop',
+                              plot.crop.isNotEmpty
+                                  ? plot.crop
+                                  : _t('No crop', MyFarmScreenSi.noCrop),
                               style: TextStyle(
                                 fontSize: r.fontSize(
                                   mobile: 12,
@@ -850,7 +911,10 @@ class _MyFarmScreenState extends State<MyFarmScreen>
             ),
             SizedBox(height: r.mediumSpacing),
             Text(
-              'Failed to load farm data',
+              _t(
+                'Failed to load farm data',
+                MyFarmScreenSi.failedToLoadFarmData,
+              ),
               style: TextStyle(
                 fontSize: r.titleFontSize,
                 fontWeight: FontWeight.w700,
@@ -870,9 +934,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
             ElevatedButton.icon(
               onPressed: _loadPlots,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text(
-                'Try Again',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              label: Text(
+                _t('Try Again', MyFarmScreenSi.tryAgain),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
@@ -917,7 +981,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
             ),
             SizedBox(height: r.largeSpacing),
             Text(
-              'No plots yet',
+              _t('No plots yet', MyFarmScreenSi.noPlotsYet),
               style: TextStyle(
                 fontSize: r.headingFontSize,
                 fontWeight: FontWeight.w700,
@@ -926,7 +990,10 @@ class _MyFarmScreenState extends State<MyFarmScreen>
             ),
             SizedBox(height: r.smallSpacing),
             Text(
-              'Start by adding your first plot',
+              _t(
+                'Start by adding your first plot',
+                MyFarmScreenSi.addFirstPlot,
+              ),
               style: TextStyle(
                 fontSize: r.bodyFontSize,
                 color: Colors.grey[600],
@@ -936,9 +1003,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
             ElevatedButton.icon(
               onPressed: () => _showPlotForm(),
               icon: const Icon(Icons.add_location_alt_outlined),
-              label: const Text(
-                'Add Plot',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              label: Text(
+                _t('Add Plot', MyFarmScreenSi.addPlot),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,

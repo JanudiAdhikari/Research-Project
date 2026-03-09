@@ -153,6 +153,16 @@ class YieldPredictionSi {
   static const String temperatureImpact = 'උෂ්ණත්වය බලපෑම';
   static const String aiModelAnalyzedPlantImage =
       'AI ආකෘතිය ශාක රූපය සහ පරිසරගත තත්ත්‍ය විශ්ලේෂණ කරනු ලබයි එසේ ඉවත් සාධක අනුමාන කරයි.';
+  static const String effectOnYield = 'අස්වැන්නට ඇති බලපෑම';
+  static const String whatIsShapImpact = 'මෙම අගයන්ගෙන් අදහස් වන්නේ කුමක්ද?';
+  static const String shapExplanation =
+      'මෙම අගයන් මගින් පසෙහි තෙතමනය සහ උෂ්ණත්වය ඔබේ අස්වැන්න වැඩි කිරීමට හෝ අඩු කිරීමට කොතරම් දුරට බලපානවාද යන්න පෙන්වයි.';
+  static const String positiveShapIcon = 'ධනාත්මක (+) බලපෑම:';
+  static const String positiveShapDesc = 'ඔබේ වගාවේ මෙම තත්ත්වය ඉතා යහපත් වන අතර එය අස්වැන්න වැඩි කිරීමට දායක වේ.';
+  static const String negativeShapIcon = 'සෘණ (-) බලපෑම:';
+  static const String negativeShapDesc = 'මෙම තත්ත්වය අස්වැන්න අඩු කිරීමට හේතු විය හැක. මෙය වැඩි දියුණු කිරීමට පියවරක් ගැනීම නිර්දේශ කෙරේ.';
+  static const String actionExample = 'උදාහරණයක් ලෙස: තෙතමනය සඳහා සෘණ (-) අගයක් ලැබෙන්නේ නම්, ශාකවලට ජලය අවශ්‍ය බව එයින් අදහස් වේ.';
+  static const String close = 'වසා දමන්න';
 
   // New Prediction Additional Strings
   static const String plantAgeLabel = 'ශාක වයස්';

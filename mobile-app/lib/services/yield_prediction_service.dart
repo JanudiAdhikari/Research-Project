@@ -124,11 +124,11 @@ class YieldPredictionService {
       );
 
       final response = await request.send().timeout(
-        const Duration(seconds: 90),
+        const Duration(seconds: 300),
         onTimeout: () {
-          print('[YieldPrediction] ERROR: Request timed out after 90 seconds');
+          print('[YieldPrediction] ERROR: Request timed out after 300 seconds');
           throw TimeoutException(
-            'The server is taking longer than usual (90s). If it is the first request of the day, please try again in a moment (Cloud Run cold start).',
+            'The server is taking longer than usual (300s). If it is the first request of the day, please try again in a moment (Cloud Run cold start).',
           );
         },
       );
@@ -140,16 +140,19 @@ class YieldPredictionService {
       } else {
         final errorBody = await response.stream.bytesToString();
         print('[YieldPrediction] Error response: $errorBody');
-        
         String message = 'Server Error (${response.statusCode})';
-        try {
-          final decoded = jsonDecode(errorBody);
-          if (decoded is Map && decoded.containsKey('detail')) {
-            message = decoded['detail'];
+        if (errorBody.contains('Rate exceeded') || response.statusCode == 429) {
+          message = 'The AI server is currently busy (Rate Limit Exceeded). Please wait a minute and try again with fewer images.';
+        } else {
+          try {
+            final decoded = jsonDecode(errorBody);
+            if (decoded is Map && decoded.containsKey('detail')) {
+              message = decoded['detail'];
+            }
+          } catch (_) {
+            // If not JSON, use the raw body or status code
+            if (errorBody.isNotEmpty) message = errorBody;
           }
-        } catch (_) {
-          // If not JSON, use the raw body or status code
-          message = errorBody.isNotEmpty ? errorBody : message;
         }
         
         throw Exception(message);

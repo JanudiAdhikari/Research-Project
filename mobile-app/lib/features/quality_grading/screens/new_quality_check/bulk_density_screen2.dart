@@ -95,18 +95,6 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
         _savedDensity = (result["density"]?["value"] as num).toDouble();
         _isSubmitting = false;
       });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _t(
-              'Density saved successfully',
-              BulkDensityScreen2Si.densitySavedSuccess,
-            ),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);
@@ -324,7 +312,7 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                 _buildInstructionStep(
                                   number: '4',
                                   text: _t(
-                                    'Accepted range is 200–900 g/L. Double-check before saving.',
+                                    'Accepted range is 0–600 g/L. Double-check before saving.',
                                     BulkDensityScreen2Si.instruction4,
                                   ),
                                   responsive: responsive,
@@ -493,16 +481,16 @@ class _BulkDensityScreen2State extends State<BulkDensityScreen2>
                                         BulkDensityScreen2Si.pleaseEnterDensity,
                                       );
                                     }
-                                    if (v <= 0) {
+                                    if (v < 0) {
                                       return _t(
-                                        'Density must be greater than 0',
+                                        'Density cannot be negative',
                                         BulkDensityScreen2Si
                                             .densityMustBePositive,
                                       );
                                     }
-                                    if (v < 200 || v > 900) {
+                                    if (v > 600) {
                                       return _t(
-                                        'Enter a realistic value (200–900 g/L)',
+                                        'Enter a realistic value (0–600 g/L)',
                                         BulkDensityScreen2Si.densityOutOfRange,
                                       );
                                     }

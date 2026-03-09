@@ -1,0 +1,47 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Distribution archives
+*.whl
+
+# Editor / OS files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Logs, test output
+*.log
+.pytest_cache/
+coverage/
+htmlcov/
+
+# Secrets and environment files
+.env
+*.pem
+*.key
+*.crt
+serviceAccountKey.json
+
+# CI / VCS
+.git/
+.github/
+.gitlab/

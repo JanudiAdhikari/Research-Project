@@ -13,6 +13,8 @@ import '../quality_grading/screens/quality_grading_dashboard.dart';
 import '../chatbot/chatbot_screen.dart';
 import '../yield_prediction/screens/harvest_prediction_dashboard.dart';
 import 'package:flutter/services.dart';
+import '../quality_grading/services/quality_check_api.dart';
+import '../../services/farmer_service.dart';
 
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
 Color colorWithOpacity(Color c, double opacity) {
@@ -38,6 +40,8 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   final AuthService _authService = AuthService();
   final WeatherService _weatherService = WeatherService();
   final LocationService _locationService = LocationService();
+  final QualityCheckApi _qualityCheckApi = QualityCheckApi();
+  final FarmerService _farmerService = FarmerService();
 
   bool _isLoadingWeather = true;
   String _locationName = 'Loading...';
@@ -150,12 +154,44 @@ class _FarmerDashboardState extends State<FarmerDashboard>
   }
 
   Future<void> _loadDashboardStats() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    double fetchedAvg = 0.0;
+    int fetchedTotalCrops = 0;
+    
+    try {
+      final plots = await _farmerService.fetchPlots();
+      fetchedTotalCrops = plots.length;
+    } catch (e) {
+      debugPrint("Failed to load plots: $e");
+    }
+
+    try {
+      final rawList = await _qualityCheckApi.getMyQualityChecks();
+      final List<Map<String, dynamic>> enriched = [];
+      for (final item in rawList) {
+        try {
+          final id = item['_id']?.toString() ?? '';
+          if (id.isEmpty) continue;
+          final full = await _qualityCheckApi.getQualityCheckById(qualityCheckId: id);
+          if (full['status'] == 'completed') enriched.add(full);
+        } catch (_) {}
+      }
+      
+      if (enriched.isNotEmpty) {
+        int totalScore = 0;
+        for (final r in enriched) {
+          totalScore += ((r['results']?['overallScore'] as num?)?.round()) ?? 0;
+        }
+        fetchedAvg = totalScore / enriched.length;
+      }
+    } catch (e) {
+      debugPrint("Failed to load quality stats: $e");
+    }
+
     if (mounted) {
       setState(() {
-        _totalCrops = 5;
+        _totalCrops = fetchedTotalCrops;
         _activeAlerts = 2;
-        _avgQuality = 87.5;
+        _avgQuality = fetchedAvg > 0 ? fetchedAvg : 0.0;
       });
     }
   }

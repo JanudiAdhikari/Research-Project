@@ -1,7 +1,11 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import '../../../utils/responsive.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../../../services/blockchain_service.dart';
+import '../widgets/blockchain_widgets.dart';
 
 class ViewBlockchainScreen extends StatefulWidget {
   final Map<String, dynamic> record;
@@ -14,10 +18,10 @@ class ViewBlockchainScreen extends StatefulWidget {
 
 class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
   bool _loadingQc = true;
+  bool _downloadingPdf = false;
   String? _qcError;
   Map<String, dynamic>? _qc;
 
-  // ---------- Helpers ----------
   String _safe(dynamic v, [String fallback = '-']) {
     if (v == null) return fallback;
     final s = v.toString().trim();
@@ -37,7 +41,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
   DateTime? _parseDate(dynamic v) {
     if (v == null) return null;
 
-    // Mongo style {"$date": "..."}
     if (v is Map && v[r'$date'] != null) {
       return DateTime.tryParse(v[r'$date'].toString());
     }
@@ -46,7 +49,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     return DateTime.tryParse(v.toString());
   }
 
-  // dd/MM/yyyy
   String _formatDateOnly(dynamic v) {
     final dt = _parseDate(v);
     if (dt == null) return _safe(v);
@@ -138,90 +140,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     }
   }
 
-  // ---------- UI Building Blocks ----------
-  Widget _sectionHeader(
-    Responsive responsive,
-    String title, {
-    Widget? trailing,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: responsive.headingFontSize,
-              fontWeight: FontWeight.w900,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        if (trailing != null) trailing,
-      ],
-    );
-  }
-
-  Widget _card(Responsive responsive, {required Widget child}) {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.only(bottom: responsive.mediumSpacing),
-      padding: EdgeInsets.all(responsive.mediumSpacing),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: child,
-    );
-  }
-
-  Widget _infoRow(
-    Responsive responsive, {
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: responsive.smallSpacing * 0.55),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 18, color: Colors.grey.shade700),
-          SizedBox(width: responsive.smallSpacing),
-          SizedBox(
-            width: responsive.value(mobile: 120, tablet: 150, desktop: 170),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                color: Colors.grey.shade700,
-                fontSize: responsive.smallFontSize + 1,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: Colors.black87,
-                fontSize: responsive.bodyFontSize,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------- Factor Scores (Screenshot Style) ----------
   String _prettyFactorKey(String key) {
     final s = key.replaceAllMapped(
       RegExp(r'([a-z])([A-Z])'),
@@ -248,7 +166,406 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     return Colors.blueGrey;
   }
 
-  Widget _factorList(Responsive responsive, Map<String, dynamic> factorScores) {
+  List<Map<String, dynamic>> _sortedHistory(dynamic historyRaw) {
+    final history = (historyRaw is List)
+        ? historyRaw.map((e) => Map<String, dynamic>.from(e as Map)).toList()
+        : <Map<String, dynamic>>[];
+
+    history.sort((a, b) {
+      final ia = (a['index'] is num) ? (a['index'] as num).toInt() : 0;
+      final ib = (b['index'] is num) ? (b['index'] as num).toInt() : 0;
+      return ia.compareTo(ib);
+    });
+
+    return history;
+  }
+
+  void _showQrPopup({
+    required String qrToken,
+    required String batchId,
+    required String qrGeneratedOn,
+  }) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.qr_code_2_rounded, color: Color(0xFF2E7D32)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Batch QR Code',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.grey.shade900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Batch ID: $batchId',
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: QrImageView(data: qrToken, size: 240),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Generated on: $qrGeneratedOn',
+                style: TextStyle(
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.check_circle_outline_rounded),
+                  label: const Text('Close'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadPdf() async {
+    setState(() => _downloadingPdf = true);
+
+    try {
+      final record = widget.record;
+
+      final batchId = _safe(record['batchId'], _safe(record['_id']));
+      final pepperType = _safe(record['pepperType']);
+      final district = _safe(record['district']);
+      final price = _formatNumber(record['pricePerKg']);
+      final qty = _formatNumber(record['quantity']);
+      final notes = _safe(record['notes'], 'No notes');
+
+      final statusRaw = _normalizeStatus(record['currentStatus']);
+      final statusPretty = _prettyStatus(statusRaw);
+
+      final qrToken = _safe(record['qrToken'], '');
+      final qrGeneratedOn = _formatDateOnly(record['qrGeneratedAt']);
+
+      final history = _sortedHistory(record['statusHistory']);
+
+      final harvestDate = _qc?['batch']?['harvestDate'];
+      final harvestedOn = harvestDate != null
+          ? _formatDateOnly(harvestDate)
+          : '-';
+
+      final qcStatus = _safe(_qc?['status'], '-');
+      final qcGrade = _safe(_qc?['results']?['grade'], '-');
+      final qcScore = _formatNumber(_qc?['results']?['overallScore']);
+      final dryingMethod = _safe(_qc?['batch']?['dryingMethod'], '-');
+      final pepperVariety = _safe(_qc?['batch']?['pepperVariety'], '-');
+      final densityValue = _formatNumber(_qc?['density']?['value']);
+      final densitySource = _safe(_qc?['density']?['source'], '-');
+      final densityMeasuredOn = _formatDateOnly(_qc?['density']?['measuredAt']);
+
+      final certCount = (_qc?['certificatesSnapshot']?['count'] is num)
+          ? (_qc?['certificatesSnapshot']?['count'] as num).toInt()
+          : 0;
+
+      final factorScoresRaw = _qc?['results']?['factorScores'];
+      final Map<String, dynamic> factorScores = (factorScoresRaw is Map)
+          ? Map<String, dynamic>.from(factorScoresRaw)
+          : {};
+
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(24),
+          build: (context) => [
+            pw.Container(
+              padding: const pw.EdgeInsets.all(14),
+              decoration: pw.BoxDecoration(
+                color: PdfColors.green100,
+                borderRadius: pw.BorderRadius.circular(10),
+              ),
+              child: pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Pepper Batch Report',
+                          style: pw.TextStyle(
+                            fontSize: 22,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text('Batch ID: $batchId'),
+                        pw.Text('Current Status: $statusPretty'),
+                      ],
+                    ),
+                  ),
+                  pw.SizedBox(width: 12),
+                  pw.Container(
+                    padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: pw.BoxDecoration(
+                      color: PdfColors.green700,
+                      borderRadius: pw.BorderRadius.circular(20),
+                    ),
+                    child: pw.Text(
+                      statusPretty,
+                      style: pw.TextStyle(
+                        color: PdfColors.white,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 20),
+            _pdfSectionTitle('Batch Details'),
+            _pdfInfoTable([
+              ['Pepper Type', pepperType],
+              ['District', district],
+              ['Price / kg', price],
+              ['Quantity', '$qty kg'],
+              ['Additional Notes', notes],
+            ]),
+            pw.SizedBox(height: 16),
+            _pdfSectionTitle('Quality Details'),
+            _pdfInfoTable([
+              ['Harvest Date', harvestedOn],
+              ['QC Status', qcStatus],
+              ['Grade', qcGrade],
+              ['Overall Score', qcScore],
+              ['Pepper Variety', pepperVariety],
+              ['Drying Method', dryingMethod],
+              ['Density', '$densityValue g/L'],
+              ['Density Source', densitySource],
+              ['Measured On', densityMeasuredOn],
+              ['Certificates', certCount.toString()],
+            ]),
+            if (factorScores.isNotEmpty) ...[
+              pw.SizedBox(height: 16),
+              _pdfSectionTitle('Factor Scores'),
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.grey300),
+                children: [
+                  pw.TableRow(
+                    decoration: const pw.BoxDecoration(
+                      color: PdfColors.grey200,
+                    ),
+                    children: [
+                      _pdfTableCell('Factor', isHeader: true),
+                      _pdfTableCell('Score', isHeader: true),
+                    ],
+                  ),
+                  ...factorScores.entries.map((e) {
+                    final score = (_safeDouble(e.value) ?? 0)
+                        .clamp(0, 100)
+                        .toDouble();
+                    return pw.TableRow(
+                      children: [
+                        _pdfTableCell(_prettyFactorKey(e.key)),
+                        _pdfTableCell(
+                          score % 1 == 0
+                              ? score.toInt().toString()
+                              : score.toStringAsFixed(1),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ],
+            pw.SizedBox(height: 16),
+            _pdfSectionTitle('QR Details'),
+            _pdfInfoTable([
+              ['QR Token', qrToken.isEmpty ? 'Not available' : qrToken],
+              ['Generated On', qrGeneratedOn],
+            ]),
+            pw.SizedBox(height: 16),
+            _pdfSectionTitle('Blockchain History'),
+            if (history.isEmpty && harvestedOn == '-')
+              pw.Text('No history found.')
+            else
+              pw.Column(
+                children: [
+                  if (harvestedOn != '-')
+                    _pdfHistoryRow('Harvested', harvestedOn, 'Farmer'),
+                  ...history.map((block) {
+                    final stRaw = _normalizeStatus(block['status']);
+                    final title = _prettyStatus(stRaw);
+                    final date = _formatDateOnly(block['timestamp']);
+                    final role = _prettyRole(block['actorRole']);
+                    return _pdfHistoryRow(title, date, role);
+                  }),
+                ],
+              ),
+          ],
+        ),
+      );
+
+      final Uint8List bytes = await pdf.save();
+
+      if (!mounted) return;
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PdfPreviewScreen(
+            pdfBytes: bytes,
+            fileName: 'batch_report_$batchId.pdf',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.error_outline_rounded, color: Colors.red),
+              SizedBox(width: 8),
+              Text('PDF Error'),
+            ],
+          ),
+          content: Text(
+            'Failed to generate the PDF.\n\n$e',
+            style: const TextStyle(height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _downloadingPdf = false);
+      }
+    }
+  }
+
+  pw.Widget _pdfSectionTitle(String title) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.only(bottom: 8),
+      child: pw.Text(
+        title,
+        style: pw.TextStyle(
+          fontSize: 16,
+          fontWeight: pw.FontWeight.bold,
+          color: PdfColors.green800,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _pdfInfoTable(List<List<String>> rows) {
+    return pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300),
+      columnWidths: {
+        0: const pw.FlexColumnWidth(2.2),
+        1: const pw.FlexColumnWidth(3.8),
+      },
+      children: rows
+          .map(
+            (row) => pw.TableRow(
+              children: [
+                _pdfTableCell(row[0], isHeader: true),
+                _pdfTableCell(row[1]),
+              ],
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  pw.Widget _pdfTableCell(String text, {bool isHeader = false}) {
+    return pw.Padding(
+      padding: const pw.EdgeInsets.all(8),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          fontSize: 10.5,
+          fontWeight: isHeader ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _pdfHistoryRow(String title, String date, String role) {
+    return pw.Container(
+      width: double.infinity,
+      margin: const pw.EdgeInsets.only(bottom: 8),
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        color: PdfColors.grey100,
+        borderRadius: pw.BorderRadius.circular(8),
+        border: pw.Border.all(color: PdfColors.grey300),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(title, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 2),
+          pw.Text('On: $date'),
+          pw.Text('By: $role'),
+        ],
+      ),
+    );
+  }
+
+  Widget _factorList(Map<String, dynamic> factorScores) {
     final entries = factorScores.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
@@ -258,179 +575,62 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
         final score = (_safeDouble(e.value) ?? 0).clamp(0, 100).toDouble();
         final color = _factorColor(e.key);
 
-        return Container(
-          margin: EdgeInsets.only(bottom: responsive.smallSpacing),
-          padding: EdgeInsets.all(responsive.mediumSpacing),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Colors.grey.shade900,
-                        fontSize: responsive.bodyFontSize,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      score % 1 == 0
-                          ? score.toInt().toString()
-                          : score.toStringAsFixed(1),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: color,
-                        fontSize: responsive.smallFontSize + 1,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: responsive.smallSpacing),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(
-                  value: score / 100,
-                  minHeight: 10,
-                  backgroundColor: color.withOpacity(0.12),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                ),
-              ),
-            ],
-          ),
-        );
+        return factorScoreItemWidget(label: label, score: score, color: color);
       }).toList(),
     );
   }
 
-  // ---------- Timeline ----------
-  Widget _timelineItem(
-    Responsive responsive, {
-    required bool isLast,
-    required String title,
-    required String date,
-    required String role,
-    required IconData icon,
-    required Color iconColor,
-  }) {
-    const green = Color(0xFF2E7D32);
+  Widget _historySection(
+    List<Map<String, dynamic>> history,
+    String? harvestedOn,
+  ) {
+    if (history.isEmpty && harvestedOn == null) {
+      return Text(
+        'No history found.',
+        style: TextStyle(
+          color: Colors.grey.shade700,
+          fontWeight: FontWeight.w600,
+        ),
+      );
+    }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        SizedBox(
-          width: 34,
-          child: Column(
-            children: [
-              Container(
-                width: 14,
-                height: 14,
-                decoration: const BoxDecoration(
-                  color: green,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              if (!isLast)
-                Container(
-                  width: 2,
-                  height: responsive.value(mobile: 64, tablet: 70, desktop: 76),
-                  margin: const EdgeInsets.only(top: 4),
-                  decoration: BoxDecoration(
-                    color: green.withOpacity(0.35),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                ),
-            ],
+        if (harvestedOn != null)
+          timelineItemWidget(
+            isLast: history.isEmpty,
+            title: 'Harvested',
+            date: harvestedOn,
+            role: 'By: ${_prettyRole('FARMER')}',
+            icon: Icons.agriculture_rounded,
+            iconColor: const Color(0xFF2E7D32),
           ),
-        ),
-        Expanded(
-          child: Container(
-            margin: EdgeInsets.only(bottom: responsive.smallSpacing),
-            padding: EdgeInsets.all(responsive.mediumSpacing),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 22),
-                ),
-                SizedBox(width: responsive.mediumSpacing),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black87,
-                          fontSize: responsive.bodyFontSize,
-                        ),
-                      ),
-                      SizedBox(height: responsive.smallSpacing * 0.5),
-                      Text(
-                        'On: $date',
-                        style: TextStyle(
-                          color: Colors.grey.shade800,
-                          fontWeight: FontWeight.w700,
-                          fontSize: responsive.smallFontSize + 1,
-                        ),
-                      ),
-                      SizedBox(height: responsive.smallSpacing * 0.3),
-                      Text(
-                        role,
-                        style: TextStyle(
-                          color: Colors.grey.shade800,
-                          fontWeight: FontWeight.w700,
-                          fontSize: responsive.smallFontSize + 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        ...List.generate(history.length, (i) {
+          final block = history[i];
+          final stRaw = _normalizeStatus(block['status']);
+          final title = _prettyStatus(stRaw);
+          final date = _formatDateOnly(block['timestamp']);
+          final role = 'By: ${_prettyRole(block['actorRole'])}';
+          final icon = _statusIcon(stRaw);
+          final iconColor = _statusColor(stRaw);
+
+          final total = history.length + (harvestedOn != null ? 1 : 0);
+          final currentIndex = i + (harvestedOn != null ? 1 : 0);
+          final isLast = currentIndex == total - 1;
+
+          return timelineItemWidget(
+            isLast: isLast,
+            title: title,
+            date: date,
+            role: role,
+            icon: icon,
+            iconColor: iconColor,
+          );
+        }),
       ],
     );
   }
 
-  // ---------- Load Quality Checks ----------
   @override
   void initState() {
     super.initState();
@@ -457,7 +657,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
         return;
       }
 
-      // pick latest by results.processedAt > updatedAt > createdAt
       list.sort((a, b) {
         DateTime? da =
             _parseDate(a['results']?['processedAt']) ??
@@ -482,10 +681,8 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     }
   }
 
-  // ---------- Screen ----------
   @override
   Widget build(BuildContext context) {
-    final responsive = context.responsive;
     final record = widget.record;
 
     final batchId = _safe(record['batchId'], _safe(record['_id']));
@@ -502,30 +699,17 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
     final qrToken = _safe(record['qrToken'], '');
     final qrGeneratedOn = _formatDateOnly(record['qrGeneratedAt']);
 
-    final historyRaw = record['statusHistory'];
-    final List<Map<String, dynamic>> history = (historyRaw is List)
-        ? historyRaw.map((e) => Map<String, dynamic>.from(e as Map)).toList()
-        : <Map<String, dynamic>>[];
-
-    // ✅ IMPORTANT FIX for your error:
-    // index can be int OR double depending on Mongo/JSON decoding.
-    history.sort((a, b) {
-      final ia = (a['index'] is num) ? (a['index'] as num).toInt() : 0;
-      final ib = (b['index'] is num) ? (b['index'] as num).toInt() : 0;
-      return ia.compareTo(ib);
-    });
+    final history = _sortedHistory(record['statusHistory']);
 
     final isMarketplaceListed = history.any(
       (b) => _normalizeStatus(b['status']) == 'MARKETPLACE_LISTED',
     );
 
-    // Harvested date (from qualitychecks.batch.harvestDate)
     final harvestDate = _qc?['batch']?['harvestDate'];
     final harvestedOn = harvestDate != null
         ? _formatDateOnly(harvestDate)
         : null;
 
-    // QC fields
     final qcStatus = _safe(_qc?['status'], '-');
     final qcGrade = _safe(_qc?['results']?['grade'], '-');
     final qcScore = _formatNumber(_qc?['results']?['overallScore']);
@@ -556,138 +740,45 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
         child: RefreshIndicator(
           onRefresh: _fetchQuality,
           child: ListView(
-            padding: EdgeInsets.all(responsive.pagePadding),
+            padding: const EdgeInsets.all(16),
             children: [
-              // --------- Top Summary ---------
-              _card(
-                responsive,
-                child: Row(
-                  children: [
-                    Container(
-                      width: responsive.value(
-                        mobile: 52,
-                        tablet: 58,
-                        desktop: 64,
-                      ),
-                      height: responsive.value(
-                        mobile: 52,
-                        tablet: 58,
-                        desktop: 64,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        _statusIcon(statusRaw),
-                        color: statusColor,
-                        size: responsive.mediumIconSize,
-                      ),
-                    ),
-                    SizedBox(width: responsive.mediumSpacing),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Batch: $batchId',
-                            style: TextStyle(
-                              fontSize: responsive.titleFontSize,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          SizedBox(height: responsive.smallSpacing),
-                          Wrap(
-                            spacing: responsive.smallSpacing,
-                            runSpacing: responsive.smallSpacing,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(
-                                    color: statusColor.withOpacity(0.25),
-                                  ),
-                                ),
-                                child: Text(
-                                  statusPretty,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              if (isMarketplaceListed)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.deepPurple.withOpacity(0.10),
-                                    borderRadius: BorderRadius.circular(999),
-                                    border: Border.all(
-                                      color: Colors.deepPurple.withOpacity(
-                                        0.25,
-                                      ),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Also in Marketplace ✅',
-                                    style: TextStyle(
-                                      color: Colors.deepPurple,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+              appCard(
+                child: batchStatusHeaderWidget(
+                  batchId: batchId,
+                  statusPretty: statusPretty,
+                  statusColor: statusColor,
+                  statusIcon: _statusIcon(statusRaw),
+                  isMarketplaceListed: isMarketplaceListed,
                 ),
               ),
+              const SizedBox(height: 14),
 
-              // --------- Batch Details (no grade) ---------
-              _card(
-                responsive,
+              appCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionHeader(responsive, 'Batch Details'),
-                    SizedBox(height: responsive.smallSpacing),
-                    _infoRow(
-                      responsive,
+                    sectionHeaderWidget('Batch Details'),
+                    infoRowWidget(
                       icon: Icons.spa_rounded,
                       label: 'Pepper Type',
                       value: pepperType,
                     ),
-                    _infoRow(
-                      responsive,
+                    infoRowWidget(
                       icon: Icons.location_on_rounded,
                       label: 'District',
                       value: district,
                     ),
-                    _infoRow(
-                      responsive,
+                    infoRowWidget(
                       icon: Icons.attach_money_rounded,
                       label: 'Price / kg',
                       value: price,
                     ),
-                    _infoRow(
-                      responsive,
+                    infoRowWidget(
                       icon: Icons.inventory_2_rounded,
                       label: 'Quantity',
                       value: '$qty kg',
                     ),
-                    _infoRow(
-                      responsive,
+                    infoRowWidget(
                       icon: Icons.sticky_note_2_rounded,
                       label: 'Additional Notes',
                       value: notes,
@@ -695,15 +786,13 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 14),
 
-              // --------- Quality Details + factors ---------
-              _card(
-                responsive,
+              appCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionHeader(
-                      responsive,
+                    sectionHeaderWidget(
                       'Quality Details',
                       trailing: _loadingQc
                           ? const SizedBox(
@@ -713,8 +802,6 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                             )
                           : const SizedBox.shrink(),
                     ),
-                    SizedBox(height: responsive.smallSpacing),
-
                     if (_qcError != null)
                       Text(
                         'Failed to load quality details: $_qcError',
@@ -729,192 +816,108 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                         style: TextStyle(
                           color: Colors.grey.shade700,
                           fontWeight: FontWeight.w600,
-                          fontSize: responsive.bodyFontSize,
+                          fontSize: 14,
                         ),
                       )
                     else if (_qc != null) ...[
-                      // Grade + score highlight
-                      Container(
-                        padding: EdgeInsets.all(responsive.mediumSpacing),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2E7D32).withOpacity(0.06),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: const Color(0xFF2E7D32).withOpacity(0.18),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF2E7D32,
-                                ).withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Icon(
-                                Icons.workspace_premium_rounded,
-                                color: Color(0xFF2E7D32),
-                              ),
-                            ),
-                            SizedBox(width: responsive.mediumSpacing),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Grade',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: responsive.smallFontSize + 1,
-                                    ),
-                                  ),
-                                  Text(
-                                    qcGrade,
-                                    style: TextStyle(
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: responsive.bodyFontSize + 1,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF2E7D32,
-                                ).withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                'Score: $qcScore',
-                                style: const TextStyle(
-                                  color: Color(0xFF2E7D32),
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      qualityGradeBannerWidget(
+                        qcGrade: qcGrade,
+                        qcScore: qcScore,
                       ),
-                      SizedBox(height: responsive.mediumSpacing),
-
-                      _infoRow(
-                        responsive,
+                      infoRowWidget(
                         icon: Icons.fact_check_rounded,
                         label: 'QC Status',
                         value: qcStatus,
                       ),
-                      _infoRow(
-                        responsive,
+                      infoRowWidget(
                         icon: Icons.eco_rounded,
                         label: 'Pepper Variety',
                         value: pepperVariety,
                       ),
-                      _infoRow(
-                        responsive,
+                      infoRowWidget(
                         icon: Icons.wb_sunny_rounded,
                         label: 'Drying Method',
                         value: dryingMethod,
                       ),
-                      _infoRow(
-                        responsive,
+                      infoRowWidget(
                         icon: Icons.scale_rounded,
                         label: 'Density',
                         value: '$densityValue g/L',
                       ),
-                      _infoRow(
-                        responsive,
+                      infoRowWidget(
                         icon: Icons.sensors_rounded,
                         label: 'Density Source',
                         value: densitySource,
                       ),
-                      _infoRow(
-                        responsive,
+                      infoRowWidget(
                         icon: Icons.event_available_rounded,
                         label: 'Measured On',
                         value: densityMeasuredOn,
                       ),
-                      _infoRow(
-                        responsive,
+                      infoRowWidget(
                         icon: Icons.badge_rounded,
                         label: 'Certificates',
                         value: certCount.toString(),
                       ),
-
                       if (factorScores.isNotEmpty) ...[
-                        SizedBox(height: responsive.mediumSpacing),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.tune_rounded,
-                              color: Colors.grey.shade800,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Factor Scores',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                color: Colors.black87,
-                                fontSize: responsive.bodyFontSize + 1,
-                              ),
-                            ),
-                          ],
+                        sectionHeaderWidget(
+                          'Factor Scores',
+                          icon: Icons.tune_rounded,
                         ),
-                        SizedBox(height: responsive.smallSpacing),
-                        _factorList(responsive, factorScores),
+                        _factorList(factorScores),
                       ],
                     ],
                   ],
                 ),
               ),
+              const SizedBox(height: 14),
 
-              // --------- QR Section ---------
-              _card(
-                responsive,
+              appCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionHeader(responsive, 'QR Code'),
-                    SizedBox(height: responsive.smallSpacing),
+                    sectionHeaderWidget('QR Code'),
                     if (qrToken.isEmpty)
                       Text(
                         'QR not available for this record.',
                         style: TextStyle(
                           color: Colors.grey.shade700,
                           fontWeight: FontWeight.w600,
-                          fontSize: responsive.bodyFontSize,
+                          fontSize: 14,
                         ),
                       )
                     else
                       Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Center(
-                            child: QrImageView(
-                              data: qrToken,
-                              size: responsive.value(
-                                mobile: 220,
-                                tablet: 260,
-                                desktop: 280,
-                              ),
-                            ),
+                          infoRowWidget(
+                            icon: Icons.event_rounded,
+                            label: 'Generated On',
+                            value: qrGeneratedOn,
                           ),
-                          SizedBox(height: responsive.smallSpacing),
-                          Text(
-                            'Generated on: $qrGeneratedOn',
-                            style: TextStyle(
-                              color: Colors.grey.shade800,
-                              fontWeight: FontWeight.w700,
-                              fontSize: responsive.bodyFontSize,
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _showQrPopup(
+                                qrToken: qrToken,
+                                batchId: batchId,
+                                qrGeneratedOn: qrGeneratedOn,
+                              ),
+                              icon: const Icon(Icons.qr_code_2_rounded),
+                              label: const Text('View QR Code'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFF2E7D32),
+                                side: const BorderSide(
+                                  color: Color(0xFF2E7D32),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -922,70 +925,98 @@ class _ViewBlockchainScreenState extends State<ViewBlockchainScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 14),
 
-              // --------- Blockchain History Timeline ---------
-              _card(
-                responsive,
+              appCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionHeader(responsive, 'Blockchain History'),
-                    SizedBox(height: responsive.smallSpacing),
-                    if (history.isEmpty && harvestedOn == null)
-                      Text(
-                        'No history found.',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      )
-                    else
-                      Column(
-                        children: [
-                          if (harvestedOn != null)
-                            _timelineItem(
-                              responsive,
-                              isLast: history.isEmpty,
-                              title: 'Harvested',
-                              date: harvestedOn,
-                              role: 'By: ${_prettyRole('FARMER')}',
-                              icon: Icons.agriculture_rounded,
-                              iconColor: const Color(0xFF2E7D32),
-                            ),
-                          ...List.generate(history.length, (i) {
-                            final block = history[i];
-                            final stRaw = _normalizeStatus(block['status']);
-                            final title = _prettyStatus(stRaw);
-                            final date = _formatDateOnly(block['timestamp']);
-                            final role =
-                                'By: ${_prettyRole(block['actorRole'])}';
-                            final icon = _statusIcon(stRaw);
-                            final iconColor = _statusColor(stRaw);
-
-                            final total =
-                                history.length + (harvestedOn != null ? 1 : 0);
-                            final currentIndex =
-                                i + (harvestedOn != null ? 1 : 0);
-                            final isLast = currentIndex == total - 1;
-
-                            return _timelineItem(
-                              responsive,
-                              isLast: isLast,
-                              title: title,
-                              date: date,
-                              role: role,
-                              icon: icon,
-                              iconColor: iconColor,
-                            );
-                          }),
-                        ],
-                      ),
+                    sectionHeaderWidget('Blockchain History'),
+                    _historySection(history, harvestedOn),
                   ],
+                ),
+              ),
+
+              Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 24),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _downloadingPdf ? null : _downloadPdf,
+                    icon: _downloadingPdf
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.download_rounded),
+                    label: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Text(
+                        _downloadingPdf
+                            ? 'Preparing PDF...'
+                            : 'Download PDF Report',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2E7D32),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class PdfPreviewScreen extends StatelessWidget {
+  final Uint8List pdfBytes;
+  final String fileName;
+
+  const PdfPreviewScreen({
+    super.key,
+    required this.pdfBytes,
+    required this.fileName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey.shade100,
+      appBar: AppBar(
+        title: const Text('PDF Preview'),
+        backgroundColor: const Color(0xFF2E7D32),
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          pdfSuccessBannerWidget(),
+          Expanded(
+            child: PdfPreview(
+              build: (format) async => pdfBytes,
+              allowPrinting: false,
+              allowSharing: false,
+              canChangePageFormat: false,
+              canChangeOrientation: false,
+              pdfFileName: fileName,
+            ),
+          ),
+        ],
       ),
     );
   }

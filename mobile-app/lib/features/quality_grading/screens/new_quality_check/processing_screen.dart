@@ -351,7 +351,7 @@ class _ProcessingScreenState extends State<ProcessingScreen>
                     // ── Title ──────────────────────────────────────────────
                     Text(
                       _t(
-                        'AI Analysis in Progress',
+                        'Analysis in Progress',
                         ProcessingScreenSi.aiAnalysisInProgress,
                       ),
                       textAlign: TextAlign.center,

@@ -4,6 +4,6 @@ python-multipart
 ultralytics==8.3.0
 torch
 torchvision
-opencv-python
+opencv-python-headless
 pillow
 numpy

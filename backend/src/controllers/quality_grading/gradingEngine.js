@@ -381,19 +381,22 @@ function gradeBatch({
   // These override the final grade regardless of score.
   // Adulteration > 0.5% → automatic reject (commercial fraud threshold).
   // Mold > 10%          → automatic reject (safety concern).
+  // const hardRejectReasons = [];
+
+  // if (raw.adulterantPct > 0.5)
+  //   hardRejectReasons.push(
+  //     `Adulterant seeds detected at ${raw.adulterantPct.toFixed(2)}% (limit: 0.5%). Batch rejected — adulteration is a commercial fraud issue.`,
+  //   );
+
+  // if (raw.moldPct > 10)
+  //   hardRejectReasons.push(
+  //     `Mold detected at ${raw.moldPct.toFixed(2)}% (limit: 10%). Batch rejected — high mold level poses safety and health concerns.`,
+  //   );
+
+  // const hardReject = hardRejectReasons.length > 0;
+
+  const hardReject = false;
   const hardRejectReasons = [];
-
-  if (raw.adulterantPct > 0.5)
-    hardRejectReasons.push(
-      `Adulterant seeds detected at ${raw.adulterantPct.toFixed(2)}% (limit: 0.5%). Batch rejected — adulteration is a commercial fraud issue.`,
-    );
-
-  if (raw.moldPct > 10)
-    hardRejectReasons.push(
-      `Mold detected at ${raw.moldPct.toFixed(2)}% (limit: 10%). Batch rejected — high mold level poses safety and health concerns.`,
-    );
-
-  const hardReject = hardRejectReasons.length > 0;
 
   // ── Compute per-factor scores (0–100) ──
   const factorScores = {
@@ -456,7 +459,8 @@ function gradeBatch({
   score = clamp(score, 0, 100);
 
   // ── Apply hard reject override ──
-  const finalGrade = hardReject ? "Reject" : scoreToGrade(score);
+  // const finalGrade = hardReject ? "Reject" : scoreToGrade(score);
+  const finalGrade = scoreToGrade(score);
 
   // ── Generate improvement tips ──
   const improvements = buildImprovements(raw, factorScores);

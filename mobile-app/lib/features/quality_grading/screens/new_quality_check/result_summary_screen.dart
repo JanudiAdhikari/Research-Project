@@ -1527,9 +1527,9 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     }
   }
 
-  int _asInt(dynamic v) {
-    if (v == null) return 0;
-    if (v is num) return v.round();
-    return int.tryParse(v.toString()) ?? 0;
-  }
+  // int _asInt(dynamic v) {
+  //   if (v == null) return 0;
+  //   if (v is num) return v.round();
+  //   return int.tryParse(v.toString()) ?? 0;
+  // }
 }

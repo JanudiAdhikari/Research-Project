@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/farmer_service.dart';
 import '../models/farm_plot.dart';
 import '../utils/responsive.dart';
+import '../providers/app_providers.dart';
 
 Color colorWithOpacity(Color c, double opacity) {
   final alpha = (opacity * 255).round().clamp(0, 255);
@@ -97,140 +98,161 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       text: plot != null ? plot.area.toString() : '',
     );
     final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
 
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colorWithOpacity(_primary, 0.1),
-                borderRadius: BorderRadius.circular(10),
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colorWithOpacity(_primary, 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  plot == null
+                      ? Icons.add_location_alt_outlined
+                      : Icons.edit_outlined,
+                  color: _primary,
+                  size: 20,
+                ),
               ),
-              child: Icon(
-                plot == null
-                    ? Icons.add_location_alt_outlined
-                    : Icons.edit_outlined,
-                color: _primary,
-                size: 20,
+              const SizedBox(width: 12),
+              Text(
+                plot == null ? 'Add New Plot' : 'Edit Plot',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _dialogField(
+                    nameCtrl,
+                    'Plot Location',
+                    Icons.label_outline,
+                    hint: 'e.g., Kegalle',
+                    enabled: !isSaving,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Plot name is required'
+                        : null,
+                  ),
+                  const SizedBox(height: 14),
+                  _dialogField(
+                    cropCtrl,
+                    'Crop Type',
+                    Icons.grass_outlined,
+                    hint: 'e.g., Black Pepper',
+                    enabled: !isSaving,
+                  ),
+                  const SizedBox(height: 14),
+                  _dialogField(
+                    areaCtrl,
+                    'Area (hectares)',
+                    Icons.straighten_outlined,
+                    hint: '0.0',
+                    suffixText: 'ha',
+                    enabled: !isSaving,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty)
+                        return 'Area is required';
+                      final n = double.tryParse(v.trim());
+                      if (n == null || n <= 0) return 'Enter a positive number';
+                      return null;
+                    },
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            Text(
-              plot == null ? 'Add New Plot' : 'Edit Plot',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+              child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            ),
+            ElevatedButton(
+              onPressed: isSaving 
+                ? null 
+                : () async {
+                    if (!formKey.currentState!.validate()) return;
+                    
+                    setDialogState(() => isSaving = true);
+                    
+                    final body = {
+                      'name': nameCtrl.text.trim(),
+                      'crop': cropCtrl.text.trim(),
+                      'area': double.tryParse(areaCtrl.text.trim()) ?? 0.0,
+                    };
+
+                    try {
+                      if (plot == null) {
+                        await _service.createPlot(body);
+                      } else {
+                        await _service.updatePlot(plot.id, body);
+                      }
+                      
+                      if (mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              plot == null
+                                  ? 'Plot added successfully'
+                                  : 'Plot updated successfully',
+                            ),
+                            backgroundColor: _primary,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                        _loadPlots();
+                      }
+                    } catch (e) {
+                      setDialogState(() => isSaving = false);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error: $e'),
+                            backgroundColor: Colors.redAccent,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      }
+                    }
+                  },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: isSaving 
+                ? const SizedBox(
+                    width: 20, 
+                    height: 20, 
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  )
+                : Text(plot == null ? 'Add Plot' : 'Save'),
             ),
           ],
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Form(
-          key: formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _dialogField(
-                  nameCtrl,
-                  'Plot Location',
-                  Icons.label_outline,
-                  hint: 'e.g., Kegalle',
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Plot name is required'
-                      : null,
-                ),
-                const SizedBox(height: 14),
-                _dialogField(
-                  cropCtrl,
-                  'Crop Type',
-                  Icons.grass_outlined,
-                  hint: 'e.g., Black Pepper',
-                ),
-                const SizedBox(height: 14),
-                _dialogField(
-                  areaCtrl,
-                  'Area (hectares)',
-                  Icons.straighten_outlined,
-                  hint: '0.0',
-                  suffixText: 'ha',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty)
-                      return 'Area is required';
-                    final n = double.tryParse(v.trim());
-                    if (n == null || n <= 0) return 'Enter a valid area';
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (!formKey.currentState!.validate()) return;
-              final body = {
-                'name': nameCtrl.text.trim(),
-                'crop': cropCtrl.text.trim(),
-                'area': double.tryParse(areaCtrl.text.trim()) ?? 0.0,
-              };
-              Navigator.pop(ctx);
-              try {
-                if (plot == null) {
-                  await _service.createPlot(body);
-                } else {
-                  await _service.updatePlot(plot.id, body);
-                }
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        plot == null
-                            ? 'Plot added successfully'
-                            : 'Plot updated successfully',
-                      ),
-                      backgroundColor: _primary,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  );
-                  await _loadPlots();
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: Colors.redAccent,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: Text(plot == null ? 'Add Plot' : 'Save'),
-          ),
-        ],
       ),
     );
 
@@ -245,6 +267,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
     IconData icon, {
     String? hint,
     String? suffixText,
+    bool enabled = true,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
@@ -252,6 +275,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       controller: ctrl,
       keyboardType: keyboardType,
       validator: validator,
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -306,7 +330,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
 
     if (confirm == true) {
       try {
-        // await _service.deletePlot(plot.id);
+        await _service.deletePlot(plot.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -783,6 +807,18 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                       bgColor: colorWithOpacity(_primary, 0.08),
                       size: r.value(mobile: 18, tablet: 20, desktop: 22),
                       onPressed: () => _showPlotForm(plot),
+                    ),
+                    SizedBox(
+                      height: r.value(mobile: 6, tablet: 8, desktop: 10),
+                    ),
+                    _actionBtn(
+                      icon: Icons.auto_stories_outlined,
+                      color: Colors.blueAccent,
+                      bgColor: colorWithOpacity(Colors.blueAccent, 0.08),
+                      size: r.value(mobile: 18, tablet: 20, desktop: 22),
+                      onPressed: () => context.navigateToFarmDiary(
+                        farmPlotId: plot.id,
+                      ),
                     ),
                     SizedBox(
                       height: r.value(mobile: 6, tablet: 8, desktop: 10),

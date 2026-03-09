@@ -56,4 +56,24 @@ const updatePlot = async (req, res) => {
   }
 };
 
-module.exports = { getPlots, createPlot, updatePlot };
+// DELETE /api/farm/plots/:id
+const deletePlot = async (req, res) => {
+  try {
+    const uid = req.user?.uid;
+    if (!uid) return res.status(401).json({ message: 'Unauthorized' });
+
+    const { id } = req.params;
+    const plot = await FarmPlot.findById(id).exec();
+    
+    if (!plot) return res.status(404).json({ message: 'Plot not found' });
+    if (plot.ownerUid !== uid) return res.status(403).json({ message: 'Forbidden' });
+
+    await FarmPlot.findByIdAndDelete(id).exec();
+    return res.json({ message: 'Plot deleted successfully' });
+  } catch (err) {
+    console.error('deletePlot error:', err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+module.exports = { getPlots, createPlot, updatePlot, deletePlot };

@@ -14,100 +14,108 @@ class YieldPredictionService {
   // Get the correct base URL based on platform
   // Android emulator: use 10.0.2.2 to reach host machine
   // Other platforms: use 127.0.0.1
-  static String get _baseUrl {
-    if (!kIsWeb && io.Platform.isAndroid) {
-      return 'http://10.0.2.2:8000';
-    }
-    return 'http://127.0.0.1:8000';
-  }
+  static String get _baseUrl => ApiConfig.yieldPredictionApiUrl;
 
   // For production, use a remote server IP
   // static const String _remoteUrl = 'http://192.168.x.x:8000';
 
-  /// Predict yield from plant image and environmental data
+  /// Predict yield from plant images and environmental data
   ///
   /// Parameters:
-  /// - [imageFile]: Plant image file (XFile from image_picker, works on all platforms)
+  /// - [imageFiles]: List of plant image files
   /// - [soilMoisture]: Soil moisture percentage (0-100)
   /// - [temperature]: Environmental temperature in °C
   /// - [rainfall]: Optional rainfall in mm
   ///
   /// Returns: PredictionResponse with yield, insights, and top factors
   Future<PredictionResponse> predictYield({
-    required dynamic imageFile,
+    required List<dynamic> imageFiles,
     required double soilMoisture,
     required double temperature,
     double? rainfall,
     String? plantAge,
   }) async {
     try {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$_baseUrl/predict'),
+      // Add soil and temp as query parameters (matching successful Postman pattern)
+      final uri = Uri.parse('$_baseUrl/predict').replace(
+        queryParameters: {
+          'soil': soilMoisture.toString(),
+          'temp': temperature.toString(),
+        },
       );
 
-      // Handle image file - works on both mobile and web
-      Uint8List imageBytes;
-      String fileName;
+      final request = http.MultipartRequest('POST', uri);
 
-      // Try to get bytes from the file object
-      try {
-        if (imageFile is XFile) {
-          // XFile from image_picker - works on all platforms
-          imageBytes = await imageFile.readAsBytes();
-          fileName = imageFile.name;
-        } else if (!kIsWeb &&
-            imageFile.runtimeType.toString().contains('File')) {
-          // Mobile platform - use dart:io.File
-          imageBytes = await imageFile.readAsBytes();
-          fileName = imageFile.path.split('/').last;
-        } else if (imageFile.runtimeType.toString().contains('PlatformFile')) {
-          // Web platform - PlatformFile from file_picker
-          imageBytes = imageFile.bytes ?? Uint8List(0);
-          fileName = imageFile.name ?? 'image.jpg';
-        } else if (imageFile is Uint8List) {
-          // Already bytes
-          imageBytes = imageFile;
-          fileName = 'image.jpg';
-        } else {
-          throw Exception(
-            'Unsupported image type: ${imageFile.runtimeType}. Please use XFile from image_picker.',
-          );
-        }
-
-        if (imageBytes.isEmpty) {
-          throw Exception('Image file is empty. Please select a valid image.');
-        }
-      } catch (e) {
-        throw Exception('Error reading image: $e');
+      if (imageFiles.isEmpty) {
+        throw Exception('At least one image is required for prediction.');
       }
 
-      // Add image file using fromBytes (works on both platforms)
-      // Explicitly set content type as image/jpeg to ensure FastAPI recognizes it
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'file',
-          imageBytes,
-          filename: fileName,
-          contentType: contentTypeFromFileName(fileName),
-        ),
-      );
+      for (var imageFile in imageFiles) {
+        // Handle image file - works on both mobile and web
+        Uint8List imageBytes;
+        String fileName;
 
-      // Add form fields
-      request.fields['soil_moisture'] = soilMoisture.toString();
-      request.fields['temperature'] = temperature.toString();
+        // Try to get bytes from the file object
+        try {
+          if (imageFile is XFile) {
+            // XFile from image_picker - works on all platforms
+            imageBytes = await imageFile.readAsBytes();
+            fileName = imageFile.name;
+          } else if (!kIsWeb &&
+              imageFile.runtimeType.toString().contains('File')) {
+            // Mobile platform - use dart:io.File
+            imageBytes = await (imageFile as dynamic).readAsBytes();
+            fileName = (imageFile as dynamic).path.split('/').last;
+          } else if (imageFile.runtimeType.toString().contains('PlatformFile')) {
+            // Web platform - PlatformFile from file_picker
+            imageBytes = imageFile.bytes ?? Uint8List(0);
+            fileName = imageFile.name ?? 'image.jpg';
+          } else if (imageFile is Uint8List) {
+            // Already bytes
+            imageBytes = imageFile;
+            fileName = 'image.jpg';
+          } else {
+            throw Exception(
+              'Unsupported image type: ${imageFile.runtimeType}. Please use XFile from image_picker.',
+            );
+          }
 
+          if (imageBytes.isEmpty) {
+            continue; // Skip empty images
+          }
+        } catch (e) {
+          print('Error reading image: $e');
+          continue;
+        }
+
+        // Add image file using fromBytes (works on both platforms)
+        // FastAPI expects this as 'files' (plural) for List[UploadFile]
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'files',
+            imageBytes,
+            filename: fileName,
+            contentType: contentTypeFromFileName(fileName),
+          ),
+        );
+      }
+
+      if (request.files.isEmpty) {
+        throw Exception('No valid images were provided.');
+      }
+
+      // Note: rainfall and plantAge are not currently used by the backend endpoint
+      // They can be added later if the backend is updated to support them
       if (rainfall != null) {
-        request.fields['rainfall'] = rainfall.toString();
+        // request.fields['rainfall'] = rainfall.toString();
       }
       if (plantAge != null) {
-        request.fields['plant_age'] = plantAge;
+        // request.fields['plant_age'] = plantAge;
       }
 
       // Debug logging
       print('[YieldPrediction] Sending request to: $_baseUrl/predict');
-      print('[YieldPrediction] Image size: ${imageBytes.length} bytes');
-      print('[YieldPrediction] Image name: $fileName');
+      print('[YieldPrediction] Number of images: ${request.files.length}');
       print('[YieldPrediction] Soil moisture: $soilMoisture');
       print('[YieldPrediction] Temperature: $temperature');
       print('[YieldPrediction] Request fields: ${request.fields}');
@@ -116,10 +124,11 @@ class YieldPredictionService {
       );
 
       final response = await request.send().timeout(
-        const Duration(seconds: 30),
+        const Duration(seconds: 90),
         onTimeout: () {
+          print('[YieldPrediction] ERROR: Request timed out after 90 seconds');
           throw TimeoutException(
-            'Prediction request timed out after 30 seconds',
+            'The server is taking longer than usual (90s). If it is the first request of the day, please try again in a moment (Cloud Run cold start).',
           );
         },
       );
@@ -131,9 +140,19 @@ class YieldPredictionService {
       } else {
         final errorBody = await response.stream.bytesToString();
         print('[YieldPrediction] Error response: $errorBody');
-        throw Exception(
-          'Failed to predict yield: ${response.statusCode} - $errorBody',
-        );
+        
+        String message = 'Server Error (${response.statusCode})';
+        try {
+          final decoded = jsonDecode(errorBody);
+          if (decoded is Map && decoded.containsKey('detail')) {
+            message = decoded['detail'];
+          }
+        } catch (_) {
+          // If not JSON, use the raw body or status code
+          message = errorBody.isNotEmpty ? errorBody : message;
+        }
+        
+        throw Exception(message);
       }
     } on io.SocketException {
       throw Exception(

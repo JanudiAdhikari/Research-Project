@@ -8,8 +8,9 @@ class XAIInsightsScreen extends StatelessWidget {
   final dynamic imageFile; // Can be File or XFile
   final double soilMoisture;
   final double temperature;
-  final List<String> insights;
-  final TopFactors? topFactors;
+  final double confidencePercent;
+  final List<String> recommendations;
+  final TopFactors? xaiTopFactors;
   final String language;
 
   const XAIInsightsScreen({
@@ -17,8 +18,9 @@ class XAIInsightsScreen extends StatelessWidget {
     required this.imageFile,
     required this.soilMoisture,
     required this.temperature,
-    this.insights = const [],
-    this.topFactors,
+    required this.confidencePercent,
+    this.recommendations = const [],
+    this.xaiTopFactors,
     this.language = 'en',
   });
 
@@ -51,7 +53,7 @@ class XAIInsightsScreen extends StatelessWidget {
             description: _getSoilMoistureDescription(isSi),
             color: Colors.blue,
             progress: soilMoisture / 100,
-            shapValue: topFactors?.soilMoistureImpact.toStringAsFixed(4),
+            shapValue: xaiTopFactors?.soilMoistureImpact.toStringAsFixed(4),
           ),
           const SizedBox(height: 16),
           // Display temperature impact with SHAP value
@@ -64,11 +66,11 @@ class XAIInsightsScreen extends StatelessWidget {
             description: _getTemperatureDescription(isSi),
             color: Colors.orange,
             progress: temperature / 50,
-            shapValue: topFactors?.temperatureImpact.toStringAsFixed(4),
+            shapValue: xaiTopFactors?.temperatureImpact.toStringAsFixed(4),
           ),
           const SizedBox(height: 20),
-          // Display dynamic insights from backend
-          if (insights.isNotEmpty) ...[
+          // Display dynamic recommendations from backend
+          if (recommendations.isNotEmpty) ...[
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -80,13 +82,11 @@ class XAIInsightsScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.info_rounded, color: Colors.amber),
+                      const Icon(Icons.lightbulb_rounded, color: Colors.amber),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          isSi
-                              ? "AI වලින් අනුমාන කරන ලද අවබෝධතා"
-                              : "AI-Generated Insights",
+                          isSi ? "නිර්දේශ" : "AI Recommendations",
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -96,9 +96,9 @@ class XAIInsightsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  ...insights
+                  ...recommendations
                       .map(
-                        (insight) => Padding(
+                        (recommendation) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +114,7 @@ class XAIInsightsScreen extends StatelessWidget {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  insight,
+                                  recommendation,
                                   style: const TextStyle(fontSize: 13),
                                 ),
                               ),
@@ -128,6 +128,61 @@ class XAIInsightsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
           ],
+          // Confidence score card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.verified_user_rounded, color: Colors.blue),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        isSi ? "ප්‍රතිඨ්ඨා විශ්ල්‍යාසිතා" : "Model Confidence",
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      "${confidencePercent.toStringAsFixed(1)}%",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                LinearProgressIndicator(
+                  value: (confidencePercent / 100).clamp(0.0, 1.0),
+                  color: Colors.blue,
+                  backgroundColor: Colors.blue.withOpacity(0.2),
+                  minHeight: 8,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isSi
+                      ? "මෙම අවස්ථාවේදී ප්‍රතිඨ්ඨාව දර්ශනයි."
+                      : "The model is ${confidencePercent > 80
+                            ? 'very confident'
+                            : confidencePercent > 60
+                            ? 'moderately confident'
+                            : 'somewhat uncertain'} in this prediction.",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
           _finalExplanationCard(isSi),
         ],
       ),

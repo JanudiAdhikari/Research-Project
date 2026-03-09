@@ -3,6 +3,7 @@ import '../services/farmer_service.dart';
 import '../models/farm_plot.dart';
 import '../utils/common/my_farm_screen_si.dart';
 import '../utils/responsive.dart';
+import '../providers/app_providers.dart';
 import '../utils/language_prefs.dart';
 
 Color colorWithOpacity(Color c, double opacity) {
@@ -115,6 +116,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       text: plot != null ? plot.area.toString() : '',
     );
     final formKey = GlobalKey<FormState>();
+    bool isSaving = false;
 
     await showDialog(
       context: context,
@@ -137,9 +139,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
             ),
             const SizedBox(width: 12),
             Text(
-              plot == null
-                  ? _t('Add New Plot', MyFarmScreenSi.addNewPlot)
-                  : _t('Edit Plot', MyFarmScreenSi.editPlot),
+              plot == null ? 'Add New Plot' : 'Edit Plot',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
@@ -153,27 +153,24 @@ class _MyFarmScreenState extends State<MyFarmScreen>
               children: [
                 _dialogField(
                   nameCtrl,
-                  _t('Plot Location', MyFarmScreenSi.plotLocation),
+                  'Plot Location',
                   Icons.label_outline,
-                  hint: _t('e.g., Kegalle', MyFarmScreenSi.plotLocationHint),
+                  hint: 'e.g., Kegalle',
                   validator: (v) => (v == null || v.trim().isEmpty)
-                      ? _t(
-                          'Plot name is required',
-                          MyFarmScreenSi.plotNameRequired,
-                        )
+                      ? 'Plot name is required'
                       : null,
                 ),
                 const SizedBox(height: 14),
                 _dialogField(
                   cropCtrl,
-                  _t('Crop Type', MyFarmScreenSi.cropType),
+                  'Crop Type',
                   Icons.grass_outlined,
-                  hint: _t('e.g., Black Pepper', MyFarmScreenSi.cropTypeHint),
+                  hint: 'e.g., Black Pepper',
                 ),
                 const SizedBox(height: 14),
                 _dialogField(
                   areaCtrl,
-                  _t('Area (hectares)', MyFarmScreenSi.areaHectares),
+                  'Area (hectares)',
                   Icons.straighten_outlined,
                   hint: '0.0',
                   suffixText: 'ha',
@@ -182,16 +179,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty)
-                      return _t(
-                        'Area is required',
-                        MyFarmScreenSi.areaRequired,
-                      );
+                      return 'Area is required';
                     final n = double.tryParse(v.trim());
-                    if (n == null || n <= 0)
-                      return _t(
-                        'Enter a valid area',
-                        MyFarmScreenSi.areaInvalid,
-                      );
+                    if (n == null || n <= 0) return 'Enter a valid area';
                     return null;
                   },
                 ),
@@ -202,10 +192,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              _t('Cancel', MyFarmScreenSi.cancel),
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -268,9 +255,9 @@ class _MyFarmScreenState extends State<MyFarmScreen>
               ),
             ),
             child: Text(
-              plot == null
-                  ? _t('Add Plot', MyFarmScreenSi.addPlot)
-                  : _t('Save', MyFarmScreenSi.save),
+              plot == null 
+                  ? _t('Add Plot', MyFarmScreenSi.addPlot) 
+                  : _t('Save', MyFarmScreenSi.save)
             ),
           ),
         ],
@@ -288,6 +275,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
     IconData icon, {
     String? hint,
     String? suffixText,
+    bool enabled = true,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
@@ -295,6 +283,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
       controller: ctrl,
       keyboardType: keyboardType,
       validator: validator,
+      enabled: enabled,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -356,7 +345,7 @@ class _MyFarmScreenState extends State<MyFarmScreen>
 
     if (confirm == true) {
       try {
-        // await _service.deletePlot(plot.id);
+        await _service.deletePlot(plot.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -844,6 +833,18 @@ class _MyFarmScreenState extends State<MyFarmScreen>
                       bgColor: colorWithOpacity(_primary, 0.08),
                       size: r.value(mobile: 18, tablet: 20, desktop: 22),
                       onPressed: () => _showPlotForm(plot),
+                    ),
+                    SizedBox(
+                      height: r.value(mobile: 6, tablet: 8, desktop: 10),
+                    ),
+                    _actionBtn(
+                      icon: Icons.auto_stories_outlined,
+                      color: Colors.blueAccent,
+                      bgColor: colorWithOpacity(Colors.blueAccent, 0.08),
+                      size: r.value(mobile: 18, tablet: 20, desktop: 22),
+                      onPressed: () => context.navigateToFarmDiary(
+                        farmPlotId: plot.id,
+                      ),
                     ),
                     SizedBox(
                       height: r.value(mobile: 6, tablet: 8, desktop: 10),

@@ -6,12 +6,16 @@ import shap
 from xgboost import XGBRegressor
 from tensorflow.keras.applications import EfficientNetB0
 from tensorflow.keras.applications.efficientnet import preprocess_input
+from typing import List
+from datetime import datetime
+
+metrics = joblib.load("metrics.pkl")
+
+MODEL_RMSE = metrics["rmse"]
+MEAN_YIELD = metrics["mean_yield"]
 
 app = FastAPI()
 
-# ------------------------------
-# Load trained models
-# ------------------------------
 xgb_model = XGBRegressor()
 xgb_model.load_model("xgb_model.json")
 
@@ -19,26 +23,25 @@ pca = joblib.load("pca.pkl")
 scaler = joblib.load("scaler.pkl")
 
 effnet = EfficientNetB0(
-    weights='imagenet',
+    weights="imagenet",
     include_top=False,
     input_shape=(224, 224, 3),
-    pooling='avg'
+    pooling="avg"
 )
 
-# Create SHAP explainer
 explainer = shap.Explainer(xgb_model)
 
-# Feature names
 feature_names = (
-    [f"pca_{i}" for i in range(pca.n_components_)] +
-    ["soil_moisture","temperature",
-     "moisture_temp_ratio","moisture_squared","temp_squared"]
+    [f"pca_{i}" for i in range(pca.n_components_)]
+    + [
+        "soil_moisture",
+        "temperature",
+        "moisture_temp_ratio",
+        "moisture_squared",
+        "temp_squared",
+    ]
 )
 
-
-# ------------------------------
-# Generate SHAP explanation
-# ------------------------------
 def get_shap_values(X):
 
     shap_values = explainer(X)
@@ -51,10 +54,6 @@ def get_shap_values(X):
 
     return explanation
 
-
-# ------------------------------
-# Generate farmer-friendly insights
-# ------------------------------
 def generate_farmer_insights(shap_values, soil, temp):
 
     insights = []
@@ -62,94 +61,156 @@ def generate_farmer_insights(shap_values, soil, temp):
     soil_impact = shap_values.get("soil_moisture", 0)
     temp_impact = shap_values.get("temperature", 0)
 
-    # Soil moisture insight
-    if soil_impact > 0:
+    # -------------------------
+    # Soil moisture analysis
+    # -------------------------
+    if soil < 35:
         insights.append(
-            "Soil moisture is positively influencing crop yield."
+            "Soil moisture is below optimal range (35–65%). Pepper requires consistent soil moisture for fruit development."
         )
+
+    elif 35 <= soil <= 65:
+        insights.append(
+            "Soil moisture level is within the optimal range for pepper growth."
+        )
+
     else:
         insights.append(
-            "Low soil moisture may reduce crop yield. Consider irrigation."
+            "Soil moisture is high. Excess moisture may cause root diseases in pepper plants."
         )
 
-    # Temperature insight
-    if temp_impact > 0:
+    # -------------------------
+    # Temperature analysis
+    # -------------------------
+    if temp < 20:
         insights.append(
-            "Current temperature conditions support good crop growth."
+            "Temperature is below optimal growth range (20–30°C). Pepper growth may slow."
         )
+
+    elif 20 <= temp <= 30:
+        insights.append(
+            "Temperature is within optimal range for pepper growth."
+        )
+
+    elif 30 < temp <= 35:
+        insights.append(
+            "Temperature slightly above optimal range. Monitor plant stress."
+        )
+
     else:
         insights.append(
-            "Temperature conditions may not be optimal for crop growth."
+            "High temperature may cause heat stress and reduce pepper yield."
         )
 
-    # Environmental advice
-    if soil < 40:
+    # -------------------------
+    # SHAP based explanation
+    # -------------------------
+    if soil_impact < -0.05:
         insights.append(
-            "Soil moisture is quite low. Increasing irrigation may improve yield."
+            "Model detected that low soil moisture significantly reduced predicted yield."
         )
 
-    if temp > 35:
+    if temp_impact < -0.05:
         insights.append(
-            "High temperature detected. Crop stress may reduce yield."
-        )
-
-    if soil > 70:
-        insights.append(
-            "Soil moisture levels are high which may support strong plant growth."
+            "Model detected temperature conditions negatively affecting yield prediction."
         )
 
     return insights
 
 
-# ------------------------------
-# Prediction Endpoint
-# ------------------------------
 @app.post("/predict")
-async def predict(file: UploadFile = File(...), soil: float = 0, temp: float = 0):
+async def predict(files: List[UploadFile] = File(...), soil: float = 0, temp: float = 0):
 
-    contents = await file.read()
-    nparr = np.frombuffer(contents, np.uint8)
+    if len(files) > 4:
+        return {"error": "Maximum 4 images allowed"}
 
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    img = cv2.resize(img, (224, 224))
-    img = preprocess_input(img)
+    # validate inputs
+    if soil < 0 or soil > 100:
+        return {"error": "Soil moisture must be between 0 and 100"}
 
-    # CNN feature extraction
-    img_feat = effnet.predict(np.expand_dims(img, axis=0))
+    if temp < -10 or temp > 60:
+        return {"error": "Temperature value unrealistic"}
 
-    # PCA reduction
+    images = []
+
+    for file in files:
+
+        contents = await file.read()
+        nparr = np.frombuffer(contents, np.uint8)
+
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            continue
+
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.resize(img, (224, 224))
+        img = preprocess_input(img)
+
+        images.append(img)
+
+    if len(images) == 0:
+        return {"error": "No valid images provided"}
+
+    images = np.array(images)
+    features = effnet.predict(images, verbose=0)
+
+    weights = np.linspace(1, 2, len(features))
+    weights = weights / np.sum(weights)
+
+    img_feat = np.average(features, axis=0, weights=weights)
+    img_feat = img_feat.reshape(1, -1)
     img_feat_reduced = pca.transform(img_feat)
 
-    # Feature engineering
     moisture_temp_ratio = soil / (temp + 1)
     moisture_squared = soil ** 2
     temp_squared = temp ** 2
 
-    tab = np.array([[soil, temp,
-                     moisture_temp_ratio,
-                     moisture_squared,
-                     temp_squared]])
+    tab = np.array(
+        [[
+            soil,
+            temp,
+            moisture_temp_ratio,
+            moisture_squared,
+            temp_squared,
+        ]]
+    )
 
-    # scale tabular data
     tab_scaled = scaler.transform(tab)
-
-    # Combine features
     X = np.concatenate([img_feat_reduced, tab_scaled], axis=1)
-
-    # Prediction
     prediction = xgb_model.predict(X)[0]
-
-    # SHAP explanation
+    confidence = max(0, 1 - (MODEL_RMSE / MEAN_YIELD))
+    confidence = round(confidence * 100, 2)
     shap_values = get_shap_values(X)
-
-    # Farmer insights
     insights = generate_farmer_insights(shap_values, soil, temp)
+    timestamp = datetime.utcnow().isoformat()
+
+    # classify crop condition
+    if prediction > 1.5:
+        condition = "Healthy crop condition"
+    elif prediction > 1.0:
+        condition = "Moderate crop condition"
+    else:
+        condition = "Low productivity risk"
 
     return {
-        "predicted_yield": float(prediction),
-        "insights": insights,
-        "top_factors": {
-            "soil_moisture_impact": shap_values.get("soil_moisture", 0),
-            "temperature_impact": shap_values.get("temperature", 0)
-        }
+    "timestamp": timestamp,
+    "predicted_yield_kg_per_plant": float(prediction),
+    "confidence_percent": confidence,
+    "crop_condition": condition,
+    "recommendations": insights,
+    "xai_top_factors": {
+        "soil_moisture_impact": shap_values.get("soil_moisture", 0),
+        "temperature_impact": shap_values.get("temperature", 0),
+    },
+}
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint for container orchestration"""
+    return {
+        "status": "healthy",
+        "service": "yield-prediction-api",
+        "version": "1.0.0"
     }

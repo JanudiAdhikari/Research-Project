@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api.dart';
 import '../models/farm_diary.dart';
+import 'auth_service.dart';
 
 class FarmDiaryService {
   static const String _baseUrl = '${ApiConfig.baseUrl}/api/farm-diary';
@@ -20,7 +21,7 @@ class FarmDiaryService {
        _prefs = prefs;
 
   Future<String?> _getToken() async {
-    return await _secureStorage.read(key: 'token');
+    return await AuthService().getToken();
   }
 
   Map<String, String> _getHeaders(String? token) => {

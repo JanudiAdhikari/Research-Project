@@ -1,8 +1,8 @@
 class ApiConfig {
   // emulator
-  // static const String baseUrl = "http://10.0.2.2:5000";
-  static const String baseUrl =
-      "https://research-backend-755295357792.us-central1.run.app";
+
+  static const String baseUrl = "http://10.0.2.2:5000";
+  //static const String baseUrl ="https://research-backend-755295357792.us-central1.run.app";
 
   // ML model
   // static const String yieldPredictionApiUrl = "http://10.0.2.2:8000"; // emulator

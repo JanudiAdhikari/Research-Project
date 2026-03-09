@@ -29,6 +29,10 @@ class YieldPredictionSi {
   static const String temperature = 'උෂ්ණත්වය (°C)';
   static const String temperatureAffectsGrowthRate =
       'උෂ්ණත්වය වර්ධන අනුපාතය සහ ඵල සංවර්ධන කෙරෙහි බලපායි.';
+  static const String selectDistrict = 'දිස්ත්‍රික්කය තෝරන්න';
+  static const String autoLocation = 'ස්වයංක්‍රීය ස්ථානය';
+  static const String currentDistrict = 'වත්මන් දිස්ත්‍රික්කය';
+  static const String fetchingWeatherFor = 'කාලගුණය ලබා ගනිමින්';
 
   static const String step4PlantAge = 'පියවර 4: ශාක වයස්';
   static const String plantAge = 'ශාක වයස්';

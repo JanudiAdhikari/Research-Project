@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import '../../../models/farm_diary.dart';
 import '../../../providers/app_providers.dart';
 import '../../../providers/farm_diary_provider.dart';
@@ -79,9 +78,10 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     _initializeFields();
 
@@ -96,16 +96,25 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
   void _initializeFields() {
     if (widget.entry != null) {
       _titleController = TextEditingController(text: widget.entry!.title);
-      _descriptionController = TextEditingController(text: widget.entry!.description);
+      _descriptionController = TextEditingController(
+        text: widget.entry!.description,
+      );
       _notesController = TextEditingController(text: widget.entry!.notes);
-      _fertiliserController = TextEditingController(text: widget.entry!.inputs.fertilizer ?? '');
-      _pesticideController = TextEditingController(text: widget.entry!.inputs.pesticide ?? '');
-      _waterQuantityController =
-          TextEditingController(text: widget.entry!.inputs.waterQuantity?.toString() ?? '');
-      _diseaseSymptomController =
-          TextEditingController(text: widget.entry!.observations.diseaseSymptoms ?? '');
-      _pestPresenceController =
-          TextEditingController(text: widget.entry!.observations.pestPresence ?? '');
+      _fertiliserController = TextEditingController(
+        text: widget.entry!.inputs.fertilizer ?? '',
+      );
+      _pesticideController = TextEditingController(
+        text: widget.entry!.inputs.pesticide ?? '',
+      );
+      _waterQuantityController = TextEditingController(
+        text: widget.entry!.inputs.waterQuantity?.toString() ?? '',
+      );
+      _diseaseSymptomController = TextEditingController(
+        text: widget.entry!.observations.diseaseSymptoms ?? '',
+      );
+      _pestPresenceController = TextEditingController(
+        text: widget.entry!.observations.pestPresence ?? '',
+      );
       _selectedActivityType = widget.entry!.activityType;
       _selectedDate = widget.entry!.diaryDate;
       _plantHealth = widget.entry!.observations.plantHealth;
@@ -178,12 +187,20 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
       ),
       observations: Observations(
         plantHealth: _plantHealth,
-        diseaseSymptoms: _diseaseSymptomController.text.isEmpty ? null : _diseaseSymptomController.text,
-        pestPresence: _pestPresenceController.text.isEmpty ? null : _pestPresenceController.text,
+        diseaseSymptoms: _diseaseSymptomController.text.isEmpty
+            ? null
+            : _diseaseSymptomController.text,
+        pestPresence: _pestPresenceController.text.isEmpty
+            ? null
+            : _pestPresenceController.text,
       ),
       inputs: Inputs(
-        fertilizer: _fertiliserController.text.isEmpty ? null : _fertiliserController.text,
-        pesticide: _pesticideController.text.isEmpty ? null : _pesticideController.text,
+        fertilizer: _fertiliserController.text.isEmpty
+            ? null
+            : _fertiliserController.text,
+        pesticide: _pesticideController.text.isEmpty
+            ? null
+            : _pesticideController.text,
         waterQuantity: _waterQuantityController.text.isEmpty
             ? null
             : double.tryParse(_waterQuantityController.text),
@@ -199,7 +216,11 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
 
       if (success) {
         if (!mounted) return;
-        _showSnackBar(widget.entry != null ? 'Entry updated successfully' : 'Entry created successfully');
+        _showSnackBar(
+          widget.entry != null
+              ? 'Entry updated successfully'
+              : 'Entry created successfully',
+        );
         Navigator.pop(context);
       } else {
         if (!mounted) return;
@@ -216,7 +237,9 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -240,7 +263,11 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                             vertical: 24,
-                            horizontal: r.value(mobile: 16, tablet: 40, desktop: 100),
+                            horizontal: r.value(
+                              mobile: 16,
+                              tablet: 40,
+                              desktop: 100,
+                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +277,8 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
                                 'General Information',
                                 Icons.info_outline,
                                 [
-                                  if (widget.farmPlotId == null && widget.entry == null)
+                                  if (widget.farmPlotId == null &&
+                                      widget.entry == null)
                                     _buildPlotDropdown(r),
                                   _buildFieldName('Activity Title'),
                                   _buildTextField(
@@ -316,7 +344,8 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
                                     validator: (v) {
                                       if (v == null || v.isEmpty) return null;
                                       final n = double.tryParse(v);
-                                      if (n == null || n <= 0) return 'Enter a positive number';
+                                      if (n == null || n <= 0)
+                                        return 'Enter a positive number';
                                       return null;
                                     },
                                   ),
@@ -403,7 +432,12 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
     );
   }
 
-  Widget _buildSection(Responsive r, String title, IconData icon, List<Widget> children) {
+  Widget _buildSection(
+    Responsive r,
+    String title,
+    IconData icon,
+    List<Widget> children,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(20),
@@ -472,7 +506,9 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
-        prefixIcon: icon != null ? Icon(icon, color: _primary.withOpacity(0.5), size: 20) : null,
+        prefixIcon: icon != null
+            ? Icon(icon, color: _primary.withOpacity(0.5), size: 20)
+            : null,
         filled: true,
         fillColor: Colors.grey[50],
         border: OutlineInputBorder(
@@ -487,7 +523,10 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: _primary, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
     );
   }
@@ -503,10 +542,12 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
           style: const TextStyle(color: Colors.black87, fontSize: 14),
           decoration: _dropdownDecoration(Icons.landscape_outlined),
           items: _availablePlots
-              .map((plot) => DropdownMenuItem(
-                    value: plot.id,
-                    child: Text('${plot.name} (${plot.crop})'),
-                  ))
+              .map(
+                (plot) => DropdownMenuItem(
+                  value: plot.id,
+                  child: Text('${plot.name} (${plot.crop})'),
+                ),
+              )
               .toList(),
           onChanged: (value) => setState(() => _selectedFarmPlotId = value),
         ),
@@ -525,10 +566,12 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
           style: const TextStyle(color: Colors.black87, fontSize: 14),
           decoration: _dropdownDecoration(Icons.category_outlined),
           items: activityTypes
-              .map((type) => DropdownMenuItem(
-                    value: type,
-                    child: Text(type.replaceAll('_', ' ').toUpperCase()),
-                  ))
+              .map(
+                (type) => DropdownMenuItem(
+                  value: type,
+                  child: Text(type.replaceAll('_', ' ').toUpperCase()),
+                ),
+              )
               .toList(),
           onChanged: (value) {
             if (value != null) setState(() => _selectedActivityType = value);
@@ -548,10 +591,12 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
           style: const TextStyle(color: Colors.black87, fontSize: 14),
           decoration: _dropdownDecoration(Icons.monitor_heart_outlined),
           items: plantHealthOptions
-              .map((health) => DropdownMenuItem(
-                    value: health,
-                    child: Text(health.toUpperCase()),
-                  ))
+              .map(
+                (health) => DropdownMenuItem(
+                  value: health,
+                  child: Text(health.toUpperCase()),
+                ),
+              )
               .toList(),
           onChanged: (value) {
             if (value != null) setState(() => _plantHealth = value);
@@ -634,7 +679,11 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
     );
   }
 
-  Widget _buildPickerButton({required IconData icon, required String label, required VoidCallback onTap}) {
+  Widget _buildPickerButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -670,13 +719,18 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
           foregroundColor: Colors.white,
           elevation: 4,
           shadowColor: _primary.withOpacity(0.4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
         child: _isLoading
             ? const SizedBox(
                 width: 24,
                 height: 24,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -685,7 +739,10 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
                   const SizedBox(width: 10),
                   Text(
                     widget.entry != null ? 'UPDATE DIARY' : 'SAVE TO DIARY',
-                    style: const TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.1),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                    ),
                   ),
                 ],
               ),

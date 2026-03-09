@@ -5,8 +5,6 @@ import '../../../models/farm_diary.dart';
 import '../../../providers/app_providers.dart';
 import '../../../providers/farm_diary_provider.dart';
 import '../../../utils/responsive.dart';
-import 'farm_diary_detail_screen.dart';
-import 'farm_diary_form_screen.dart';
 
 Color colorWithOpacity(Color c, double opacity) {
   final alpha = (opacity * 255).round().clamp(0, 255);
@@ -64,8 +62,8 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadEntries());
   }
@@ -81,8 +79,9 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen>
       farmPlotId: widget.farmPlotId,
       startDate: _startDate,
       endDate: _endDate,
-      activityType:
-          _selectedActivityFilter == 'all' ? null : _selectedActivityFilter,
+      activityType: _selectedActivityFilter == 'all'
+          ? null
+          : _selectedActivityFilter,
     );
     if (mounted) {
       _animationController.forward(from: 0);
@@ -126,8 +125,9 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen>
                         checkmarkColor: _primary,
                         labelStyle: TextStyle(
                           color: isSelected ? _primary : Colors.grey[700],
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
                         ),
                         onSelected: (selected) {
                           setState(() {
@@ -206,8 +206,10 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen>
                         _loadEntries();
                         Navigator.pop(context);
                       },
-                      child:
-                          Text('Clear All', style: TextStyle(color: Colors.red)),
+                      child: Text(
+                        'Clear All',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -264,9 +266,8 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen>
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'farm_diary_fab',
-        onPressed: () => context.navigateToFarmDiaryForm(
-          farmPlotId: widget.farmPlotId,
-        ),
+        onPressed: () =>
+            context.navigateToFarmDiaryForm(farmPlotId: widget.farmPlotId),
         icon: const Icon(Icons.add_task),
         label: const Text(
           'New Entry',
@@ -292,8 +293,12 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen>
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(r.value(mobile: 28, tablet: 36, desktop: 40)),
-          bottomRight: Radius.circular(r.value(mobile: 28, tablet: 36, desktop: 40)),
+          bottomLeft: Radius.circular(
+            r.value(mobile: 28, tablet: 36, desktop: 40),
+          ),
+          bottomRight: Radius.circular(
+            r.value(mobile: 28, tablet: 36, desktop: 40),
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -368,8 +373,10 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen>
                   hintText: 'Search entries...',
                   prefixIcon: const Icon(Icons.search, size: 20),
                   border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),
@@ -479,18 +486,30 @@ class _FarmDiaryListScreenState extends State<FarmDiaryListScreen>
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.access_time, size: 14, color: Colors.grey[500]),
+                          Icon(
+                            Icons.access_time,
+                            size: 14,
+                            color: Colors.grey[500],
+                          ),
                           const SizedBox(width: 4),
                           Text(
-                            DateFormat('MMM dd, yyyy • HH:mm').format(entry.diaryDate),
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            DateFormat(
+                              'MMM dd, yyyy • HH:mm',
+                            ).format(entry.diaryDate),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
                           ),
                         ],
                       ),
                       if (entry.syncStatus != 'synced') ...[
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: entry.syncStatus == 'pending'
                                 ? Colors.orange[50]

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../utils/language_prefs.dart';
 
 class HowItWorksScreen extends StatefulWidget {
   const HowItWorksScreen({super.key});
@@ -10,130 +11,243 @@ class HowItWorksScreen extends StatefulWidget {
 class _HowItWorksScreenState extends State<HowItWorksScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  String _currentLanguage = 'en';
 
-  final List<HowItWorksPage> _pages = [
+  bool get _isSinhala => _currentLanguage == 'si';
+
+  @override
+  void initState() {
+    super.initState();
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
+  }
+
+  List<HowItWorksPage> get _pages => [
     HowItWorksPage(
-      title: "Welcome to AI-Powered Quality Grading",
-      description: "Our system combines IoT technology and artificial intelligence to provide accurate, transparent quality assessment for your pepper samples.",
+      title: _isSinhala
+          ? "ගම්මිරිස් ගුණාත්මක ශ්‍රේණීකරණයට සාදරයෙන් පිළිගනිමු"
+          : "Welcome to Pepper Quality Grading",
+      description: _isSinhala
+          ? "මෙම පද්ධතිය ඔබේ කළු ගම්මිරිස් නියදිවල ගුණාත්මකභාවය ඡායාරූප විශ්ලේෂණය සහ ගුණාත්මක ලකුණු ගණනය කිරීම හරහා සරලව පරීක්ෂා කිරීමට ඔබට උදවු කරයි."
+          : "This system helps you check the quality of your black pepper sample using photo analysis and quality scoring in a simple and easy way.",
       icon: Icons.auto_awesome,
       color: Colors.purple,
-      details: [
-        "Real-time bulk density measurement",
-        "AI-powered visual analysis",
-        "Comprehensive quality scoring",
-        "Instant certification reports",
-      ],
+      details: _isSinhala
+          ? [
+              "සරල පියවරෙන් පියවර ක්‍රියාවලිය",
+              "ඡායාරූප මත පදනම් වූ ගුණාත්මක පරීක්ෂාව",
+              "පහසු ගුණාත්මක ලකුණු ගණනය කිරීම",
+              "ගොවීන් සහ ගැනුම්කරුවන් සඳහා පැහැදිලි වාර්තාව",
+            ]
+          : [
+              "Simple step-by-step process",
+              "Photo-based quality checking",
+              "Easy quality score calculation",
+              "Clear report for farmers and buyers",
+            ],
     ),
     HowItWorksPage(
-      title: "Step 1: Bulk Density Measurement",
-      description: "Connect your ESP32 IoT device via Bluetooth to measure the physical density of your pepper sample.",
+      title: _isSinhala
+          ? "පියවර 1: තොග ඝනත්වය මනිනු"
+          : "Step 1: Measure Bulk Density",
+      description: _isSinhala
+          ? "1 ලීටර් කෝප්පයක් ගෙන ගම්මිරිස් පුරවා, බර මැනගෙන, යෙදුමට ඇතුළු කරන්න."
+          : "Take a 1 litre cup, fill it with pepper, measure the weight, and enter that value into the app.",
       icon: Icons.scale_rounded,
       color: Colors.blue,
-      details: [
-        "Pour 1L of pepper into the measuring container",
-        "Load cell measures weight with high precision",
-        "ESP32 calculates bulk density (g/L)",
-        "Data transmitted to app via Bluetooth",
-        "Grade I: ≥550 g/L (black) / ≥600 g/L (white)",
-      ],
+      details: _isSinhala
+          ? [
+              "1L කෝප්පයක් හෝ බඳුනක් ගන්න",
+              "ගම්මිරිස් නියදියෙන් පුරවන්න",
+              "මුළු බර මනිනු",
+              "යෙදුමට බර ඇතුළු කරන්න",
+              "වැඩි බරක් සාමාන්‍යයෙන් වඩා හොඳ ඝනත්වයක් අදහස් කරයි",
+              "හොඳ තොග ඝනත්වය අවසාන ශ්‍රේණිය වැඩිදියුණු කිරීමට උදවු කරයි",
+            ]
+          : [
+              "Take a 1L cup or container",
+              "Fill it with pepper sample",
+              "Measure the total weight",
+              "Enter the weight into the app",
+              "Higher weight usually means better density",
+              "Good bulk density helps improve the final grade",
+            ],
     ),
     HowItWorksPage(
-      title: "Step 2: Visual Capture",
-      description: "Take 8 photos of your pepper sample following our standardized guidelines for accurate AI analysis.",
+      title: _isSinhala
+          ? "පියවර 2: නියදි ඡායාරූප ගන්න"
+          : "Step 2: Take Sample Photos",
+      description: _isSinhala
+          ? "යෙදුමේ උපදෙස් අනුගමනය කරමින් ගම්මිරිස් නියදිවල පැහැදිලි ඡායාරූප 8ක් ගන්න."
+          : "Take 8 clear photos of your pepper sample by following the instructions in the app.",
       icon: Icons.camera_alt_rounded,
       color: Colors.teal,
-      details: [
-        "Spread pepper on white A4 sheet",
-        "Ensure good natural lighting",
-        "Hold camera 20-30 cm above sample",
-        "Capture from multiple angles",
-        "5 overhead shots + 3 close-ups",
-        "Avoid shadows and reflections",
-      ],
+      details: _isSinhala
+          ? [
+              "සුදු A4 කඩදාසියක ගම්මිරිස් විසිරවන්න",
+              "හොඳ ස්වාභාවික ආලෝකය භාවිතා කරන්න",
+              "නියදිය ඉහළින් සෙ.මී. 20-30ක් කැමරාව රඳවන්න",
+              "බොඳ නොවී පැහැදිලි ඡායාරූප ගන්න",
+              "ඉහළ කෝණ ඡායාරූප 5ක් සහ ළඟිනි ඡායාරූප 3ක් ගන්න",
+              "සෙවනැලි, ප්‍රතිබිම්බ සහ අඳුරු පසුබිම් වළකින්න",
+            ]
+          : [
+              "Spread pepper on a white A4 sheet",
+              "Use good natural light",
+              "Hold the camera about 20-30 cm above the sample",
+              "Take clear photos without blur",
+              "Capture 5 top-view photos and 3 close-up photos",
+              "Avoid shadows, reflections, and dark backgrounds",
+            ],
     ),
     HowItWorksPage(
-      title: "Step 3: Piperine Content Estimation",
-      description: "Select your pepper variety to estimate piperine content based on research data.",
+      title: _isSinhala
+          ? "පියවර 3: ගම්මිරිස් වර්ගය තෝරන්න"
+          : "Step 3: Select Pepper Variety",
+      description: _isSinhala
+          ? "ගම්මිරිස් වර්ගය තෝරන්න, එවිට යෙදුමට පිපෙරීන් මට්ටම තක්සේරු කර ගුණාත්මක ලකුණුවලට ඇතුළත් කළ හැක."
+          : "Choose your pepper variety so the app can estimate piperine level and include it in the quality score.",
       icon: Icons.science_rounded,
       color: Colors.orange,
-      details: [
-        "Ceylon Pepper: 10-12% (100 points)",
-        "Bootawe Rala: 6.3% (70 points)",
-        "Kohukumbure Rala: 6% (65 points)",
-        "Dingi Rala: 5.6% (60 points)",
-        "Panniyur-1: 4.9% (50 points)",
-        "Higher piperine = better quality & value",
-      ],
+      details: _isSinhala
+          ? [
+              "නිවැරදි ගම්මිරිස් වර්ගය තෝරන්න",
+              "ලංකා ගම්මිරිස් සාමාන්‍යයෙන් වැඩි ලකුණු ලබාගනී",
+              "අනෙකුත් වර්ග පර්යේෂණ මත පදනම් අගයන් යොදා ශ්‍රේණිගත කෙරේ",
+              "පිපෙරීන් තිත්තකම සහ ගුණාත්මකභාවය සමඟ සම්බන්ධ",
+              "මෙය ප්‍රයෝගශාලා පරීක්ෂාවක් නොව, අනුමාන කළ අගයකි",
+            ]
+          : [
+              "Select the correct pepper variety",
+              "Ceylon Pepper usually gets a higher score",
+              "Other varieties are scored using research-based values",
+              "Piperine is linked with pungency and quality",
+              "This is an estimated value, not a lab test",
+            ],
     ),
     HowItWorksPage(
-      title: "AI Visual Analysis - Defects",
-      description: "Advanced detection of mold, adulteration, and quality issues using trained neural networks.",
+      title: _isSinhala ? "දෝෂ දෘශ්‍ය විශ්ලේෂණය" : "Visual Analysis of Defects",
+      description: _isSinhala
+          ? "යෙදුම ගම්මිරිස් නියදිවල දෘශ්‍ය ගුණාත්මක ගැටළු හඳුනාගැනීමට උඩුගත කළ ඡායාරූප පරීක්ෂා කරයි."
+          : "The app checks the uploaded photos to identify visible quality problems in the pepper sample.",
       icon: Icons.bug_report_rounded,
       color: Colors.red,
-      details: [
-        "Mold detection: White/grey fuzzy patches",
-        "Adulteration: Papaya seeds, foreign items",
-        "Extraneous matter: Stones, sticks, debris",
-        "Insect damage: Holes and bite marks",
-        "Each defect reduces overall grade",
-        "Zero tolerance for adulterants",
-      ],
+      details: _isSinhala
+          ? [
+              "ගම්මිරිස් ඇටවල පීනස් හඳුනා ගනී",
+              "පොල්පිත්ත ඇට වැනි සාවද්‍ය සෙවීම් හඳුනා ගනී",
+              "කූරු සහ ගල් ආදී අනවශ්‍ය ද්‍රව්‍ය හඳුනා ගනී",
+              "හානි වූ හෝ දුර්වල ගම්මිරිස් ඇට පරීක්ෂා කරයි",
+              "දෝෂ වැඩිවීම අවසාන ලකුණු අඩු කරයි",
+              "පිරිසිදු ගම්මිරිස් සාමාන්‍යයෙන් හොඳ ශ්‍රේණියක් ලබා ගනී",
+            ]
+          : [
+              "Detects mold on pepper berries",
+              "Detects adulteration such as papaya seeds",
+              "Detects unwanted materials like sticks and stones",
+              "Checks for damaged or poor-quality pepper berries",
+              "More defects will reduce the final score",
+              "Cleaner pepper usually gets a better grade",
+            ],
     ),
     HowItWorksPage(
-      title: "Surface Texture Recognition",
-      description: "AI evaluates surface texture to confirm proper processing and drying.",
+      title: _isSinhala ? "මතුපිට ගොඩනැගිලි පරීක්ෂාව" : "Surface Texture Check",
+      description: _isSinhala
+          ? "යෙදුම ගම්මිරිස් ඇටවල තත්ත්වය තේරුම් ගැනීමට ඒවායේ මතුපිට පෙනුම ද පරීක්ෂා කරයි."
+          : "The app also checks the surface appearance of pepper berries to understand their condition.",
       icon: Icons.texture_rounded,
       color: Colors.brown,
-      details: [
-        "Black pepper: Should be wrinkled",
-        "White pepper: Smooth or slightly pitted",
-        "Texture indicates drying quality",
-        "Classifier trained on texture patterns",
-        "≥95% conformity = full points",
-        "Poor texture = processing issues",
-      ],
+      details: _isSinhala
+          ? [
+              "කළු ගම්මිරිස් සාමාන්‍යයෙන් හොඳින් වියළී රැලි ගැසී පෙනෙන්නට ඕනෑ",
+              "අසාමාන්‍ය ගොඩනැගිලි ගුණාත්මක ගැටළු පෙන්නුම් කළ හැකිය",
+              "බිඳුණු හෝ අසාමාන්‍ය ඇට ලකුණු අඩු කළ හැකිය",
+              "හොඳ ගොඩනැගිලි සාමාන්‍යයෙන් හොඳ සකසුම් ගුණාත්මකභාවය අදහස් කරයි",
+            ]
+          : [
+              "Black pepper should usually look well dried and wrinkled",
+              "Unusual texture may indicate quality issues",
+              "Broken or abnormal berries can reduce the score",
+              "Better texture usually means better processing quality",
+            ],
     ),
     HowItWorksPage(
-      title: "Weighted Scoring System",
-      description: "All factors are weighted and combined into a comprehensive quality score.",
+      title: _isSinhala
+          ? "ලකුණු ගණනය කරන ආකාරය"
+          : "How the Score is Calculated",
+      description: _isSinhala
+          ? "අවසාන ලකුණු ගණනය කිරීම සඳහා කිහිපයක් වැදගත් ගුණාත්මක සාධක ඒකාබද්ධ කෙරේ."
+          : "The final score is calculated by combining several important quality factors.",
       icon: Icons.calculate_rounded,
       color: Colors.green,
-      details: [
-        "Bulk Density: 18% weight",
-        "Adulteration: 15% weight",
-        "Piperine Content: 10% weight",
-        "Color, Size, Mold: 10% each",
-        "Texture, Extraneous: 8-10%",
-        "Final score: 0-100 points",
-      ],
+      details: _isSinhala
+          ? [
+              "තොග ඝනත්වය ලකුණුවලට ඇතුළත් කෙරේ",
+              "සාවද්‍ය මට්ටම ලකුණු ශක්තිමත් ලෙස බලපායි",
+              "පීනස් මට්ටම ලකුණු අඩු කරයි",
+              "ආගන්තුක ද්‍රව්‍ය පිරිසිදු ලකුණු බලපායි",
+              "ගොඩනැගිලි සහ දෘශ්‍ය සෞඛ්‍යසම්පන්න ඇටද සලකා බලනු ලැබේ",
+              "අවසාන ලකුණු 100 න් ලබා දෙනු ලැබේ",
+            ]
+          : [
+              "Bulk density is included in the score",
+              "Adulteration level affects the score strongly",
+              "Mold level reduces the score",
+              "Extraneous matter affects cleanliness score",
+              "Texture and visible healthy berries are also considered",
+              "The final score is given out of 100",
+            ],
     ),
     HowItWorksPage(
-      title: "Quality Grades & Certification",
-      description: "Your final grade is determined by the weighted score and blocking rules.",
+      title: _isSinhala ? "ගුණාත්මක ශ්‍රේණි" : "Quality Grades",
+      description: _isSinhala
+          ? "අවසාන ලකුණු මත පදනම්ව, ඔබේ ගම්මිරිස් නියදිය ගුණාත්මක ශ්‍රේණියකට ලැකෙනු ලැබේ."
+          : "Based on the final score, your pepper sample is placed into a quality grade.",
       icon: Icons.workspace_premium_rounded,
       color: Colors.amber,
-      details: [
-        "Premium Quality: ≥92 points",
-        "Gold: 80-91 points",
-        "Silver: 65-79 points",
-        "Bronze: 50-64 points",
-        "Reject: <50 points",
-        "GAP certification adds bonus points",
-      ],
+      details: _isSinhala
+          ? [
+              "ශ්‍රේණිය 1 - ප්‍රිමියම්: 90 සහ ඊට ඉහළ",
+              "ශ්‍රේණිය 2 - රන්: 80 සිට 89 දක්වා",
+              "ශ්‍රේණිය 3 - රිදී: 65 සිට 79 දක්වා",
+              "ශ්‍රේණිය 4 - මූලික: 50 සිට 64 දක්වා",
+              "ප්‍රතික්ෂේප: 50 ට අඩු",
+              "සත්‍යාපිත සහතික කිරීම් කුඩා ප්‍රසාද ලකුණු ලබා දිය හැකිය",
+            ]
+          : [
+              "Grade 1 - Premium: 90 and above",
+              "Grade 2 - Gold: 80 to 89",
+              "Grade 3 - Silver: 65 to 79",
+              "Grade 4 - Basic: 50 to 64",
+              "Reject: below 50",
+              "Verified certifications can give a small bonus",
+            ],
     ),
     HowItWorksPage(
-      title: "Your Complete Report",
-      description: "Receive a detailed PDF report with QR code for buyer verification and traceability.",
+      title: _isSinhala ? "ඔබේ අවසාන වාර්තාව" : "Your Final Report",
+      description: _isSinhala
+          ? "ශ්‍රේණිගත කිරීමෙන් පසු, ඔබේ ප්‍රතිඵල සහ වැඩිදියුණු කිරීම් සඳහා යෝජනා පෙන්වන පැහැදිලි වාර්තාවක් ලැබෙනු ඇත."
+          : "After grading, you will receive a clear report showing your results and suggestions for improvement.",
       icon: Icons.description_rounded,
       color: Colors.deepPurple,
-      details: [
-        "Overall quality grade (A/B/C)",
-        "Factor-by-factor breakdown",
-        "Visual evidence of detections",
-        "Improvement recommendations",
-        "Shareable QR code",
-        "Full transparency for buyers",
-      ],
+      details: _isSinhala
+          ? [
+              "සමස්ත ශ්‍රේණිය සහ මුළු ලකුණු",
+              "සෑම ගුණාත්මක සාධකයකම විස්තරය",
+              "නියදිවල හඳුනාගත් ගැටළු",
+              "අනාගත ශ්‍රේණිය වැඩිදියුණු කිරීමට යෝජනා",
+              "ගැනුම්කරුවන් සහ ගොවීන් සඳහා ප්‍රයෝජනවත් තොරතුරු",
+              "පහසුවෙන් තේරුම්ගත හැකි ගුණාත්මක සාරාංශය",
+            ]
+          : [
+              "Overall grade and total score",
+              "Breakdown of each quality factor",
+              "Detected problems in the sample",
+              "Suggestions to improve future batches",
+              "Useful information for buyers and farmers",
+              "Easy-to-understand quality summary",
+            ],
     ),
   ];
 
@@ -151,12 +265,18 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
         backgroundColor: const Color(0xFF2E7D32),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "How It Works",
-          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+        title: Text(
+          _isSinhala ? "ක්‍රියා කරන ආකාරය" : "How It Works",
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
         ),
       ),
       body: Column(
@@ -182,58 +302,59 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
   }
 
   Widget _buildPageContent(HowItWorksPage page) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmall = screenWidth < 360;
+    final hPad = isSmall ? 16.0 : 24.0;
+    final iconSize = isSmall ? 60.0 : 80.0;
+    final titleSize = isSmall ? 20.0 : 22.0;
+    final descSize = isSmall ? 13.0 : 15.0;
+    final detailSize = isSmall ? 13.0 : 14.0;
+
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16),
         child: Column(
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // Icon
             Container(
-              padding: const EdgeInsets.all(32),
+              padding: EdgeInsets.all(isSmall ? 22 : 28),
               decoration: BoxDecoration(
                 color: page.color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                page.icon,
-                size: 80,
-                color: page.color,
-              ),
+              child: Icon(page.icon, size: iconSize, color: page.color),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-            // Title
             Text(
               page.title,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 26,
+                fontSize: titleSize,
                 fontWeight: FontWeight.w800,
                 color: Colors.grey[900],
-                height: 1.2,
+                height: 1.3,
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
-            // Description
             Text(
               page.description,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: descSize,
                 color: Colors.grey[700],
-                height: 1.5,
+                height: 1.6,
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-            // Details
             Container(
+              width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -245,17 +366,17 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: page.details.map((detail) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: 14),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          margin: const EdgeInsets.only(top: 4),
+                          margin: const EdgeInsets.only(top: 3),
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             color: page.color.withOpacity(0.1),
@@ -263,18 +384,18 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                           ),
                           child: Icon(
                             Icons.check_rounded,
-                            size: 16,
+                            size: 14,
                             color: page.color,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             detail,
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: detailSize,
                               color: Colors.grey[800],
-                              height: 1.4,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -285,7 +406,7 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
               ),
             ),
 
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
           ],
         ),
       ),
@@ -293,8 +414,13 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
   }
 
   Widget _buildBottomNavigation() {
+    final isSmall = MediaQuery.of(context).size.width < 360;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      padding: EdgeInsets.symmetric(
+        horizontal: isSmall ? 16 : 24,
+        vertical: 16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -309,15 +435,15 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Page indicators
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // Dot indicators — wrap so they never overflow
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
               children: List.generate(_pages.length, (index) {
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
                   height: 8,
-                  width: _currentPage == index ? 32 : 8,
+                  width: _currentPage == index ? 28 : 8,
                   decoration: BoxDecoration(
                     color: _currentPage == index
                         ? const Color(0xFF2E7D32)
@@ -328,9 +454,8 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
               }),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // Navigation buttons
             Row(
               children: [
                 if (_currentPage > 0)
@@ -342,10 +467,13 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                           curve: Curves.easeInOut,
                         );
                       },
-                      icon: const Icon(Icons.arrow_back_rounded),
-                      label: const Text("Previous"),
+                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                      label: Text(
+                        _isSinhala ? "පෙර" : "Previous",
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         foregroundColor: const Color(0xFF2E7D32),
                         side: const BorderSide(color: Color(0xFF2E7D32)),
                         shape: RoundedRectangleBorder(
@@ -355,10 +483,9 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                     ),
                   ),
 
-                if (_currentPage > 0) const SizedBox(width: 12),
+                if (_currentPage > 0) const SizedBox(width: 10),
 
                 Expanded(
-                  flex: _currentPage == 0 ? 1 : 1,
                   child: ElevatedButton.icon(
                     onPressed: () {
                       if (_currentPage < _pages.length - 1) {
@@ -374,12 +501,16 @@ class _HowItWorksScreenState extends State<HowItWorksScreen> {
                       _currentPage < _pages.length - 1
                           ? Icons.arrow_forward_rounded
                           : Icons.check_rounded,
+                      size: 18,
                     ),
                     label: Text(
-                      _currentPage < _pages.length - 1 ? "Next" : "Got It",
+                      _currentPage < _pages.length - 1
+                          ? (_isSinhala ? "ඊළඟ" : "Next")
+                          : (_isSinhala ? "හරි" : "Got It"),
+                      overflow: TextOverflow.ellipsis,
                     ),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       backgroundColor: const Color(0xFF2E7D32),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(

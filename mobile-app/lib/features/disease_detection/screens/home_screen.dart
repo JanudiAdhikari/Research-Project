@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'image_picker_screen.dart';
 import 'posts_view_screen.dart';
 import 'complaint_screen.dart';
-import 'complaint_list_screen.dart';
 import 'weather_forecast_screen.dart';
 import '../../../utils/localization.dart';
 import '../../../utils/language_prefs.dart';
@@ -84,11 +83,6 @@ class _HomeScreenState extends State<HomeScreen>
   void _navigateToComplaint(BuildContext context) => Navigator.push(
     context,
     MaterialPageRoute(builder: (_) => const ComplaintScreen()),
-  );
-
-  void _navigateToComplaintManagement(BuildContext context) => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const ComplaintListScreen()),
   );
 
   void _navigateToWeatherForecast(BuildContext context) => Navigator.push(

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'dart:io';
 import 'firebase_options.dart';
 import 'features/auth/login_page.dart';
 import 'features/auth/signup_page.dart';
 import 'features/auth/splash_screen.dart';
-import 'widgets/navigation_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'providers/yield_prediction_provider.dart';
 import 'providers/prediction_history_provider.dart';

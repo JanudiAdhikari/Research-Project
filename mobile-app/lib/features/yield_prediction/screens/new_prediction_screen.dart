@@ -6,9 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/yield_prediction_provider.dart';
 import '../../../utils/yield_prediction/yield_prediction_si.dart';
-import '../../disease_detection/services/location_service.dart';
 import '../../../services/weather_service.dart';
 import '../../../services/iot_ble_service.dart';
+import '../../../utils/location_constants.dart';
 
 class NewPredictionScreen extends StatefulWidget {
   final String language;
@@ -26,10 +26,10 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
   double temperature = 28;
   String? locationName;
   bool isFetchingWeather = false;
+  DistrictInfo? selectedDistrict;
   
   List<File?> selectedImages = [null, null, null, null];
   final ImagePicker _picker = ImagePicker();
-  final LocationService _locationService = LocationService();
   final IotBleService _iotService = IotBleService();
   
   String plantAge = "6–8 months";
@@ -55,7 +55,6 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchWeather();
     _setupIotListeners();
   }
 
@@ -84,25 +83,22 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
   }
 
   Future<void> _fetchWeather() async {
+    if (selectedDistrict == null) return;
+
     setState(() {
       isFetchingWeather = true;
     });
 
     try {
-      final position = await _locationService.getCurrentLocation();
-      if (position != null) {
-        final weatherData = await WeatherService.fetchWeatherData(
-          latitude: position.latitude,
-          longitude: position.longitude,
-        );
-        setState(() {
-          temperature = weatherData.temperature;
-          locationName = weatherData.location;
-          isFetchingWeather = false;
-        });
-      } else {
-        setState(() => isFetchingWeather = false);
-      }
+      final weatherData = await WeatherService.fetchWeatherData(
+        latitude: selectedDistrict!.latitude,
+        longitude: selectedDistrict!.longitude,
+      );
+      setState(() {
+        temperature = weatherData.temperature;
+        locationName = widget.language == 'si' ? selectedDistrict!.nameSi : selectedDistrict!.name;
+        isFetchingWeather = false;
+      });
     } catch (e) {
       print('Error fetching weather: $e');
       setState(() => isFetchingWeather = false);
@@ -190,10 +186,12 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
                   ? YieldPredictionSi.step3Temperature
                   : "Step 3: Temperature",
               subtitle: isSi
-                  ? YieldPredictionSi.environmentalTemperatureInCelsius
-                  : "Automatically fetched for your location",
+                  ? YieldPredictionSi.selectDistrict
+                  : "Please select your current district",
               color: Colors.orange,
             ),
+            const SizedBox(height: 16),
+            _buildDistrictDropdown(isSi),
             const SizedBox(height: 16),
             _buildWeatherCard(isSi),
             _infoText(
@@ -416,6 +414,18 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
 
     // Perform prediction
     final provider = context.read<YieldPredictionProvider>();
+    
+    if (selectedDistrict == null) {
+      Navigator.pop(context); // Close loading dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isSi ? "කරුණාකර පළමුව දිස්ත්‍රික්කය තෝරන්න" : "Please select a district first"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     final success = await provider.performPrediction(
       imageFiles: validImages,
       soilMoisture: soilMoisture,
@@ -791,5 +801,38 @@ class _NewPredictionScreenState extends State<NewPredictionScreen> {
         selectedImages[index] = File(image.path);
       });
     }
+  }
+
+  Widget _buildDistrictDropdown(bool isSi) {
+    return DropdownButtonFormField<DistrictInfo>(
+      value: selectedDistrict,
+      hint: Text(isSi ? YieldPredictionSi.selectDistrict : "Select District"),
+      items: LocationConstants.districts.map((district) {
+        return DropdownMenuItem<DistrictInfo>(
+          value: district,
+          child: Text(isSi ? district.nameSi : district.name),
+        );
+      }).toList(),
+      onChanged: (v) {
+        setState(() {
+          selectedDistrict = v;
+          _fetchWeather();
+        });
+      },
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.grey[50],
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        prefixIcon: Icon(Icons.map_rounded, color: Colors.orange.shade400),
+      ),
+    );
   }
 }

@@ -5,12 +5,16 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'xai_insights_screen.dart';
+import 'prediction_history_screen.dart';
 import '../../../utils/yield_prediction/yield_prediction_si.dart';
 import '../../../providers/yield_prediction_provider.dart';
 import '../../../models/prediction_response.dart';
 
 class PredictionResultScreen extends StatefulWidget {
-  final double predictedYield;
+  final double predictedYieldKgPerPlant;
+  final double confidencePercent;
+  final String cropCondition;
+  final String timestamp;
   final double soilMoisture;
   final double temperature;
   final dynamic imageFile; // XFile or File
@@ -18,7 +22,10 @@ class PredictionResultScreen extends StatefulWidget {
 
   const PredictionResultScreen({
     super.key,
-    required this.predictedYield,
+    required this.predictedYieldKgPerPlant,
+    required this.confidencePercent,
+    required this.cropCondition,
+    required this.timestamp,
     required this.soilMoisture,
     required this.temperature,
     required this.imageFile,
@@ -30,6 +37,19 @@ class PredictionResultScreen extends StatefulWidget {
 }
 
 class _PredictionResultScreenState extends State<PredictionResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Save prediction to history
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final yieldProvider = context.read<YieldPredictionProvider>();
+      yieldProvider.savePredictionToHistory(
+        soilMoisture: widget.soilMoisture,
+        temperature: widget.temperature,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isSi = widget.language == 'si';
@@ -51,10 +71,18 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
 
           const SizedBox(height: 24),
 
-          // YIELD HERO
+          // YIELD HERO WITH CONFIDENCE
           _buildYieldHero(isSi),
 
           const SizedBox(height: 24),
+
+          // CROP CONDITION
+          _infoTile(
+            Icons.spa_rounded,
+            isSi ? "ගස්වල තත්ත්වය" : "Crop Condition",
+            widget.cropCondition,
+            Colors.green,
+          ),
 
           // SOIL
           _infoTile(
@@ -70,6 +98,42 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
             isSi ? YieldPredictionSi.temperature : "Temperature",
             "${widget.temperature.round()}°C",
             Colors.orange,
+          ),
+
+          const SizedBox(height: 24),
+
+          // TIMESTAMP
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.schedule_rounded,
+                  color: Colors.grey,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  isSi ? "ගණනය කිරීමේ කාලය: " : "Prediction made: ",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Expanded(
+                  child: Text(
+                    widget.timestamp,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 24),
@@ -92,10 +156,34 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
                       imageFile: widget.imageFile,
                       soilMoisture: widget.soilMoisture,
                       temperature: widget.temperature,
-                      insights: provider.insights,
-                      topFactors: provider.topFactors,
+                      confidencePercent: widget.confidencePercent,
+                      recommendations: provider.recommendations,
+                      xaiTopFactors: provider.xaiTopFactors,
                       language: widget.language,
                     ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // HISTORY BUTTON
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.history_rounded),
+              label: Text(
+                isSi ? YieldPredictionSi.predictionHistory : "View History",
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        PredictionHistoryScreen(language: widget.language),
                   ),
                 );
               },
@@ -163,11 +251,37 @@ class _PredictionResultScreenState extends State<PredictionResultScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "${widget.predictedYield} ${isSi ? YieldPredictionSi.kilogramPerPlant : "kg"}",
+            "${widget.predictedYieldKgPerPlant.toStringAsFixed(2)} ${isSi ? YieldPredictionSi.kilogramPerPlant : "kg/plant"}",
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.verified_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  "${widget.confidencePercent.toStringAsFixed(1)}% ${isSi ? " আত্মবিশ্বাসী" : "Confidence"}",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

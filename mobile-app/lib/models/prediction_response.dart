@@ -1,19 +1,29 @@
 class PredictionResponse {
-  final double predictedYield;
-  final List<String> insights;
-  final TopFactors topFactors;
+  final String timestamp;
+  final double predictedYieldKgPerPlant;
+  final double confidencePercent;
+  final String cropCondition;
+  final List<String> recommendations;
+  final TopFactors xaiTopFactors;
 
   PredictionResponse({
-    required this.predictedYield,
-    required this.insights,
-    required this.topFactors,
+    required this.timestamp,
+    required this.predictedYieldKgPerPlant,
+    required this.confidencePercent,
+    required this.cropCondition,
+    required this.recommendations,
+    required this.xaiTopFactors,
   });
 
   factory PredictionResponse.fromJson(Map<String, dynamic> json) {
     return PredictionResponse(
-      predictedYield: (json['predicted_yield'] ?? 0.0).toDouble(),
-      insights: List<String>.from(json['insights'] ?? []),
-      topFactors: TopFactors.fromJson(json['top_factors'] ?? {}),
+      timestamp: json['timestamp'] ?? '',
+      predictedYieldKgPerPlant: (json['predicted_yield_kg_per_plant'] ?? 0.0)
+          .toDouble(),
+      confidencePercent: (json['confidence_percent'] ?? 0.0).toDouble(),
+      cropCondition: json['crop_condition'] ?? '',
+      recommendations: List<String>.from(json['recommendations'] ?? []),
+      xaiTopFactors: TopFactors.fromJson(json['xai_top_factors'] ?? {}),
     );
   }
 }

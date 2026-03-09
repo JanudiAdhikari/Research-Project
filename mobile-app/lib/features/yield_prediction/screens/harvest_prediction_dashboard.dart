@@ -99,9 +99,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
           child: SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
             child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: responsive.pagePadding,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: responsive.pagePadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -272,7 +270,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
           Expanded(
             child: Text(
               _t(
-                "Crop condition looks healthy. No immediate action required.",
+                "Latest prediction: Yield prediction successful.",
                 YieldPredictionSi.cropConditionHealthy,
               ),
               style: TextStyle(
@@ -301,46 +299,10 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
             (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
             crossAxisCount;
 
-        final cards = [
-          _summaryCard(
-            responsive,
-            title: _t("Predictions", YieldPredictionSi.predictions),
-            value: "5",
-            icon: Icons.analytics_rounded,
-            color: Colors.blue,
-          ),
-          _summaryCard(
-            responsive,
-            title: _t(
-              "Avg Yield",
-              YieldPredictionSi.avgYield,
-            ),
-            value: "35 ${_t('kg', YieldPredictionSi.kg)}",
-            icon: Icons.trending_up_rounded,
-            color: Colors.green,
-          ),
-          _summaryCard(
-            responsive,
-            title: _t("Best Yield", YieldPredictionSi.bestYield),
-            value: "41 ${_t('kg', YieldPredictionSi.kg)}",
-            icon: Icons.star_rounded,
-            color: Colors.amber,
-          ),
-          _summaryCard(
-            responsive,
-            title: _t("Last Run", YieldPredictionSi.lastRun),
-            value: "Jan 6th",
-            icon: Icons.schedule_rounded,
-            color: Colors.purple,
-          ),
-        ];
 
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: cards.map((card) {
-            return SizedBox(width: itemWidth, child: card);
-          }).toList(),
         );
       },
     );
@@ -392,11 +354,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
             child: Text(
               value,
               style: TextStyle(
-                fontSize: responsive.value(
-                  mobile: 15,
-                  tablet: 16,
-                  desktop: 18,
-                ),
+                fontSize: responsive.value(mobile: 15, tablet: 16, desktop: 18),
                 fontWeight: FontWeight.w800,
                 color: Colors.grey[800],
               ),
@@ -474,8 +432,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                PredictionHistoryScreen(language: widget.language),
+            builder: (_) => PredictionHistoryScreen(language: widget.language),
           ),
         ),
       ),
@@ -649,9 +606,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
             ),
           ),
         ),
-        SizedBox(
-          height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
-        ),
+        SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
         _resourceCard(
           responsive,
           title: _t(
@@ -672,15 +627,10 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
             ),
           ),
         ),
-        SizedBox(
-          height: responsive.value(mobile: 8, tablet: 10, desktop: 12),
-        ),
+        SizedBox(height: responsive.value(mobile: 8, tablet: 10, desktop: 12)),
         _resourceCard(
           responsive,
-          title: _t(
-            "IoT Sensor Setup",
-            YieldPredictionSi.iotSensorSetupTitle,
-          ),
+          title: _t("IoT Sensor Setup", YieldPredictionSi.iotSensorSetupTitle),
           description: _t(
             "Connect soil sensor",
             YieldPredictionSi.connectSoilSensor,
@@ -690,8 +640,7 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) =>
-                  IotSensorSetupScreen(language: widget.language),
+              builder: (_) => IotSensorSetupScreen(language: widget.language),
             ),
           ),
         ),

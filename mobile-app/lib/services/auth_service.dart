@@ -325,6 +325,32 @@ class AuthService {
       return null;
     }
   }
+
+  // GET FRESH TOKEN (with auto-refresh)
+  Future<String?> getToken() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+
+      // This will return the cached token if it's still valid,
+      // or refresh it automatically if it has expired (or is about to).
+      final token = await user.getIdToken();
+
+      if (token != null) {
+        // Update storage so other components reading from it get the fresh one too
+        final currentStoredToken = await storage.read(key: "token");
+        if (token != currentStoredToken) {
+          await storage.write(key: "token", value: token);
+        }
+      }
+
+      return token;
+    } catch (e) {
+      print("Error getting fresh token: $e");
+      // Fallback to reading whatever is in storage if Firebase refresh fails
+      return await storage.read(key: "token");
+    }
+  }
 }
 
 

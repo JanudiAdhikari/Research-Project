@@ -8,7 +8,7 @@ class FarmerService {
   final AuthService _auth = AuthService();
 
   Future<List<FarmPlot>> fetchPlots() async {
-    final token = await _auth.storage.read(key: 'token');
+    final token = await _auth.getToken();
     final headers = <String, String>{'Content-Type': 'application/json'};
     if (token != null) headers['Authorization'] = 'Bearer $token';
 
@@ -50,7 +50,7 @@ class FarmerService {
 
   Future<FarmPlot> createPlot(Map<String, dynamic> body) async {
     return _retry(() async {
-      final token = await _auth.storage.read(key: 'token');
+      final token = await _auth.getToken();
       final headers = <String, String>{'Content-Type': 'application/json'};
       if (token != null) headers['Authorization'] = 'Bearer $token';
 
@@ -61,13 +61,13 @@ class FarmerService {
       if (res.statusCode == 201 || res.statusCode == 200) {
         return FarmPlot.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
       }
-      throw Exception('Failed to create plot: ${res.statusCode} ${res.body}');
+      throw Exception('Create Plot Error (${res.statusCode}): ${res.body}');
     });
   }
 
   Future<FarmPlot> updatePlot(String id, Map<String, dynamic> body) async {
     return _retry(() async {
-      final token = await _auth.storage.read(key: 'token');
+      final token = await _auth.getToken();
       final headers = <String, String>{'Content-Type': 'application/json'};
       if (token != null) headers['Authorization'] = 'Bearer $token';
 
@@ -78,7 +78,21 @@ class FarmerService {
       if (res.statusCode == 200) {
         return FarmPlot.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
       }
-      throw Exception('Failed to update plot: ${res.statusCode} ${res.body}');
+      throw Exception('Update Plot Error (${res.statusCode}): ${res.body}');
+    });
+  }
+  Future<void> deletePlot(String id) async {
+    return _retry(() async {
+      final token = await _auth.getToken();
+      final headers = <String, String>{'Content-Type': 'application/json'};
+      if (token != null) headers['Authorization'] = 'Bearer $token';
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/farm/plots/$id');
+      final res = await http
+          .delete(uri, headers: headers)
+          .timeout(const Duration(seconds: 15));
+      if (res.statusCode == 200) return;
+      throw Exception('Delete Plot Error (${res.statusCode}): ${res.body}');
     });
   }
 }

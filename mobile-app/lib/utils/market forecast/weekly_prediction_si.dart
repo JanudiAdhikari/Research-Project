@@ -23,6 +23,10 @@ class WeeklyPredictionSi {
   // Unit label for kilogram
   static const String kg = 'කිලෝග්‍රෑම්';
 
+  // Loading prompt
+  static const String loadingTitle = 'ඔබගේ මිල පුරෝකථනය සකස් කරමින්...';
+  static const String loadingSubtitle = 'කරුණාකර මොහොතක් රැඳී සිටින්න.';
+
   // Action titles
   static const String considerHolding = 'රඳවා තැබීම ගැන සලකා බලන්න';
   static const String sellPartially = 'කොටසක් විකිණීම ගැන සලකා බලන්න';

@@ -291,7 +291,97 @@ class _WeeklyPredictionState extends State<WeeklyPrediction> {
         elevation: 0,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Container(
+                margin: EdgeInsets.symmetric(
+                  horizontal: r.spacing(mobile: 24, tablet: 32, desktop: 40),
+                ),
+                padding: EdgeInsets.symmetric(
+                  horizontal: r.spacing(mobile: 24, tablet: 28, desktop: 32),
+                  vertical: r.spacing(mobile: 22, tablet: 26, desktop: 30),
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: const Color(0xFFE8F5E9),
+                    width: 1.2,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(
+                        r.spacing(mobile: 14, tablet: 16, desktop: 18),
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE8F5E9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.insights_outlined,
+                        color: const Color(0xFF2E7D32),
+                        size: r.iconSize(mobile: 34, tablet: 38, desktop: 42),
+                      ),
+                    ),
+                    SizedBox(
+                      height: r.spacing(mobile: 14, tablet: 16, desktop: 18),
+                    ),
+                    Text(
+                      _currentLanguage == 'si'
+                          ? WeeklyPredictionSi.loadingTitle
+                          : 'Preparing your price forecast...',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: r.fontSize(
+                          mobile: 16,
+                          tablet: 17,
+                          desktop: 18,
+                        ),
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    SizedBox(
+                      height: r.spacing(mobile: 8, tablet: 10, desktop: 12),
+                    ),
+                    Text(
+                      _currentLanguage == 'si'
+                          ? WeeklyPredictionSi.loadingSubtitle
+                          : 'Please wait a moment.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: r.fontSize(
+                          mobile: 12.5,
+                          tablet: 13,
+                          desktop: 14,
+                        ),
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    SizedBox(
+                      height: r.spacing(mobile: 16, tablet: 18, desktop: 20),
+                    ),
+                    SizedBox(
+                      width: r.spacing(mobile: 28, tablet: 30, desktop: 32),
+                      height: r.spacing(mobile: 28, tablet: 30, desktop: 32),
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation(Color(0xFF2E7D32)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           : errorMsg != null
           ? Padding(
               padding: EdgeInsets.all(

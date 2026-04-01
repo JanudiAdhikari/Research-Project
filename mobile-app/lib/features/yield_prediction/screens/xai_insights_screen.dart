@@ -23,9 +23,8 @@ class XAIInsightsScreen extends StatelessWidget {
     this.xaiTopFactors,
     this.language = 'en',
   });
- 
+
   bool get isSi => language == 'si';
- 
   @override
   Widget build(BuildContext context) {
     final isSi = language == 'si';
@@ -420,6 +419,34 @@ class XAIInsightsScreen extends StatelessWidget {
                 isSi ? YieldPredictionSi.whatIsShapImpact : "What is SHAP Impact?",
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
+            ),
+            const SizedBox(height: 20),
+            _helpItem(
+              icon: Icons.add_circle_rounded,
+              color: Colors.green,
+              title: isSi ? YieldPredictionSi.positiveShapIcon : "Positive (+) Effect:",
+              desc: isSi ? YieldPredictionSi.positiveShapDesc : "This condition is good! it is boosting your predicted yield.",
+            ),
+            const SizedBox(height: 16),
+            _helpItem(
+              icon: Icons.remove_circle_rounded,
+              color: Colors.red,
+              title: isSi ? YieldPredictionSi.negativeShapIcon : "Negative (-) Effect:",
+              desc: isSi ? YieldPredictionSi.negativeShapDesc : "This condition is holding back your yield. You should take action to fix it.",
+            ),
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            Text(
+              isSi ? "💡 උදාහරණය:" : "💡 Tip:",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isSi
+                  ? YieldPredictionSi.actionExample
+                  : "If Moisture has a negative (-) value, it means your soil is too dry and your plants need more water immediately.",
+              style: TextStyle(fontSize: 12, color: Colors.grey[700], fontStyle: FontStyle.italic),
             ),
           ],
         ),

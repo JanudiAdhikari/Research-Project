@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../../utils/yield_prediction/yield_prediction_si.dart';
 import '../../../models/prediction_response.dart';
-
+ 
 class XAIInsightsScreen extends StatelessWidget {
   final dynamic imageFile; // Can be File or XFile
   final double soilMoisture;
@@ -12,7 +12,7 @@ class XAIInsightsScreen extends StatelessWidget {
   final List<String> recommendations;
   final TopFactors? xaiTopFactors;
   final String language;
-
+ 
   const XAIInsightsScreen({
     super.key,
     required this.imageFile,
@@ -23,11 +23,13 @@ class XAIInsightsScreen extends StatelessWidget {
     this.xaiTopFactors,
     this.language = 'en',
   });
-
+ 
+  bool get isSi => language == 'si';
+ 
   @override
   Widget build(BuildContext context) {
     final isSi = language == 'si';
-
+ 
     return Scaffold(
       appBar: AppBar(
         title: Text(isSi ? YieldPredictionSi.xaiInsights : "AI Insights"),
@@ -54,6 +56,7 @@ class XAIInsightsScreen extends StatelessWidget {
             color: Colors.blue,
             progress: soilMoisture / 100,
             shapValue: xaiTopFactors?.soilMoistureImpact.toStringAsFixed(4),
+            onInfoTap: () => _showShapHelpDialog(context, isSi),
           ),
           const SizedBox(height: 16),
           // Display temperature impact with SHAP value
@@ -67,6 +70,7 @@ class XAIInsightsScreen extends StatelessWidget {
             color: Colors.orange,
             progress: temperature / 50,
             shapValue: xaiTopFactors?.temperatureImpact.toStringAsFixed(4),
+            onInfoTap: () => _showShapHelpDialog(context, isSi),
           ),
           const SizedBox(height: 20),
           // Display dynamic recommendations from backend
@@ -188,7 +192,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ),
     );
   }
-
+ 
   String _getSoilMoistureDescription(bool isSi) {
     if (isSi) {
       if (soilMoisture < 40) {
@@ -208,7 +212,7 @@ class XAIInsightsScreen extends StatelessWidget {
       }
     }
   }
-
+ 
   String _getTemperatureDescription(bool isSi) {
     if (isSi) {
       if (temperature < 20) {
@@ -228,9 +232,9 @@ class XAIInsightsScreen extends StatelessWidget {
       }
     }
   }
-
+ 
   // ================= UI COMPONENTS =================
-
+ 
   Widget _headerCard(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -254,7 +258,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ),
     );
   }
-
+ 
   Widget _imageInsightCard() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,7 +315,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ],
     );
   }
-
+ 
   Widget _factorCard({
     required IconData icon,
     required String title,
@@ -320,6 +324,7 @@ class XAIInsightsScreen extends StatelessWidget {
     required Color color,
     required double progress,
     String? shapValue,
+    VoidCallback? onInfoTap,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -376,13 +381,23 @@ class XAIInsightsScreen extends StatelessWidget {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Text(
-                "SHAP Impact: $shapValue",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "${language == 'si' ? YieldPredictionSi.effectOnYield : 'Effect on Yield'}: $shapValue",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: onInfoTap,
+                    child: Icon(Icons.info_outline_rounded, size: 14, color: color),
+                  ),
+                ],
               ),
             ),
           ],
@@ -390,7 +405,110 @@ class XAIInsightsScreen extends StatelessWidget {
       ),
     );
   }
-
+ 
+  void _showShapHelpDialog(BuildContext context, bool isSi) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.psychology_rounded, color: Colors.blue),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isSi ? YieldPredictionSi.whatIsShapImpact : "What is SHAP Impact?",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.withOpacity(0.1)),
+              ),
+              child: Text(
+                isSi
+                    ? YieldPredictionSi.shapExplanation
+                    : "This value shows how much Soil Moisture or Temperature is helping or hurting your crop's yield.",
+                style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.4),
+              ),
+            ),
+            const SizedBox(height: 20),
+            _helpItem(
+              icon: Icons.add_circle_rounded,
+              color: Colors.green,
+              title: isSi ? YieldPredictionSi.positiveShapIcon : "Positive (+) Effect:",
+              desc: isSi ? YieldPredictionSi.positiveShapDesc : "This condition is good! it is boosting your predicted yield.",
+            ),
+            const SizedBox(height: 16),
+            _helpItem(
+              icon: Icons.remove_circle_rounded,
+              color: Colors.red,
+              title: isSi ? YieldPredictionSi.negativeShapIcon : "Negative (-) Effect:",
+              desc: isSi ? YieldPredictionSi.negativeShapDesc : "This condition is holding back your yield. You should take action to fix it.",
+            ),
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            Text(
+              isSi ? "💡 උදාහරණය:" : "💡 Tip:",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isSi
+                  ? YieldPredictionSi.actionExample
+                  : "If Moisture has a negative (-) value, it means your soil is too dry and your plants need more water immediately.",
+              style: TextStyle(fontSize: 12, color: Colors.grey[700], fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(isSi ? YieldPredictionSi.close : "Close"),
+          ),
+        ],
+      ),
+    );
+  }
+ 
+  Widget _helpItem({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String desc,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color),
+              ),
+              const SizedBox(height: 2),
+              Text(desc, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+ 
   Widget _finalExplanationCard(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(16),

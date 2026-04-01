@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../../utils/yield_prediction/yield_prediction_si.dart';
 import '../../../models/prediction_response.dart';
-
+ 
 class XAIInsightsScreen extends StatelessWidget {
   final dynamic imageFile; // Can be File or XFile
   final double soilMoisture;
@@ -12,7 +12,7 @@ class XAIInsightsScreen extends StatelessWidget {
   final List<String> recommendations;
   final TopFactors? xaiTopFactors;
   final String language;
-
+ 
   const XAIInsightsScreen({
     super.key,
     required this.imageFile,
@@ -25,11 +25,10 @@ class XAIInsightsScreen extends StatelessWidget {
   });
 
   bool get isSi => language == 'si';
-
   @override
   Widget build(BuildContext context) {
     final isSi = language == 'si';
-
+ 
     return Scaffold(
       appBar: AppBar(
         title: Text(isSi ? YieldPredictionSi.xaiInsights : "AI Insights"),
@@ -192,7 +191,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ),
     );
   }
-
+ 
   String _getSoilMoistureDescription(bool isSi) {
     if (isSi) {
       if (soilMoisture < 40) {
@@ -212,7 +211,7 @@ class XAIInsightsScreen extends StatelessWidget {
       }
     }
   }
-
+ 
   String _getTemperatureDescription(bool isSi) {
     if (isSi) {
       if (temperature < 20) {
@@ -232,9 +231,9 @@ class XAIInsightsScreen extends StatelessWidget {
       }
     }
   }
-
+ 
   // ================= UI COMPONENTS =================
-
+ 
   Widget _headerCard(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -258,7 +257,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ),
     );
   }
-
+ 
   Widget _imageInsightCard() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,7 +314,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ],
     );
   }
-
+ 
   Widget _factorCard({
     required IconData icon,
     required String title,
@@ -405,7 +404,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ),
     );
   }
-
+ 
   void _showShapHelpDialog(BuildContext context, bool isSi) {
     showDialog(
       context: context,
@@ -420,6 +419,34 @@ class XAIInsightsScreen extends StatelessWidget {
                 isSi ? YieldPredictionSi.whatIsShapImpact : "What is SHAP Impact?",
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
+            ),
+            const SizedBox(height: 20),
+            _helpItem(
+              icon: Icons.add_circle_rounded,
+              color: Colors.green,
+              title: isSi ? YieldPredictionSi.positiveShapIcon : "Positive (+) Effect:",
+              desc: isSi ? YieldPredictionSi.positiveShapDesc : "This condition is good! it is boosting your predicted yield.",
+            ),
+            const SizedBox(height: 16),
+            _helpItem(
+              icon: Icons.remove_circle_rounded,
+              color: Colors.red,
+              title: isSi ? YieldPredictionSi.negativeShapIcon : "Negative (-) Effect:",
+              desc: isSi ? YieldPredictionSi.negativeShapDesc : "This condition is holding back your yield. You should take action to fix it.",
+            ),
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            Text(
+              isSi ? "💡 උදාහරණය:" : "💡 Tip:",
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isSi
+                  ? YieldPredictionSi.actionExample
+                  : "If Moisture has a negative (-) value, it means your soil is too dry and your plants need more water immediately.",
+              style: TextStyle(fontSize: 12, color: Colors.grey[700], fontStyle: FontStyle.italic),
             ),
           ],
         ),
@@ -480,7 +507,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ),
     );
   }
-
+ 
   Widget _helpItem({
     required IconData icon,
     required Color color,
@@ -508,7 +535,7 @@ class XAIInsightsScreen extends StatelessWidget {
       ],
     );
   }
-
+ 
   Widget _finalExplanationCard(bool isSi) {
     return Container(
       padding: const EdgeInsets.all(16),

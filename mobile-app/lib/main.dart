@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'dart:io';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'features/auth/login_page.dart';
 import 'features/auth/signup_page.dart';
 import 'features/auth/splash_screen.dart';
-import 'widgets/navigation_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'providers/yield_prediction_provider.dart';
+import 'providers/prediction_history_provider.dart';
 import 'providers/app_providers.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    print('⚠️ .env file not found or failed to load: $e');
+  }
 
   try {
     await Firebase.initializeApp(
@@ -23,6 +28,7 @@ void main() async {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => YieldPredictionProvider()),
+          ChangeNotifierProvider(create: (_) => PredictionHistoryProvider()),
         ],
         child: const MyApp(),
       ),

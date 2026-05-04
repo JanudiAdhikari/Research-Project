@@ -5,6 +5,7 @@ import '../../../providers/app_providers.dart';
 import '../../../providers/farm_diary_provider.dart';
 import '../../../services/farmer_service.dart';
 import '../../../models/farm_plot.dart';
+import '../../../utils/responsive.dart';
 
 class FarmDiaryFormScreen extends StatefulWidget {
   final String? farmPlotId;
@@ -16,8 +17,14 @@ class FarmDiaryFormScreen extends StatefulWidget {
   State<FarmDiaryFormScreen> createState() => _FarmDiaryFormScreenState();
 }
 
-class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
+class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen>
+    with SingleTickerProviderStateMixin {
+  static const Color _primary = Color(0xFF2E7D32);
   late FarmDiaryProvider _provider;
+
+  final _formKey = GlobalKey<FormState>();
+
+  // Controllers
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late TextEditingController _notesController;
@@ -29,10 +36,6 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
 
   String _selectedActivityType = 'other';
   DateTime _selectedDate = DateTime.now();
-  String _selectedWeatherCondition = 'unknown';
-  double? _temperature;
-  double? _humidity;
-  double? _rainfall;
   String _plantHealth = 'good';
   List<String> _tags = [];
   bool _isLoading = false;
@@ -42,6 +45,10 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
   List<FarmPlot> _availablePlots = [];
   String? _selectedFarmPlotId;
   bool _isLoadingPlots = false;
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   final List<String> activityTypes = [
     'watering',
@@ -55,15 +62,6 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
     'other',
   ];
 
-  final List<String> weatherConditions = [
-    'sunny',
-    'cloudy',
-    'rainy',
-    'windy',
-    'stormy',
-    'unknown',
-  ];
-
   final List<String> plantHealthOptions = ['excellent', 'good', 'fair', 'poor'];
 
   @override
@@ -71,6 +69,31 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
     super.initState();
     _provider = AppProviders.farmDiary;
 
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
+
+    _initializeFields();
+
+    _selectedFarmPlotId = widget.farmPlotId ?? widget.entry?.farmPlotId;
+    if (_selectedFarmPlotId == null) {
+      _loadAvailablePlots();
+    } else {
+      _animationController.forward();
+    }
+  }
+
+  void _initializeFields() {
     if (widget.entry != null) {
       _titleController = TextEditingController(text: widget.entry!.title);
       _descriptionController = TextEditingController(
@@ -94,10 +117,6 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
       );
       _selectedActivityType = widget.entry!.activityType;
       _selectedDate = widget.entry!.diaryDate;
-      _selectedWeatherCondition = widget.entry!.weather.condition;
-      _temperature = widget.entry!.weather.temperature;
-      _humidity = widget.entry!.weather.humidity;
-      _rainfall = widget.entry!.weather.rainfall;
       _plantHealth = widget.entry!.observations.plantHealth;
       _tags = List.from(widget.entry!.tags);
     } else {
@@ -110,11 +129,6 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
       _diseaseSymptomController = TextEditingController();
       _pestPresenceController = TextEditingController();
     }
-
-    _selectedFarmPlotId = widget.farmPlotId ?? widget.entry?.farmPlotId;
-    if (_selectedFarmPlotId == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _loadAvailablePlots());
-    }
   }
 
   Future<void> _loadAvailablePlots() async {
@@ -124,8 +138,9 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
       setState(() {
         _availablePlots = plots;
       });
+      _animationController.forward();
     } catch (e) {
-      print('Error loading plots: $e');
+      debugPrint('Error loading plots: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoadingPlots = false);
@@ -143,21 +158,15 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
     _waterQuantityController.dispose();
     _diseaseSymptomController.dispose();
     _pestPresenceController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   void _saveDiaryEntry() async {
-    if (_titleController.text.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please enter a title')));
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     if (_selectedFarmPlotId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a farm plot')),
-      );
+      _showSnackBar('Please select a farm plot');
       return;
     }
 
@@ -170,11 +179,11 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
       activityType: _selectedActivityType,
       diaryDate: _selectedDate,
       farmPlotId: _selectedFarmPlotId!,
-      weather: Weather(
-        condition: _selectedWeatherCondition,
-        temperature: _temperature,
-        humidity: _humidity,
-        rainfall: _rainfall,
+      weather: const Weather(
+        condition: 'unknown',
+        temperature: null,
+        humidity: null,
+        rainfall: null,
       ),
       observations: Observations(
         plantHealth: _plantHealth,
@@ -201,34 +210,25 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
     );
 
     try {
-      FarmDiary? saved;
-      if (widget.entry != null) {
-        saved = await _provider.updateDiaryEntry(widget.entry!.id, entry);
-      } else {
-        saved = await _provider.createDiaryEntry(entry);
-      }
+      final success = widget.entry != null
+          ? await _provider.updateDiaryEntry(widget.entry!.id, entry) != null
+          : await _provider.createDiaryEntry(entry) != null;
 
-      if (saved != null) {
+      if (success) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.entry != null ? 'Entry updated' : 'Entry created',
-            ),
-          ),
+        _showSnackBar(
+          widget.entry != null
+              ? 'Entry updated successfully'
+              : 'Entry created successfully',
         );
         Navigator.pop(context);
       } else {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_provider.error ?? 'Failed to save entry')),
-        );
+        _showSnackBar(_provider.error ?? 'Failed to save entry');
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      _showSnackBar('Error: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -236,326 +236,425 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
     }
   }
 
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.entry != null ? 'Edit Entry' : 'New Diary Entry'),
-        elevation: 0,
-      ),
+      backgroundColor: Colors.grey[50],
       body: _isLoadingPlots
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (widget.farmPlotId == null && widget.entry == null) ...[
-                    const Text(
-                      'Select Farm Plot',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    DropdownButtonFormField<String>(
-                      value: _selectedFarmPlotId,
-                      hint: const Text('Select a plot'),
-                      items: _availablePlots
-                          .map((plot) => DropdownMenuItem(
-                                value: plot.id,
-                                child: Text('${plot.name} (${plot.crop})'),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() => _selectedFarmPlotId = value);
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  // Title
-                  _buildTextField(
-                    'Title ',
-                    _titleController,
-                    hint: 'e.g., Watering Session',
-                    maxLines: 1,
-                  ),
-                  const SizedBox(height: 16),
-                  // Activity Type
-                  _buildActivityTypeDropdown(),
-                  const SizedBox(height: 16),
-                  // Date and Time
-                  _buildDateField(),
-                  const SizedBox(height: 16),
-                  // Description
-                  _buildTextField(
-                    'Description',
-                    _descriptionController,
-                    hint: 'Describe what you did...',
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 24),
-                  // Weather Section
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Weather Information',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildWeatherConditionDropdown(),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Temperature (°C)',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+          ? const Center(child: CircularProgressIndicator(color: _primary))
+          : Form(
+              key: _formKey,
+              child: CustomScrollView(
+                slivers: [
+                  _buildSliverHeader(r),
+                  SliverToBoxAdapter(
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 24,
+                            horizontal: r.value(
+                              mobile: 16,
+                              tablet: 40,
+                              desktop: 100,
                             ),
                           ),
-                          onChanged: (value) {
-                            _temperature = double.tryParse(value);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Humidity (%)',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSection(
+                                r,
+                                'General Information',
+                                Icons.info_outline,
+                                [
+                                  if (widget.farmPlotId == null &&
+                                      widget.entry == null)
+                                    _buildPlotDropdown(r),
+                                  _buildFieldName('Activity Title'),
+                                  _buildTextField(
+                                    _titleController,
+                                    hint: 'e.g., Early Morning Watering',
+                                    icon: Icons.title,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildActivityDropdown(r),
+                                  const SizedBox(height: 16),
+                                  _buildDateTimeField(r),
+                                ],
+                              ),
+                              _buildSection(
+                                r,
+                                'Observation & Health',
+                                Icons.visibility_outlined,
+                                [
+                                  _buildHealthDropdown(r),
+                                  const SizedBox(height: 16),
+                                  _buildFieldName('Disease Symptoms'),
+                                  _buildTextField(
+                                    _diseaseSymptomController,
+                                    hint: 'Describe any symptoms...',
+                                    icon: Icons.coronavirus_outlined,
+                                    maxLines: 2,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildFieldName('Pest Presence'),
+                                  _buildTextField(
+                                    _pestPresenceController,
+                                    hint: 'Describe any pests found...',
+                                    icon: Icons.bug_report_outlined,
+                                    maxLines: 2,
+                                  ),
+                                ],
+                              ),
+                              _buildSection(
+                                r,
+                                'Usage & Inputs',
+                                Icons.inventory_2_outlined,
+                                [
+                                  _buildFieldName('Fertilizer Used'),
+                                  _buildTextField(
+                                    _fertiliserController,
+                                    hint: 'Type and amount of fertilizer',
+                                    icon: Icons.science_outlined,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildFieldName('Pesticide Used'),
+                                  _buildTextField(
+                                    _pesticideController,
+                                    hint: 'Type and amount of pesticide',
+                                    icon: Icons.biotech_outlined,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildFieldName('Water Quantity (L)'),
+                                  _buildTextField(
+                                    _waterQuantityController,
+                                    hint: 'Amount of water in liters',
+                                    icon: Icons.water_drop_outlined,
+                                    keyboardType: TextInputType.number,
+                                    validator: (v) {
+                                      if (v == null || v.isEmpty) return null;
+                                      final n = double.tryParse(v);
+                                      if (n == null || n <= 0)
+                                        return 'Enter a positive number';
+                                      return null;
+                                    },
+                                  ),
+                                ],
+                              ),
+                              _buildSection(
+                                r,
+                                'Notes & Description',
+                                Icons.description_outlined,
+                                [
+                                  _buildFieldName('Main Description'),
+                                  _buildTextField(
+                                    _descriptionController,
+                                    hint: 'What did you do today?',
+                                    maxLines: 4,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildFieldName('Additional Notes'),
+                                  _buildTextField(
+                                    _notesController,
+                                    hint: 'Extra info or future plans...',
+                                    maxLines: 3,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 32),
+                              _buildSaveButton(r),
+                              const SizedBox(height: 40),
+                            ],
                           ),
-                          onChanged: (value) {
-                            _humidity = double.tryParse(value);
-                          },
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Rainfall (mm)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      _rainfall = double.tryParse(value);
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  // Observations Section
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Observations',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPlantHealthDropdown(),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    'Disease Symptoms',
-                    _diseaseSymptomController,
-                    hint: 'Describe any disease symptoms...',
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    'Pest Presence',
-                    _pestPresenceController,
-                    hint: 'Describe any pests found...',
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 24),
-                  // Inputs Section
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Inputs Used',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    'Fertilizer',
-                    _fertiliserController,
-                    hint: 'Type and amount of fertilizer used',
-                    maxLines: 1,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    'Pesticide',
-                    _pesticideController,
-                    hint: 'Type and amount of pesticide used',
-                    maxLines: 1,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    'Water Quantity (L)',
-                    _waterQuantityController,
-                    hint: 'Amount of water used in liters',
-                    maxLines: 1,
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 24),
-                  // Notes Section
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  _buildTextField(
-                    'Additional Notes',
-                    _notesController,
-                    hint: 'Any other observations or notes...',
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 24),
-                  // Save Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _saveDiaryEntry,
-                      icon: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.save),
-                      label: Text(
-                        widget.entry != null ? 'Update Entry' : 'Save Entry',
-                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),
     );
   }
 
+  Widget _buildSliverHeader(Responsive r) {
+    return SliverAppBar(
+      expandedHeight: r.value(mobile: 120, tablet: 150),
+      pinned: true,
+      elevation: 0,
+      backgroundColor: _primary,
+      flexibleSpace: FlexibleSpaceBar(
+        centerTitle: true,
+        title: Text(
+          widget.entry != null ? 'Edit Entry' : 'New Diary Entry',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_primary, _primary.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                right: -30,
+                top: -30,
+                child: Icon(
+                  Icons.edit_note,
+                  size: 150,
+                  color: Colors.white.withOpacity(0.1),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+  Widget _buildSection(
+    Responsive r,
+    String title,
+    IconData icon,
+    List<Widget> children,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: _primary, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldName(String name) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Text(
+        name,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Colors.grey[700],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTextField(
-    String label,
     TextEditingController controller, {
-    String hint = '',
+    required String hint,
+    IconData? icon,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
   }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+        prefixIcon: icon != null
+            ? Icon(icon, color: _primary.withOpacity(0.5), size: 20)
+            : null,
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _primary, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlotDropdown(Responsive r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 4),
-        TextField(
-          controller: controller,
-          maxLines: maxLines,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            hintText: hint,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-          ),
+        _buildFieldName('Select Farm Plot'),
+        DropdownButtonFormField<String>(
+          value: _selectedFarmPlotId,
+          hint: const Text('Choose a plot...'),
+          style: const TextStyle(color: Colors.black87, fontSize: 14),
+          decoration: _dropdownDecoration(Icons.landscape_outlined),
+          items: _availablePlots
+              .map(
+                (plot) => DropdownMenuItem(
+                  value: plot.id,
+                  child: Text('${plot.name} (${plot.crop})'),
+                ),
+              )
+              .toList(),
+          onChanged: (value) => setState(() => _selectedFarmPlotId = value),
         ),
+        const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget _buildActivityTypeDropdown() {
+  Widget _buildActivityDropdown(Responsive r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Activity Type ',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 4),
+        _buildFieldName('Activity Type'),
         DropdownButtonFormField<String>(
           value: _selectedActivityType,
+          style: const TextStyle(color: Colors.black87, fontSize: 14),
+          decoration: _dropdownDecoration(Icons.category_outlined),
           items: activityTypes
               .map(
                 (type) => DropdownMenuItem(
                   value: type,
-                  child: Text(type.replaceAll('_', ' ')),
+                  child: Text(type.replaceAll('_', ' ').toUpperCase()),
                 ),
               )
               .toList(),
           onChanged: (value) {
-            if (value != null) {
-              setState(() => _selectedActivityType = value);
-            }
+            if (value != null) setState(() => _selectedActivityType = value);
           },
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-          ),
         ),
       ],
     );
   }
 
-  Widget _buildDateField() {
+  Widget _buildHealthDropdown(Responsive r) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Date & Time ',
-          style: TextStyle(fontWeight: FontWeight.w600),
+        _buildFieldName('Plant Health Status'),
+        DropdownButtonFormField<String>(
+          value: _plantHealth,
+          style: const TextStyle(color: Colors.black87, fontSize: 14),
+          decoration: _dropdownDecoration(Icons.monitor_heart_outlined),
+          items: plantHealthOptions
+              .map(
+                (health) => DropdownMenuItem(
+                  value: health,
+                  child: Text(health.toUpperCase()),
+                ),
+              )
+              .toList(),
+          onChanged: (value) {
+            if (value != null) setState(() => _plantHealth = value);
+          },
         ),
-        const SizedBox(height: 4),
+      ],
+    );
+  }
+
+  InputDecoration _dropdownDecoration(IconData icon) {
+    return InputDecoration(
+      prefixIcon: Icon(icon, color: _primary.withOpacity(0.5), size: 20),
+      filled: true,
+      fillColor: Colors.grey[50],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _primary, width: 1.5),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    );
+  }
+
+  Widget _buildDateTimeField(Responsive r) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFieldName('Date & Time'),
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () async {
+              child: _buildPickerButton(
+                icon: Icons.calendar_today,
+                label: DateFormat('MMM dd, yyyy').format(_selectedDate),
+                onTap: () async {
                   final date = await showDatePicker(
                     context: context,
                     initialDate: _selectedDate,
                     firstDate: DateTime(2000),
                     lastDate: DateTime.now(),
                   );
-                  if (date != null) {
-                    setState(() => _selectedDate = date);
-                  }
+                  if (date != null) setState(() => _selectedDate = date);
                 },
-                icon: const Icon(Icons.calendar_today),
-                label: Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () async {
+              child: _buildPickerButton(
+                icon: Icons.access_time,
+                label: DateFormat('HH:mm').format(_selectedDate),
+                onTap: () async {
                   final time = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay.fromDateTime(_selectedDate),
@@ -572,8 +671,6 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
                     });
                   }
                 },
-                icon: const Icon(Icons.access_time),
-                label: Text(DateFormat('HH:mm').format(_selectedDate)),
               ),
             ),
           ],
@@ -582,43 +679,73 @@ class _FarmDiaryFormScreenState extends State<FarmDiaryFormScreen> {
     );
   }
 
-  Widget _buildWeatherConditionDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _selectedWeatherCondition,
-      items: weatherConditions
-          .map(
-            (condition) =>
-                DropdownMenuItem(value: condition, child: Text(condition)),
-          )
-          .toList(),
-      onChanged: (value) {
-        if (value != null) {
-          setState(() => _selectedWeatherCondition = value);
-        }
-      },
-      decoration: InputDecoration(
-        labelText: 'Weather Condition',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  Widget _buildPickerButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: _primary),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPlantHealthDropdown() {
-    return DropdownButtonFormField<String>(
-      value: _plantHealth,
-      items: plantHealthOptions
-          .map((health) => DropdownMenuItem(value: health, child: Text(health)))
-          .toList(),
-      onChanged: (value) {
-        if (value != null) {
-          setState(() => _plantHealth = value);
-        }
-      },
-      decoration: InputDecoration(
-        labelText: 'Plant Health Status',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  Widget _buildSaveButton(Responsive r) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _saveDiaryEntry,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _primary,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          shadowColor: _primary.withOpacity(0.4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.save_outlined),
+                  const SizedBox(width: 10),
+                  Text(
+                    widget.entry != null ? 'UPDATE DIARY' : 'SAVE TO DIARY',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

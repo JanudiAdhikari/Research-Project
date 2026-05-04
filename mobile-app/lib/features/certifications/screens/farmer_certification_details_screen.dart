@@ -4,6 +4,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/certification_model.dart';
 import '../services/certification_api.dart';
 import '../../../utils/responsive.dart';
+import '../../../utils/language_prefs.dart';
+import '../../../utils/common/farmer_certification_details_si.dart';
 import 'farmer_edit_certification_screen.dart';
 
 // Helper to create a Color from an existing Color with a custom opacity (0.0-1.0)
@@ -40,6 +42,8 @@ class _FarmerCertificationDetailsScreenState
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  String _currentLanguage = 'en';
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +58,12 @@ class _FarmerCertificationDetailsScreenState
         Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero).animate(
           CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
         );
+
+    // Load saved language preference
+    LanguagePrefs.getLanguage().then((lang) {
+      if (mounted) setState(() => _currentLanguage = lang);
+    });
+
     _load();
   }
 
@@ -62,6 +72,10 @@ class _FarmerCertificationDetailsScreenState
     _animationController.dispose();
     super.dispose();
   }
+
+  bool get _isSinhala => _currentLanguage == 'si';
+
+  String _t(String english, String sinhala) => _isSinhala ? sinhala : english;
 
   String _formatDate(DateTime d) {
     final mm = d.month.toString().padLeft(2, '0');
@@ -101,7 +115,12 @@ class _FarmerCertificationDetailsScreenState
     if (c == null) return;
 
     if (!_canEdit) {
-      _toast('This certificate cannot be edited.');
+      _toast(
+        _t(
+          'This certificate cannot be edited.',
+          FarmerCertificationDetailsSi.cannotEdit,
+        ),
+      );
       return;
     }
 
@@ -118,7 +137,12 @@ class _FarmerCertificationDetailsScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Updated successfully'),
+          content: Text(
+            _t(
+              'Updated successfully',
+              FarmerCertificationDetailsSi.updatedSuccessfully,
+            ),
+          ),
           backgroundColor: _primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -151,20 +175,29 @@ class _FarmerCertificationDetailsScreenState
               ),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'Delete Certificate',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            Text(
+              _t(
+                'Delete Certificate',
+                FarmerCertificationDetailsSi.deleteCertificate,
+              ),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to delete this certificate? This action cannot be undone.',
+        content: Text(
+          _t(
+            'Are you sure you want to delete this certificate? This action cannot be undone.',
+            FarmerCertificationDetailsSi.deleteConfirmation,
+          ),
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              _t('Cancel', FarmerCertificationDetailsSi.cancel),
+              style: TextStyle(color: Colors.grey[600]),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -175,7 +208,7 @@ class _FarmerCertificationDetailsScreenState
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text('Delete'),
+            child: Text(_t('Delete', FarmerCertificationDetailsSi.delete)),
           ),
         ],
       ),
@@ -189,7 +222,12 @@ class _FarmerCertificationDetailsScreenState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Certificate deleted'),
+          content: Text(
+            _t(
+              'Certificate deleted',
+              FarmerCertificationDetailsSi.certificateDeleted,
+            ),
+          ),
           backgroundColor: _primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -208,18 +246,29 @@ class _FarmerCertificationDetailsScreenState
     final c = _cert;
     if (c == null) return;
     if (!c.attachment.hasFile) {
-      _toast('No attachment');
+      _toast(_t('No attachment', FarmerCertificationDetailsSi.noAttachment));
       return;
     }
 
     final url = Uri.tryParse(c.attachment.url!.trim());
     if (url == null) {
-      _toast('Invalid attachment URL');
+      _toast(
+        _t(
+          'Invalid attachment URL',
+          FarmerCertificationDetailsSi.invalidAttachmentUrl,
+        ),
+      );
       return;
     }
 
     final ok = await launchUrl(url, mode: LaunchMode.externalApplication);
-    if (!ok) _toast('Cannot open attachment');
+    if (!ok)
+      _toast(
+        _t(
+          'Cannot open attachment',
+          FarmerCertificationDetailsSi.cannotOpenAttachment,
+        ),
+      );
   }
 
   void _toast(String msg) {
@@ -374,7 +423,10 @@ class _FarmerCertificationDetailsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Certificate Details',
+                  _t(
+                    'Certificate Details',
+                    FarmerCertificationDetailsSi.certificateDetails,
+                  ),
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: responsive.fontSize(
@@ -498,31 +550,37 @@ class _FarmerCertificationDetailsScreenState
           Divider(height: 1, color: colorWithOpacity(_primary, 0.08)),
           ResponsiveSpacing(mobile: 16, tablet: 18, desktop: 20),
 
-          _buildSectionLabel(responsive, 'Certificate Information'),
+          _buildSectionLabel(
+            responsive,
+            _t(
+              'Certificate Information',
+              FarmerCertificationDetailsSi.certificateInformation,
+            ),
+          ),
           ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
 
           _infoRow(
             responsive,
             Icons.confirmation_number_outlined,
-            'Certificate No.',
+            _t('Certificate No.', FarmerCertificationDetailsSi.certificateNo),
             c.certificateNumber,
           ),
           _infoRow(
             responsive,
             Icons.account_balance_outlined,
-            'Issuing Body',
+            _t('Issuing Body', FarmerCertificationDetailsSi.issuingBody),
             c.issuingBody,
           ),
           _infoRow(
             responsive,
             Icons.event_outlined,
-            'Issue Date',
+            _t('Issue Date', FarmerCertificationDetailsSi.issueDate),
             _formatDate(c.issueDate),
           ),
           _infoRow(
             responsive,
             Icons.event_available_outlined,
-            'Expiry Date',
+            _t('Expiry Date', FarmerCertificationDetailsSi.expiryDate),
             _formatDate(c.expiryDate),
             isLast: true,
           ),
@@ -531,19 +589,25 @@ class _FarmerCertificationDetailsScreenState
           Divider(height: 1, color: colorWithOpacity(_primary, 0.08)),
           ResponsiveSpacing(mobile: 14, tablet: 16, desktop: 18),
 
-          _buildSectionLabel(responsive, 'Submission Timeline'),
+          _buildSectionLabel(
+            responsive,
+            _t(
+              'Submission Timeline',
+              FarmerCertificationDetailsSi.submissionTimeline,
+            ),
+          ),
           ResponsiveSpacing(mobile: 12, tablet: 14, desktop: 16),
 
           _infoRow(
             responsive,
             Icons.schedule_outlined,
-            'Submitted On',
+            _t('Submitted On', FarmerCertificationDetailsSi.submittedOn),
             _formatDate(c.createdAt),
           ),
           _infoRow(
             responsive,
             Icons.update_outlined,
-            'Last Updated',
+            _t('Last Updated', FarmerCertificationDetailsSi.lastUpdated),
             _formatDate(c.updatedAt),
             isLast: true,
           ),
@@ -558,9 +622,13 @@ class _FarmerCertificationDetailsScreenState
     final rawName = (c.attachment.originalName ?? '').trim();
     final name = rawName.isNotEmpty
         ? rawName
-        : (c.attachment.isPdf ? 'Document' : 'Image');
+        : (c.attachment.isPdf
+              ? _t('Document', FarmerCertificationDetailsSi.document)
+              : _t('Image', FarmerCertificationDetailsSi.image));
 
-    final typeText = c.attachment.isPdf ? 'PDF document' : 'Image file';
+    final typeText = c.attachment.isPdf
+        ? _t('PDF document', FarmerCertificationDetailsSi.pdfDocument)
+        : _t('Image file', FarmerCertificationDetailsSi.imageFile);
 
     return Container(
       width: double.infinity,
@@ -597,7 +665,7 @@ class _FarmerCertificationDetailsScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Attachment',
+                  _t('Attachment', FarmerCertificationDetailsSi.attachment),
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: responsive.fontSize(
@@ -641,7 +709,7 @@ class _FarmerCertificationDetailsScreenState
           TextButton.icon(
             onPressed: _openAttachment,
             icon: const Icon(Icons.open_in_new_rounded),
-            label: const Text('Open'),
+            label: Text(_t('Open', FarmerCertificationDetailsSi.open)),
           ),
         ],
       ),
@@ -687,7 +755,15 @@ class _FarmerCertificationDetailsScreenState
               ),
               const SizedBox(width: 8),
               Text(
-                isRejected ? 'Rejection Details' : 'Verification Details',
+                isRejected
+                    ? _t(
+                        'Rejection Details',
+                        FarmerCertificationDetailsSi.rejectionDetails,
+                      )
+                    : _t(
+                        'Verification Details',
+                        FarmerCertificationDetailsSi.verificationDetails,
+                      ),
                 style: TextStyle(
                   fontSize: responsive.fontSize(
                     mobile: 14,
@@ -705,21 +781,27 @@ class _FarmerCertificationDetailsScreenState
             _infoRow(
               responsive,
               Icons.person_outline,
-              'Verified By',
+              _t('Verified By', FarmerCertificationDetailsSi.verifiedBy),
               c.verifiedBy!.toUpperCase(),
             ),
           if (c.verificationDate != null)
             _infoRow(
               responsive,
               Icons.event_outlined,
-              'Verification Date',
+              _t(
+                'Verification Date',
+                FarmerCertificationDetailsSi.verificationDate,
+              ),
               _formatDate(c.verificationDate!),
             ),
           if (isRejected && (c.rejectionReason ?? '').trim().isNotEmpty)
             _infoRow(
               responsive,
               Icons.info_outline,
-              'Rejection Reason',
+              _t(
+                'Rejection Reason',
+                FarmerCertificationDetailsSi.rejectionReason,
+              ),
               c.rejectionReason!.trim(),
               isLast: true,
             ),
@@ -843,7 +925,7 @@ class _FarmerCertificationDetailsScreenState
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Edit',
+                        _t('Edit', FarmerCertificationDetailsSi.edit),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: responsive.fontSize(
@@ -906,7 +988,7 @@ class _FarmerCertificationDetailsScreenState
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Delete',
+                      _t('Delete', FarmerCertificationDetailsSi.delete),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: responsive.fontSize(
@@ -952,7 +1034,7 @@ class _FarmerCertificationDetailsScreenState
             ),
             ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
             Text(
-              'Failed to load',
+              _t('Failed to load', FarmerCertificationDetailsSi.failedToLoad),
               style: TextStyle(
                 fontWeight: FontWeight.w800,
                 fontSize: responsive.fontSize(
@@ -980,7 +1062,7 @@ class _FarmerCertificationDetailsScreenState
             ElevatedButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
+              label: Text(_t('Retry', FarmerCertificationDetailsSi.retry)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _primary,
                 foregroundColor: Colors.white,
@@ -1028,7 +1110,10 @@ class _FarmerCertificationDetailsScreenState
           ),
           ResponsiveSpacing(mobile: 16, tablet: 20, desktop: 24),
           Text(
-            'Certificate not found',
+            _t(
+              'Certificate not found',
+              FarmerCertificationDetailsSi.certificateNotFound,
+            ),
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: responsive.fontSize(
@@ -1063,6 +1148,29 @@ class _FarmerCertificationDetailsScreenState
       fg = Colors.red.shade700;
     }
 
+    // Translate status label for display
+    String displayLabel;
+    if (_isSinhala) {
+      switch (s) {
+        case 'pending':
+          displayLabel = FarmerCertificationDetailsSi.statusPending;
+          break;
+        case 'verified':
+          displayLabel = FarmerCertificationDetailsSi.statusVerified;
+          break;
+        case 'rejected':
+          displayLabel = FarmerCertificationDetailsSi.statusRejected;
+          break;
+        case 'expired':
+          displayLabel = FarmerCertificationDetailsSi.statusExpired;
+          break;
+        default:
+          displayLabel = status[0].toUpperCase() + status.substring(1);
+      }
+    } else {
+      displayLabel = status[0].toUpperCase() + status.substring(1);
+    }
+
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: responsive.value(mobile: 10, tablet: 12, desktop: 14),
@@ -1074,7 +1182,7 @@ class _FarmerCertificationDetailsScreenState
         border: Border.all(color: colorWithOpacity(fg, 0.3)),
       ),
       child: Text(
-        status[0].toUpperCase() + status.substring(1),
+        displayLabel,
         style: TextStyle(
           fontWeight: FontWeight.w700,
           color: fg,

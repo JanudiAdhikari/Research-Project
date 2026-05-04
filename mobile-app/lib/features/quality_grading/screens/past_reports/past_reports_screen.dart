@@ -103,15 +103,27 @@ class _PastReportsScreenState extends State<PastReportsScreen>
 
     try {
       final rawList = await _api.getMyQualityChecks();
-      final List<Map<String, dynamic>> enriched = [];
-      for (final item in rawList) {
+
+      // The API returns a lightweight list of checks, so we need to fetch the
+      // full record for each one. Doing this sequentially can be very slow when
+      // the user has many reports, because each fetch waits for the previous one.
+      // Parallelize the requests to improve load time.
+      final futures = rawList.map((item) async {
+        final id = item['_id']?.toString() ?? '';
+        if (id.isEmpty) return null;
         try {
-          final id = item['_id']?.toString() ?? '';
-          if (id.isEmpty) continue;
-          final full = await _api.getQualityCheckById(qualityCheckId: id);
-          if (full['status'] == 'completed') enriched.add(full);
-        } catch (_) {}
-      }
+          return await _api.getQualityCheckById(qualityCheckId: id);
+        } catch (_) {
+          return null;
+        }
+      }).toList();
+
+      final results = await Future.wait(futures);
+      final enriched = results
+          .whereType<Map<String, dynamic>>()
+          .where((full) => full['status'] == 'completed')
+          .toList();
+
       setState(() {
         _allReports = enriched;
         _isLoading = false;
@@ -1085,15 +1097,15 @@ class _PastReportsScreenState extends State<PastReportsScreen>
   Color _getGradeColor(String fullGrade) {
     final lower = fullGrade.toLowerCase();
     if (lower.contains('premium') || lower.contains('grade 1'))
-      return Colors.green.shade600;
+      return const Color(0xFFB8860B);
     if (lower.contains('gold') || lower.contains('grade 2'))
-      return Colors.amber.shade700;
+      return const Color(0xFFF9A825);
     if (lower.contains('silver') || lower.contains('grade 3'))
-      return Colors.blueGrey.shade600;
-    if (lower.contains('basic') || lower.contains('grade 4'))
-      return Colors.orange.shade600;
-    if (lower.contains('reject')) return Colors.red.shade600;
-    return Colors.grey.shade600;
+      return const Color(0xFF546E7A);
+    if (lower.contains('basic') || lower.contains('grade 4') || lower.contains('bronze'))
+      return const Color(0xFF795548);
+    if (lower.contains('reject') || lower.contains('fail')) return const Color(0xFFC62828);
+    return const Color(0xFF2E7D32);
   }
 
   String _formatDate(String date) {

@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'image_picker_screen.dart';
 import 'posts_view_screen.dart';
 import 'complaint_screen.dart';
-import 'complaint_list_screen.dart';
 import 'weather_forecast_screen.dart';
 import '../../../utils/localization.dart';
 import '../../../utils/language_prefs.dart';
@@ -84,11 +83,6 @@ class _HomeScreenState extends State<HomeScreen>
   void _navigateToComplaint(BuildContext context) => Navigator.push(
     context,
     MaterialPageRoute(builder: (_) => const ComplaintScreen()),
-  );
-
-  void _navigateToComplaintManagement(BuildContext context) => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (_) => const ComplaintListScreen()),
   );
 
   void _navigateToWeatherForecast(BuildContext context) => Navigator.push(
@@ -285,14 +279,14 @@ class _HomeScreenState extends State<HomeScreen>
         iconColor: const Color(0xFFE65100),
         onTap: () => _navigateToComplaint(context),
       ),
-      _FeatureCardData(
-        title: _translate('manage_complaints'),
-        subtitle: _translate('manage_complaints_subtitle'),
-        iconData: Icons.admin_panel_settings_rounded,
-        iconBgColor: const Color(0xFFF3E5F5),
-        iconColor: const Color(0xFF6A1B9A),
-        onTap: () => _navigateToComplaintManagement(context),
-      ),
+      // _FeatureCardData(
+      //   title: _translate('manage_complaints'),
+      //   subtitle: _translate('manage_complaints_subtitle'),
+      //   iconData: Icons.admin_panel_settings_rounded,
+      //   iconBgColor: const Color(0xFFF3E5F5),
+      //   iconColor: const Color(0xFF6A1B9A),
+      //   onTap: () => _navigateToComplaintManagement(context),
+      // ),
       _FeatureCardData(
         title: _translate('weather_forecast'),
         subtitle: _translate('weather_forecast_subtitle'),

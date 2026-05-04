@@ -274,19 +274,6 @@ class _HarvestPredictionDashboardState extends State<HarvestPredictionDashboard>
         children: [
           Icon(Icons.check_circle_rounded, color: Colors.green.shade700),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              _t(
-                "Crop condition looks healthy. No immediate action required.",
-                YieldPredictionSi.cropConditionHealthy,
-              ),
-              style: TextStyle(
-                fontSize: responsive.bodyFontSize,
-                fontWeight: FontWeight.w500,
-                color: Colors.green.shade900,
-              ),
-            ),
-          ),
         ],
       ),
     );

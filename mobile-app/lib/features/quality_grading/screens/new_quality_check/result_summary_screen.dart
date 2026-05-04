@@ -581,6 +581,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
       child: Column(
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 padding: responsive.padding(
@@ -984,12 +985,60 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     Responsive responsive,
     Map<String, dynamic> factorScores,
   ) {
+    Widget pctRow(
+      String label,
+      dynamic value,
+      IconData icon, {
+      bool isLast = false,
+    }) {
+      final pct = (value is num) ? value.toDouble() : (double.tryParse(value?.toString() ?? '0') ?? 0.0);
+      return Column(
+        children: [
+          Padding(
+            padding: responsive.padding(
+              mobile: EdgeInsets.fromLTRB(16, 14, 16, isLast ? 14 : 0),
+              tablet: EdgeInsets.fromLTRB(18, 16, 18, isLast ? 16 : 0),
+              desktop: EdgeInsets.fromLTRB(20, 18, 20, isLast ? 18 : 0),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: responsive.smallIconSize,
+                  color: Colors.grey[600],
+                ),
+                ResponsiveSpacing.horizontal(
+                  mobile: 12,
+                  tablet: 14,
+                  desktop: 16,
+                ),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: responsive.bodyFontSize,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Text(
+                  '${pct.toStringAsFixed(2)}%',
+                  style: TextStyle(
+                    fontSize: responsive.bodyFontSize,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (!isLast) _buildDivider(responsive),
+        ],
+      );
+    }
+
     return Container(
-      padding: responsive.padding(
-        mobile: const EdgeInsets.all(20),
-        tablet: const EdgeInsets.all(24),
-        desktop: const EdgeInsets.all(28),
-      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -1004,41 +1053,33 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
       ),
       child: Column(
         children: [
-          _buildScoreBar(
-            responsive,
-            _t('Density', ResultSummaryScreenSi.density),
-            _asInt(factorScores['density']),
-            Colors.green,
+          pctRow(
+            _t('Adulterant Seeds', ResultSummaryScreenSi.adulteration),
+            factorScores['adulteration'],
+            Icons.warning_amber_rounded,
           ),
-          _buildScoreBar(
-            responsive,
-            _t('Adulteration', ResultSummaryScreenSi.adulteration),
-            _asInt(factorScores['adulteration']),
-            Colors.teal,
+          pctRow(
+            _t('Extraneous Matter', ResultSummaryScreenSi.extraneous),
+            factorScores['extraneous'],
+            Icons.grass_rounded,
           ),
-          _buildScoreBar(
-            responsive,
+          pctRow(
             _t('Mold', ResultSummaryScreenSi.mold),
-            _asInt(factorScores['mold']),
-            Colors.purple,
+            factorScores['mold'],
+            Icons.blur_on_rounded,
           ),
-          _buildScoreBar(
-            responsive,
-            _t('Extraneous', ResultSummaryScreenSi.extraneous),
-            _asInt(factorScores['extraneous']),
-            Colors.orange,
+          pctRow(
+            _t(
+              'Broken / Abnormal Texture',
+              ResultSummaryScreenSi.broken,
+            ),
+            factorScores['broken'],
+            Icons.broken_image_rounded,
           ),
-          _buildScoreBar(
-            responsive,
-            _t('Broken', ResultSummaryScreenSi.broken),
-            _asInt(factorScores['broken']),
-            Colors.blue,
-          ),
-          _buildScoreBar(
-            responsive,
+          pctRow(
             _t('Healthy Visual', ResultSummaryScreenSi.healthyVisual),
-            _asInt(factorScores['healthyVisual']),
-            Colors.indigo,
+            factorScores['healthyVisual'],
+            Icons.check_circle_rounded,
             isLast: true,
           ),
         ],
@@ -1323,71 +1364,7 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     endIndent: responsive.value(mobile: 16, tablet: 18, desktop: 20),
   );
 
-  Widget _buildScoreBar(
-    Responsive responsive,
-    String label,
-    int score,
-    Color color, {
-    bool isLast = false,
-  }) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: isLast
-            ? 0
-            : responsive.value(mobile: 20, tablet: 22, desktop: 24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: responsive.bodyFontSize,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: responsive.value(
-                    mobile: 10,
-                    tablet: 11,
-                    desktop: 12,
-                  ),
-                  vertical: responsive.value(mobile: 4, tablet: 5, desktop: 6),
-                ),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '$score',
-                  style: TextStyle(
-                    fontSize: responsive.bodyFontSize,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          ResponsiveSpacing(mobile: 8, tablet: 10, desktop: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: score / 100,
-              backgroundColor: color.withOpacity(0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: responsive.value(mobile: 8, tablet: 9, desktop: 10),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildSuggestionItem(
     Responsive responsive,
@@ -1550,9 +1527,9 @@ class _ResultSummaryScreenState extends State<ResultSummaryScreen>
     }
   }
 
-  int _asInt(dynamic v) {
-    if (v == null) return 0;
-    if (v is num) return v.round();
-    return int.tryParse(v.toString()) ?? 0;
-  }
+  // int _asInt(dynamic v) {
+  //   if (v == null) return 0;
+  //   if (v is num) return v.round();
+  //   return int.tryParse(v.toString()) ?? 0;
+  // }
 }

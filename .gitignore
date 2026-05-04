@@ -1,0 +1,5 @@
+# Ignore local Flutter config/API key files
+mobile-app/lib/config/api_keys.dart
+
+# Ignore common generated files at repo root
+.DS_Store
